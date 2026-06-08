@@ -19,9 +19,10 @@
 - Phase 0 pipeline exists and is locally verified.
 - Phase 1 literature and source verification is now substantially stronger.
 - TempGlitch public access is now verified through a public Hugging Face dataset artifact under MIT license.
+- The repo now has a real TempGlitch smoke pipeline on a tiny public subset.
 - Real LeWM integration is still absent by design.
-- No public benchmark result has yet been produced in this repo.
-- The repo currently has only synthetic and toy-dynamics evidence.
+- Public benchmark results exist, but only for a two-video `Blinking` smoke subset.
+- The repo now has synthetic evidence plus a real but very small public-benchmark smoke result.
 - The verified public TempGlitch artifact currently exposes binary per-video labels and one public `train` split, not a verified official held-out split or finer temporal-span file.
 
 ## 3. What is enough for a short paper
@@ -42,6 +43,7 @@
 - At least one clear failure-analysis section beyond headline metrics.
 - Reproducible commands that regenerate every table and figure cited in the paper.
 - If the paper claims temporal localization rather than binary clip-level detection, a benchmark with verified public span annotations is still required.
+- Results must extend beyond a smoke subset to a more meaningful benchmark slice.
 
 ## 5. Minimum experiment package for a full paper
 
@@ -109,7 +111,7 @@
 
 - Benchmark access is still paper-only.
 - Labels are still not mapped into `source,start_frame,end_frame,label`.
-- Results come only from synthetic or toy data.
+- Results come only from synthetic, toy, or tiny smoke subsets.
 - The paper would have to rely on static-image evidence to stand in for temporal detection.
 
 ## Decision
@@ -117,9 +119,10 @@
 - Decision class: B. Full-paper path risky, short-paper path safer.
 - Why:
   - TempGlitch now has a verified public artifact and is strong enough for binary clip-level benchmark work.
+  - The repo now proves that the TempGlitch smoke path is operational end-to-end.
   - TempGlitch's current public artifact does not by itself verify finer temporal spans or an official held-out split.
   - VideoGlitchBench is rich on paper, but public code/data release is still unverified.
   - GlitchBench is accessible but static-image only.
   - World of Bugs is promising but operationally heavier and not yet mapped into this repo's CSV interfaces.
 - Practical implication:
-  - Phase 2 should focus on TempGlitch subset conversion and smoke evaluation before any broader model expansion.
+  - The next step after Phase 2 is no longer access plumbing; it is a larger documented TempGlitch split, stronger analysis, and honest experiment framing.
