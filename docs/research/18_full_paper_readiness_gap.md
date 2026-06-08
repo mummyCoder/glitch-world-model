@@ -18,9 +18,11 @@
 
 - Phase 0 pipeline exists and is locally verified.
 - Phase 1 literature and source verification is now substantially stronger.
+- TempGlitch public access is now verified through a public Hugging Face dataset artifact under MIT license.
 - Real LeWM integration is still absent by design.
-- No public temporal benchmark has yet been downloaded, converted, or evaluated in this repo.
+- No public benchmark result has yet been produced in this repo.
 - The repo currently has only synthetic and toy-dynamics evidence.
+- The verified public TempGlitch artifact currently exposes binary per-video labels and one public `train` split, not a verified official held-out split or finer temporal-span file.
 
 ## 3. What is enough for a short paper
 
@@ -34,16 +36,17 @@
 ## 4. What is required for a full paper
 
 - Verified literature that supports the motivation, benchmark choice, baseline families, and limitations.
-- At least one verified public temporal benchmark with documented source URL, access date, and permitted use.
-- A verified train / validation / test or cross-video split with no leakage across overlapping clips.
+- At least one verified public gameplay-video benchmark with documented source URL, access date, and permitted use.
+- A documented split protocol with no leakage across overlapping clips or paired near-duplicates, even if the benchmark does not ship an official held-out split.
 - Actual public-benchmark results for `frame_diff`, `feature_distance`, and `mini_latent`.
 - At least one clear failure-analysis section beyond headline metrics.
 - Reproducible commands that regenerate every table and figure cited in the paper.
+- If the paper claims temporal localization rather than binary clip-level detection, a benchmark with verified public span annotations is still required.
 
 ## 5. Minimum experiment package for a full paper
 
 - Benchmark package:
-  - TempGlitch if its direct public access path and label format are verified in Phase 2.
+  - TempGlitch for binary clip-level gameplay-glitch detection if the repo defines and documents a leakage-safe local split.
   - Otherwise a documented fallback, likely World of Bugs or a clearly limited GlitchBench image-only section.
 - Baselines:
   - `frame_diff`
@@ -86,19 +89,21 @@
 ## 9. Must-have limitations
 
 - `mini_latent` is a proxy, not LeWM.
-- Public temporal benchmark access was the main gating factor for the full-paper path.
+- TempGlitch public access is solved, but the public artifact is binary per-video and single-split.
 - Image-only evidence from GlitchBench cannot support temporal localization claims.
 - World of Bugs requires additional setup and label conversion effort.
 - Cross-game generalization remains unproven until multiple public benchmarks or games are evaluated.
+- Temporal localization claims remain unproven until a public span-annotated benchmark is executed.
 
 ## 10. Go / No-Go criteria before writing full paper
 
 ### Go
 
-- A public temporal benchmark is verified, downloaded locally under gitignored paths, and converted into the repo CSV interfaces.
+- A public gameplay-video benchmark is verified, downloaded locally under gitignored paths, and converted into the repo CSV interfaces.
 - The repo has benchmark results for all current baselines.
 - Split protocol, threshold protocol, and figure / table provenance are documented.
 - At least two ablations and one error-analysis section are complete.
+- If claiming localization, public span annotations are verified and executed.
 
 ### No-Go
 
@@ -111,9 +116,10 @@
 
 - Decision class: B. Full-paper path risky, short-paper path safer.
 - Why:
-  - TempGlitch is the best benchmark on paper, but direct public access was not verified during Phase 1.
-  - VideoGlitchBench is rich on paper, but public code/data release was also unverified.
+  - TempGlitch now has a verified public artifact and is strong enough for binary clip-level benchmark work.
+  - TempGlitch's current public artifact does not by itself verify finer temporal spans or an official held-out split.
+  - VideoGlitchBench is rich on paper, but public code/data release is still unverified.
   - GlitchBench is accessible but static-image only.
   - World of Bugs is promising but operationally heavier and not yet mapped into this repo's CSV interfaces.
 - Practical implication:
-  - Phase 2 should focus first on benchmark access verification and conversion, not on broad model expansion.
+  - Phase 2 should focus on TempGlitch subset conversion and smoke evaluation before any broader model expansion.
