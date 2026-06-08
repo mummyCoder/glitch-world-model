@@ -14,6 +14,17 @@ Research planning docs:
 - [Dataset and benchmark map](docs/research/04_dataset_benchmark_map.md)
 - [Experiment plan](docs/research/06_experiment_plan.md)
 - [Risks and limitations](docs/research/09_risks_and_limitations.md)
+- [TempGlitch integration plan](docs/research/11_tempglitch_integration_plan.md)
+
+Phase 0 verification commands:
+
+```powershell
+git pull --ff-only
+git submodule update --init
+python -m pip install -e ".[dev]"
+python scripts\run_synthetic_demo.py
+python -m pytest
+```
 
 ## Layout
 

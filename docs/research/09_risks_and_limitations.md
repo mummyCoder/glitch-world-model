@@ -3,6 +3,7 @@
 | Risk | Why it matters | Mitigation |
 | --- | --- | --- |
 | Dataset access risk | New gameplay glitch benchmarks may have limited access, licenses, or large files. | Treat dataset acquisition as a separate task; document source, license, and version. |
+| TempGlitch format conversion risk | TempGlitch annotation and video/frame layout are not verified in Phase 0. | Create a Phase 2 integration plan first; convert only after source URL, license, splits, FPS, and label schema are confirmed. |
 | Temporal label availability | Clip-level metrics are weaker than event-level temporal localization. | Prefer benchmarks with temporal spans; clearly state when labels are interval-derived. |
 | GlitchBench ground-truth limitation | GlitchBench is valuable but may emphasize static visual recognition rather than temporal dynamics. | Use it for image-level evidence only; do not overclaim temporal performance from it. |
 | Overfitting to synthetic data | Toy datasets can make simple baselines look stronger than they are. | Label synthetic results as sanity checks and validate on public benchmarks. |

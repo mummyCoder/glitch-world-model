@@ -36,6 +36,19 @@ The repo already contains:
 
 Known local setup gaps may include missing `pytest`, `numpy`, `Pillow`, and `opencv-python`.
 
+## Phase 0 local verification status
+
+Verified on 2026-06-08 in this working copy:
+
+- `git pull --ff-only`: already up to date.
+- `git submodule update --init`: initialized `external/le-wm`, `external/world-of-bugs`, and `external/world-of-bugs-experiments`.
+- `python -m pip install -e ".[dev]"`: installed core/dev dependencies for Python 3.14.4.
+- `python scripts/run_synthetic_demo.py`: produced synthetic scores, metrics, and plot under gitignored `outputs/`.
+- Synthetic demo metrics: F1 = 0.8, AUROC = 0.8333333333333334.
+- `python -m pytest`: 18 tests passed, no import errors.
+
+Generated `data/`, `outputs/`, and `.test-tmp/` artifacts remain uncommitted.
+
 ## Current MVP pipeline
 
 ```text
