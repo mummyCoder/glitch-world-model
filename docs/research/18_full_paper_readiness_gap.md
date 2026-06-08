@@ -24,9 +24,11 @@
 - Real LeWM integration is still absent by design.
 - Public benchmark evidence now includes the two-video smoke subset and a preliminary 30-video split experiment.
 - The repo now has a leakage-aware 30-video TempGlitch split experiment across all five public categories.
+- The repo now has a scaled 100-video TempGlitch experiment with category and failure analysis.
 - Thresholds are calibrated on validation and applied unchanged to test.
 - `feature_distance` and `mini_latent` fit on train-normal clips only.
 - Current 30-video results are weak and preliminary; test AUROC ranges from approximately `0.522` to `0.589`.
+- Current 100-video results remain weak; best global test AUROC is `0.504053`.
 - The verified public TempGlitch artifact currently exposes binary per-video labels and one public `train` split, not a verified official held-out split or finer temporal-span file.
 
 ## 3. What is enough for a short paper
@@ -49,6 +51,7 @@
 - If the paper claims temporal localization rather than binary clip-level detection, a benchmark with verified public span annotations is still required.
 - Results must extend beyond a smoke subset to a more meaningful benchmark slice.
 - The current 30-video slice must be scaled and analyzed by category / failure mode.
+- Phase 3B scaled the slice, but the results indicate method or evaluation mismatch rather than readiness for broad ablations.
 
 ## 5. Minimum experiment package for a full paper
 
@@ -127,9 +130,10 @@
   - The repo now proves that the TempGlitch smoke path is operational end-to-end.
   - The repo now has a leakage-aware train / validation / test protocol and preliminary results for all three current baselines.
   - The current 30-video results do not support mini-latent superiority and have weak discrimination.
+  - The 100-video scaled result still does not support mini-latent superiority or full-paper performance claims.
   - TempGlitch's current public artifact does not by itself verify finer temporal spans or an official held-out split.
   - VideoGlitchBench is rich on paper, but public code/data release is still unverified.
   - GlitchBench is accessible but static-image only.
   - World of Bugs is promising but operationally heavier and not yet mapped into this repo's CSV interfaces.
 - Practical implication:
-  - The next step is Phase 3B: scale the split and add per-category / failure analysis before deciding whether ablations are justified.
+  - The next step is Phase 6B: add video-level aggregation because the available public labels are per-video.

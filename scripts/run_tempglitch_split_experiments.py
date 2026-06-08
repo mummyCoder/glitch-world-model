@@ -8,6 +8,15 @@ from pathlib import Path
 from typing import Any
 
 from glitch_detection import feature_distance, frame_diff, mini_latent
+from glitch_detection.analysis import (
+    binary_metrics_by_group,
+    prediction_rows,
+    score_distribution_summary,
+    top_errors,
+    write_json,
+    write_markdown_table,
+    write_rows_csv,
+)
 from glitch_detection.calibration import calibrate_threshold, evaluate_with_fixed_threshold
 from glitch_detection.manifest import ClipRecord, clip_has_glitch, read_labels, read_manifest
 from glitch_detection.preprocess import extract_video_frames, preprocess_frames
@@ -18,6 +27,7 @@ from glitch_detection.splits import (
     filter_manifest_by_sources,
     read_split_csv,
     sources_for_split,
+    split_counts_by_group,
     write_split_csv,
 )
 from glitch_detection.tempglitch import (
@@ -148,7 +158,7 @@ def score_validation_and_test(
 
 def write_comparison(results: list[dict[str, Any]], output_path: Path) -> Path:
     lines = [
-        "# Phase 3/4 TempGlitch Comparison",
+        "# TempGlitch Split Experiment Comparison",
         "",
         "| Scorer | Val threshold | Test precision | Test recall | Test F1 | Test AUROC |",
         "| --- | ---: | ---: | ---: | ---: | ---: |",
@@ -164,6 +174,18 @@ def write_comparison(results: list[dict[str, Any]], output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return output_path
+
+
+def best_and_worst_categories(category_metrics: dict[str, dict[str, Any]]) -> tuple[str, str]:
+    def ranking_value(item: tuple[str, dict[str, Any]]) -> tuple[float, float]:
+        metrics = item[1]
+        auroc = metrics.get("auroc")
+        return (float(auroc) if auroc is not None else -1.0, float(metrics.get("f1", 0.0)))
+
+    ranked = sorted(category_metrics.items(), key=ranking_value, reverse=True)
+    if not ranked:
+        return "n/a", "n/a"
+    return ranked[0][0], ranked[-1][0]
 
 
 def positive_clip_counts(
@@ -183,25 +205,46 @@ def positive_clip_counts(
     }
 
 
+def clip_counts_by_split(manifest_path: Path, split_records: list[SplitRecord]) -> dict[str, int]:
+    records = read_manifest(manifest_path)
+    return {
+        split: sum(
+            1 for record in records if record.source in sources_for_split(split_records, split)
+        )
+        for split in ["train", "validation", "test"]
+    }
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run leakage-aware TempGlitch split experiments.")
-    parser.add_argument("--raw-dir", type=Path, default=ROOT / "data" / "raw" / "tempglitch_phase3")
-    parser.add_argument(
-        "--processed-dir", type=Path, default=ROOT / "data" / "processed" / "tempglitch_phase3"
-    )
-    parser.add_argument("--outputs-dir", type=Path, default=ROOT / "outputs" / "tempglitch_phase3")
+    parser.add_argument("--experiment-name", default="tempglitch_phase3b")
+    parser.add_argument("--raw-dir", type=Path, default=None)
+    parser.add_argument("--processed-dir", type=Path, default=None)
+    parser.add_argument("--outputs-dir", type=Path, default=None)
     parser.add_argument("--categories", nargs="+", default=list(DEFAULT_CATEGORIES))
-    parser.add_argument("--limit-per-group", type=int, default=3)
+    parser.add_argument("--limit-per-group", type=int, default=10)
     parser.add_argument("--clip-length", type=int, default=16)
     parser.add_argument("--stride", type=int, default=16)
     parser.add_argument("--size", type=int, default=128)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--train-ratio", type=float, default=0.6)
+    parser.add_argument("--validation-ratio", type=float, default=0.2)
+    parser.add_argument("--test-ratio", type=float, default=0.2)
+    parser.add_argument("--train-count", type=int, default=None)
+    parser.add_argument("--validation-count", type=int, default=None)
+    parser.add_argument("--test-count", type=int, default=None)
     parser.add_argument("--scorer", action="append", dest="scorers", default=None)
+    parser.add_argument("--analysis", action="store_true", default=True)
+    parser.add_argument("--no-analysis", action="store_false", dest="analysis")
+    parser.add_argument("--top-errors", type=int, default=20)
     return parser
 
 
 def main() -> None:
     args = build_parser().parse_args()
+    args.raw_dir = args.raw_dir or ROOT / "data" / "raw" / args.experiment_name
+    args.processed_dir = args.processed_dir or ROOT / "data" / "processed" / args.experiment_name
+    args.outputs_dir = args.outputs_dir or ROOT / "outputs" / args.experiment_name
     scorers = args.scorers or list(DEFAULT_SCORERS)
     if args.limit_per_group < 3:
         raise SystemExit(
@@ -228,7 +271,16 @@ def main() -> None:
     )
     split_path = write_split_csv(
         args.processed_dir / "split.csv",
-        assign_video_splits(read_tempglitch_metadata(metadata_path), seed=args.seed),
+        assign_video_splits(
+            read_tempglitch_metadata(metadata_path),
+            seed=args.seed,
+            train_count=args.train_count,
+            validation_count=args.validation_count,
+            test_count=args.test_count,
+            train_ratio=args.train_ratio,
+            validation_ratio=args.validation_ratio,
+            test_ratio=args.test_ratio,
+        ),
     )
     split_records = read_split_csv(split_path)
 
@@ -270,6 +322,49 @@ def main() -> None:
             calibration_path,
             test_metrics_path,
         )
+        analysis_payload: dict[str, Any] = {}
+        if args.analysis:
+            rows = prediction_rows(
+                test_scores_path,
+                split_label_paths["test"],
+                threshold=float(calibration["threshold"]),
+                split_csv=split_path,
+            )
+            category_metrics = binary_metrics_by_group(rows, "category")
+            source_metrics = binary_metrics_by_group(rows, "source")
+            distribution = score_distribution_summary(rows, "category")
+            false_positives = top_errors(rows, "false_positive", args.top_errors)
+            false_negatives = top_errors(rows, "false_negative", args.top_errors)
+            best_category, worst_category = best_and_worst_categories(category_metrics)
+            write_rows_csv(rows, args.outputs_dir / f"{scorer_name}_test_predictions.csv")
+            write_json(category_metrics, args.outputs_dir / f"{scorer_name}_category_metrics.json")
+            write_markdown_table(
+                category_metrics,
+                args.outputs_dir / f"{scorer_name}_category_metrics.md",
+                title=f"{scorer_name} Category Metrics",
+            )
+            write_json(source_metrics, args.outputs_dir / f"{scorer_name}_source_metrics.json")
+            write_rows_csv(false_positives, args.outputs_dir / f"{scorer_name}_false_positives.csv")
+            write_rows_csv(false_negatives, args.outputs_dir / f"{scorer_name}_false_negatives.csv")
+            write_json(distribution, args.outputs_dir / f"{scorer_name}_score_distribution.json")
+            analysis_payload = {
+                "category_metrics_path": str(
+                    args.outputs_dir / f"{scorer_name}_category_metrics.json"
+                ),
+                "source_metrics_path": str(args.outputs_dir / f"{scorer_name}_source_metrics.json"),
+                "false_positives_path": str(
+                    args.outputs_dir / f"{scorer_name}_false_positives.csv"
+                ),
+                "false_negatives_path": str(
+                    args.outputs_dir / f"{scorer_name}_false_negatives.csv"
+                ),
+                "score_distribution_path": str(
+                    args.outputs_dir / f"{scorer_name}_score_distribution.json"
+                ),
+                "best_category": best_category,
+                "worst_category": worst_category,
+                "category_metrics": category_metrics,
+            }
         results.append(
             {
                 "scorer": scorer_name,
@@ -278,14 +373,24 @@ def main() -> None:
                 "test_metrics_path": str(test_metrics_path),
                 "fit": fit_metadata,
                 "test_metrics": test_metrics,
+                "analysis": analysis_payload,
             }
         )
 
     split_counts = Counter(record.split for record in split_records)
-    group_counts = Counter(
-        (record.category, record.label, record.split) for record in split_records
-    )
+    clip_counts = clip_counts_by_split(manifest_path, split_records)
+    positives = positive_clip_counts(manifest_path, labels_path, split_records)
+    negatives = {split: clip_counts[split] - positives[split] for split in clip_counts}
+    split_summary = {
+        "split_counts": dict(split_counts),
+        "group_split_counts": split_counts_by_group(split_records),
+        "clip_counts": clip_counts,
+        "positive_clip_counts": positives,
+        "negative_clip_counts": negatives,
+    }
+    write_json(split_summary, args.outputs_dir / "split_summary.json")
     summary = {
+        "experiment_name": args.experiment_name,
         "dataset_url": DATASET_PAGE_URL,
         "dataset_revision": samples[0].dataset_revision if samples else None,
         "categories": args.categories,
@@ -293,11 +398,9 @@ def main() -> None:
         "video_count": len(samples),
         "clip_count": len(read_manifest(manifest_path)),
         "split_counts": dict(split_counts),
-        "group_split_counts": {
-            f"{category}/{label}/{split}": count
-            for (category, label, split), count in sorted(group_counts.items())
-        },
-        "positive_clip_counts": positive_clip_counts(manifest_path, labels_path, split_records),
+        "group_split_counts": split_counts_by_group(split_records),
+        "positive_clip_counts": positives,
+        "negative_clip_counts": negatives,
         "clip_length": args.clip_length,
         "stride": args.stride,
         "size": args.size,
@@ -306,22 +409,30 @@ def main() -> None:
         "results": results,
     }
     args.outputs_dir.mkdir(parents=True, exist_ok=True)
-    summary_path = args.outputs_dir / "phase3_summary.json"
+    summary_path = args.outputs_dir / "phase3b_summary.json"
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    comparison_path = write_comparison(results, args.outputs_dir / "phase3_comparison.md")
+    comparison_path = write_comparison(results, args.outputs_dir / "phase3b_comparison.md")
 
+    print(f"Dataset revision: {summary['dataset_revision']}")
     print(f"Videos: {summary['video_count']}")
     print(f"Clips: {summary['clip_count']}")
     print(f"Split counts: {summary['split_counts']}")
     print(f"Group split counts: {summary['group_split_counts']}")
     print(f"Positive clips by split: {summary['positive_clip_counts']}")
+    print(f"Negative clips by split: {summary['negative_clip_counts']}")
     for result in results:
         metrics = result["test_metrics"]
+        analysis = result.get("analysis", {})
         print(
             f"{result['scorer']}: validation threshold={result['validation_threshold']:.6g}, "
             f"test AUROC={metrics['auroc']:.3f}, F1={metrics['f1']:.3f}, "
             f"precision={metrics['precision']:.3f}, recall={metrics['recall']:.3f}"
         )
+        if analysis:
+            print(
+                f"{result['scorer']}: best category={analysis['best_category']}, "
+                f"worst category={analysis['worst_category']}"
+            )
     print(f"Comparison: {comparison_path}")
     print(f"Summary: {summary_path}")
     print("Warning: binary per-video labels only; no temporal span claims.")

@@ -18,7 +18,7 @@ from glitch_detection.splits import (
 )
 
 
-def _metadata_rows() -> list[dict[str, str]]:
+def _metadata_rows(samples_per_group: int = 3) -> list[dict[str, str]]:
     return [
         {
             "source": f"{category}_{label}_{index}",
@@ -27,7 +27,7 @@ def _metadata_rows() -> list[dict[str, str]]:
         }
         for category in ["Blinking", "Frozen Animation"]
         for label in ["Buggy", "Normal"]
-        for index in range(3)
+        for index in range(samples_per_group)
     ]
 
 
@@ -43,6 +43,72 @@ def test_assign_video_splits_is_deterministic_and_source_disjoint():
                 row.split for row in first if row.category == category and row.label == label
             }
             assert group_splits == {"train", "validation", "test"}
+
+
+def test_assign_video_splits_uses_expected_counts_for_five_sources_per_group():
+    splits = assign_video_splits(_metadata_rows(samples_per_group=5), seed=42)
+
+    for category in ["Blinking", "Frozen Animation"]:
+        for label in ["Buggy", "Normal"]:
+            counts = {
+                split: sum(
+                    1
+                    for row in splits
+                    if row.category == category and row.label == label and row.split == split
+                )
+                for split in ["train", "validation", "test"]
+            }
+            assert counts == {"train": 3, "validation": 1, "test": 1}
+
+
+def test_assign_video_splits_uses_expected_counts_for_ten_sources_per_group():
+    splits = assign_video_splits(_metadata_rows(samples_per_group=10), seed=42)
+
+    for category in ["Blinking", "Frozen Animation"]:
+        for label in ["Buggy", "Normal"]:
+            counts = {
+                split: sum(
+                    1
+                    for row in splits
+                    if row.category == category and row.label == label and row.split == split
+                )
+                for split in ["train", "validation", "test"]
+            }
+            assert counts == {"train": 6, "validation": 2, "test": 2}
+
+
+def test_assign_video_splits_supports_explicit_counts():
+    splits = assign_video_splits(
+        _metadata_rows(samples_per_group=10),
+        seed=42,
+        train_count=5,
+        validation_count=3,
+        test_count=2,
+    )
+
+    counts = {
+        split: sum(
+            1
+            for row in splits
+            if row.category == "Blinking" and row.label == "Buggy" and row.split == split
+        )
+        for split in ["train", "validation", "test"]
+    }
+    assert counts == {"train": 5, "validation": 3, "test": 2}
+
+
+def test_assign_video_splits_fails_when_required_splits_do_not_fit():
+    rows = [
+        {"source": f"Blinking_Buggy_{index}", "category": "Blinking", "public_label": "Buggy"}
+        for index in range(2)
+    ]
+
+    try:
+        assign_video_splits(rows, seed=42, train_count=1, validation_count=1, test_count=1)
+    except ValueError as exc:
+        assert "requires 3 videos" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for an undersized split group")
 
 
 def test_assign_video_splits_uses_train_test_fallback_for_two_sources():

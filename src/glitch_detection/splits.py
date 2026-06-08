@@ -19,7 +19,60 @@ class SplitRecord:
     split: str
 
 
-def assign_video_splits(metadata_rows: list[dict[str, str]], seed: int = 42) -> list[SplitRecord]:
+def _split_counts_for_group(
+    group_size: int,
+    train_count: int | None,
+    validation_count: int | None,
+    test_count: int | None,
+    train_ratio: float,
+    validation_ratio: float,
+    test_ratio: float,
+) -> dict[str, int]:
+    if group_size < 2:
+        raise ValueError("Need at least 2 videos per category/label group to split.")
+
+    if train_count is not None or validation_count is not None or test_count is not None:
+        if train_count is None or validation_count is None or test_count is None:
+            raise ValueError(
+                "Explicit split counts require train_count, validation_count, and test_count."
+            )
+        requested = train_count + validation_count + test_count
+        if requested > group_size:
+            raise ValueError(
+                f"Requested split requires {requested} videos but group has {group_size}."
+            )
+        return {
+            "train": train_count + (group_size - requested),
+            "validation": validation_count,
+            "test": test_count,
+        }
+
+    if group_size == 2:
+        return {"train": 1, "validation": 0, "test": 1}
+    if group_size < 3:
+        raise ValueError("Validation/test split requires 3 videos per category/label group.")
+
+    _ = train_ratio
+    validation = max(1, int(group_size * validation_ratio))
+    test = max(1, int(group_size * test_ratio))
+    train = group_size - validation - test
+    if train < 1:
+        raise ValueError(
+            f"Ratio split requires 3 videos per category/label group, got {group_size}."
+        )
+    return {"train": train, "validation": validation, "test": test}
+
+
+def assign_video_splits(
+    metadata_rows: list[dict[str, str]],
+    seed: int = 42,
+    train_count: int | None = None,
+    validation_count: int | None = None,
+    test_count: int | None = None,
+    train_ratio: float = 0.6,
+    validation_ratio: float = 0.2,
+    test_ratio: float = 0.2,
+) -> list[SplitRecord]:
     groups: dict[tuple[str, str], list[str]] = defaultdict(list)
     for row in metadata_rows:
         groups[(row["category"], row["public_label"])].append(row["source"])
@@ -29,14 +82,27 @@ def assign_video_splits(metadata_rows: list[dict[str, str]], seed: int = 42) -> 
     for (category, label), sources in sorted(groups.items()):
         shuffled = sorted(set(sources))
         rng.shuffle(shuffled)
-        split_order = ["train", "test"] if len(shuffled) == 2 else ["train", "validation", "test"]
+        counts = _split_counts_for_group(
+            group_size=len(shuffled),
+            train_count=train_count,
+            validation_count=validation_count,
+            test_count=test_count,
+            train_ratio=train_ratio,
+            validation_ratio=validation_ratio,
+            test_ratio=test_ratio,
+        )
+        split_order = (
+            ["train"] * counts["train"]
+            + ["validation"] * counts["validation"]
+            + ["test"] * counts["test"]
+        )
         for index, source in enumerate(shuffled):
             records.append(
                 SplitRecord(
                     source=source,
                     category=category,
                     label=label,
-                    split=split_order[index % len(split_order)],
+                    split=split_order[index],
                 )
             )
     return sorted(records, key=lambda record: record.source)
@@ -74,6 +140,14 @@ def read_split_csv(path: Path) -> list[SplitRecord]:
 
 def sources_for_split(records: list[SplitRecord], split: str) -> set[str]:
     return {record.source for record in records if record.split == split}
+
+
+def split_counts_by_group(records: list[SplitRecord]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for record in records:
+        key = f"{record.category}/{record.label}/{record.split}"
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def filter_manifest_by_sources(input_path: Path, sources: set[str], output_path: Path) -> Path:
