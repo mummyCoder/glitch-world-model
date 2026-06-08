@@ -72,7 +72,7 @@ All artifacts below are gitignored:
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | `frame_diff` | `0.0013542` | `0.468571` | `0.984000` | `0.634839` | `0.588631` | Highest test AUROC; validation threshold produced zero test true negatives |
 | `feature_distance` | `0.06626666` | `0.472868` | `0.976000` | `0.637076` | Highest test F1 by a small margin; fit on train normals only |
-| `mini_latent` | `0.01788175` | `0.469582` | `0.988000` | `0.636598` | Did not outperform either simple baseline on test AUROC; fit on train normals only |
+| `mini_latent` | `0.01788175` | `0.469582` | `0.988000` | `0.636598` | `0.522495` | Did not outperform either simple baseline on test AUROC; fit on train normals only |
 
 Test split:
 
