@@ -122,6 +122,18 @@ or outputs.
 The current local machine has no Kaggle CLI credential/token, so the Kaggle GPU job cannot be
 submitted from this environment yet.
 
+## Launch And Artifact Handoff
+
+- Kaggle launch guide: `kaggle/phase6e_video_autoencoder/README.md`
+- Copy-paste notebook cells: `kaggle/phase6e_video_autoencoder/phase6e_kaggle_cells.md`
+- Dataset preparation: `python scripts/prepare_phase6e_kaggle_dataset.py --dry-run`
+- Downloaded artifact validation:
+  `python scripts/ingest_phase6e_kaggle_artifacts.py --artifact-root <downloaded-seed-42>`
+- Run log template: `docs/research/30_phase6e_kaggle_run_log_template.md`
+
+The local upload-package dry-run measured `5,572` manifest clips, `179,199` files, approximately
+`4.734 GiB`, and zero unresolved clip directories. This is a packaging audit, not a GPU run.
+
 ## Acceptance Gate Before Any Result Claim
 
 - Kaggle dry-run reports zero cross-split groups and the expected partition counts.

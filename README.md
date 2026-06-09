@@ -30,6 +30,14 @@ Phase 6E adds the first gradient-trained neural baseline package: a compact Conv
 that fits train-normal clips and scores validation clips. The package is ready for a real Kaggle
 GPU run, but no neural checkpoint or result is claimed yet.
 
+### Phase 6E Kaggle GPU run
+
+Use the [Kaggle launch package](kaggle/phase6e_video_autoencoder/README.md) to prepare the private
+dataset, run the five notebook cells, download artifacts, and validate them locally. Record a
+real run with the [Phase 6E Kaggle run log template](docs/research/30_phase6e_kaggle_run_log_template.md).
+No Kaggle GPU result, neural AUROC/F1, or locked-test score may be claimed before real artifacts
+pass ingestion.
+
 Phase 0 verification commands:
 
 ```powershell
