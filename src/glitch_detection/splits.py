@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import csv
+import json
 import random
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from .manifest import read_labels, read_manifest, write_manifest
+from .pairs import infer_tempglitch_pair_id, pair_leakage_report
 
 SPLIT_FIELDS = ["source", "category", "label", "split"]
+GROUPED_SPLIT_FIELDS = [*SPLIT_FIELDS, "pair_id_heuristic"]
 
 
 @dataclass(frozen=True)
@@ -17,6 +21,15 @@ class SplitRecord:
     category: str
     label: str
     split: str
+
+
+@dataclass(frozen=True)
+class GroupedSplitRecord:
+    source: str
+    category: str
+    label: str
+    split: str
+    pair_id_heuristic: str
 
 
 def _split_counts_for_group(
@@ -106,6 +119,101 @@ def assign_video_splits(
                 )
             )
     return sorted(records, key=lambda record: record.source)
+
+
+def assign_grouped_video_splits(
+    metadata_rows: list[dict[str, str]],
+    seed: int = 42,
+    train_ratio: float = 0.6,
+    validation_ratio: float = 0.2,
+    test_ratio: float = 0.2,
+) -> list[GroupedSplitRecord]:
+    groups_by_category: dict[str, dict[str, list[dict[str, str]]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    for row in metadata_rows:
+        category = row["category"]
+        pair_id = f"{category}/{infer_tempglitch_pair_id(row['source'])}"
+        groups_by_category[category][pair_id].append(row)
+
+    rng = random.Random(seed)
+    records: list[GroupedSplitRecord] = []
+    for category, pair_groups in sorted(groups_by_category.items()):
+        group_ids = sorted(pair_groups)
+        rng.shuffle(group_ids)
+        counts = _split_counts_for_group(
+            group_size=len(group_ids),
+            train_count=None,
+            validation_count=None,
+            test_count=None,
+            train_ratio=train_ratio,
+            validation_ratio=validation_ratio,
+            test_ratio=test_ratio,
+        )
+        split_order = (
+            ["train"] * counts["train"]
+            + ["validation"] * counts["validation"]
+            + ["test"] * counts["test"]
+        )
+        for pair_id, split in zip(group_ids, split_order):
+            for row in pair_groups[pair_id]:
+                records.append(
+                    GroupedSplitRecord(
+                        source=row["source"],
+                        category=category,
+                        label=row["public_label"],
+                        split=split,
+                        pair_id_heuristic=pair_id,
+                    )
+                )
+    return sorted(records, key=lambda record: record.source)
+
+
+def validate_no_group_leakage(records: list[GroupedSplitRecord | dict[str, Any]]) -> dict[str, Any]:
+    report = pair_leakage_report(records)
+    return {
+        "grouping_mode": report["grouping_mode"],
+        "group_count": report["group_count"],
+        "suspected_pair_count": report["suspected_pair_count"],
+        "cross_split_group_count": report["cross_split_pair_count"],
+        "cross_split_groups": report["cross_split_pairs"],
+    }
+
+
+def write_grouped_split_csv(
+    path: Path,
+    records: list[GroupedSplitRecord],
+    seed: int,
+    grouping_mode: str = "pair_id_heuristic",
+) -> tuple[Path, Path]:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=GROUPED_SPLIT_FIELDS)
+        writer.writeheader()
+        for record in records:
+            writer.writerow(
+                {
+                    "source": record.source,
+                    "category": record.category,
+                    "label": record.label,
+                    "split": record.split,
+                    "pair_id_heuristic": record.pair_id_heuristic,
+                }
+            )
+    validation = validate_no_group_leakage(records)
+    metadata_path = path.with_suffix(".metadata.json")
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "seed": seed,
+                "grouping_mode": grouping_mode,
+                **validation,
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    return path, metadata_path
 
 
 def write_split_csv(path: Path, records: list[SplitRecord]) -> Path:

@@ -4,6 +4,11 @@
 
 The strongest current evidence is Phase 3B: a leakage-aware 100-video TempGlitch slice across all five public categories. It uses `5,572` clips and a repo-defined `60 / 20 / 20` train/validation/test video split.
 
+Phase 6C correction: "leakage-aware" here meant source/clip disjointness only. A conservative
+pair-suspect audit found `19 / 35` suspected pairs crossing the Phase 3B splits (`65` total
+grouping units). Therefore
+all Phase 3B and Phase 6B performance results remain exploratory.
+
 ## 2. Main result table
 
 | Scorer | Test precision | Test recall | Test F1 | Test AUROC |
@@ -84,7 +89,7 @@ failure-analysis path while prioritizing method improvement or better supervisio
 
 Allowed:
 
-- The repo provides a leakage-aware TempGlitch split protocol.
+- The repo provides a pair-suspect grouped TempGlitch split protocol for future runs.
 - The repo evaluates `frame_diff`, `feature_distance`, and `mini_latent` at clip and video level.
 - Thresholds are selected on validation and fixed on test.
 - Video-level aggregation better matches TempGlitch's public per-video labels.
@@ -98,3 +103,10 @@ Forbidden:
 - No global `mini_latent` superiority claim.
 - No VLM superiority claim.
 - No dataset creation claim.
+
+## 11. Phase 6C correction
+
+Phase 6C adds pair-suspect grouped splits, validation-only configuration selection, locked-test
+single-config evaluation, and pair-level bootstrap confidence intervals. The existing test slice
+was already exposed, so the current locked-test rehearsal is not a fresh final result. Repeated
+grouped refit/scoring remains `TBD`.

@@ -31,6 +31,8 @@
 - Current 30-video results are weak and preliminary; test AUROC ranges from approximately `0.522` to `0.589`.
 - Current 100-video results remain weak; best global test AUROC is `0.504053`.
 - Current video-level results remain weak; best global test AUROC is `0.54`.
+- Phase 6C found suspected pair leakage in the old split and test-driven aggregation comparison,
+  so all current TempGlitch performance numbers are exploratory.
 - The verified public TempGlitch artifact currently exposes binary per-video labels and one public `train` split, not a verified official held-out split or finer temporal-span file.
 
 ## 3. What is enough for a short paper

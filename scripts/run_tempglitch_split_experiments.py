@@ -22,12 +22,14 @@ from glitch_detection.manifest import ClipRecord, clip_has_glitch, read_labels, 
 from glitch_detection.preprocess import extract_video_frames, preprocess_frames
 from glitch_detection.splits import (
     SplitRecord,
+    assign_grouped_video_splits,
     assign_video_splits,
     filter_labels_by_sources,
     filter_manifest_by_sources,
     read_split_csv,
     sources_for_split,
     split_counts_by_group,
+    write_grouped_split_csv,
     write_split_csv,
 )
 from glitch_detection.tempglitch import (
@@ -227,6 +229,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--stride", type=int, default=16)
     parser.add_argument("--size", type=int, default=128)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--sample-mode",
+        choices=["sequential", "random-stratified"],
+        default="random-stratified",
+    )
+    parser.add_argument(
+        "--grouping-mode",
+        choices=["source", "pair_id_heuristic"],
+        default="pair_id_heuristic",
+    )
     parser.add_argument("--train-ratio", type=float, default=0.6)
     parser.add_argument("--validation-ratio", type=float, default=0.2)
     parser.add_argument("--test-ratio", type=float, default=0.2)
@@ -250,11 +262,20 @@ def main() -> None:
         raise SystemExit(
             "Leakage-aware validation calibration requires at least 3 videos per category/label."
         )
+    if args.grouping_mode == "pair_id_heuristic" and any(
+        count is not None for count in [args.train_count, args.validation_count, args.test_count]
+    ):
+        raise SystemExit(
+            "Explicit per-label split counts are incompatible with whole pair-suspect groups. "
+            "Use split ratios or --grouping-mode source."
+        )
 
     samples, metadata_path, _ = download_tempglitch_subset(
         output_dir=args.raw_dir,
         categories=args.categories,
         limit_per_group=args.limit_per_group,
+        sample_mode=args.sample_mode,
+        seed=args.seed,
     )
     manifest_path = preprocess_tempglitch_videos(
         raw_dir=args.raw_dir,
@@ -269,19 +290,32 @@ def main() -> None:
         manifest_path=manifest_path,
         output_path=args.processed_dir / "labels.csv",
     )
-    split_path = write_split_csv(
-        args.processed_dir / "split.csv",
-        assign_video_splits(
-            read_tempglitch_metadata(metadata_path),
+    if args.grouping_mode == "pair_id_heuristic":
+        split_path, _ = write_grouped_split_csv(
+            args.processed_dir / "split.csv",
+            assign_grouped_video_splits(
+                read_tempglitch_metadata(metadata_path),
+                seed=args.seed,
+                train_ratio=args.train_ratio,
+                validation_ratio=args.validation_ratio,
+                test_ratio=args.test_ratio,
+            ),
             seed=args.seed,
-            train_count=args.train_count,
-            validation_count=args.validation_count,
-            test_count=args.test_count,
-            train_ratio=args.train_ratio,
-            validation_ratio=args.validation_ratio,
-            test_ratio=args.test_ratio,
-        ),
-    )
+        )
+    else:
+        split_path = write_split_csv(
+            args.processed_dir / "split.csv",
+            assign_video_splits(
+                read_tempglitch_metadata(metadata_path),
+                seed=args.seed,
+                train_count=args.train_count,
+                validation_count=args.validation_count,
+                test_count=args.test_count,
+                train_ratio=args.train_ratio,
+                validation_ratio=args.validation_ratio,
+                test_ratio=args.test_ratio,
+            ),
+        )
     split_records = read_split_csv(split_path)
 
     split_manifest_paths: dict[str, Path] = {}
@@ -405,6 +439,8 @@ def main() -> None:
         "stride": args.stride,
         "size": args.size,
         "seed": args.seed,
+        "sample_mode": args.sample_mode,
+        "grouping_mode": args.grouping_mode,
         "label_limitation": "binary per-video labels; no temporal span claims",
         "results": results,
     }

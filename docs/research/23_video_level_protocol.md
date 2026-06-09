@@ -1,5 +1,11 @@
 # Phase 6B Video-Level Evaluation Protocol
 
+> Phase 6C correction: Phase 6B evaluated all scorer/aggregation candidates on test and the
+> result log highlighted best test AUROC. Those comparisons are exploratory, not a paper-safe
+> selection protocol. Phase 6C selects exactly one configuration using validation only and
+> applies it once to locked test. See
+> [25_phase6c_protocol_hardening_plan.md](25_phase6c_protocol_hardening_plan.md).
+
 ## 1. Motivation
 
 The public TempGlitch artifact exposes binary per-video labels. Phase 3B mapped each buggy
@@ -29,6 +35,8 @@ If a source has fewer than three clips, `topk_mean` uses all available clips.
 - A source with no positive interval is an implicit negative.
 - Sources remain in the Phase 3B repo-defined split.
 - No source or clip crosses train, validation, and test boundaries.
+- Phase 3B did not protect suspected Buggy/Normal pairs from crossing splits; Phase 6C replaces
+  this with pair-suspect grouped splitting for future runs.
 
 ## 4. Threshold policy
 

@@ -60,6 +60,9 @@ Use this checklist before any result is copied into a paper draft, slide deck, o
 ## Data leakage check
 
 - [ ] Split by video/source, not by overlapping clips, when evaluating real datasets.
+- [ ] For paired datasets, verify that official or clearly labeled heuristic pair groups do not
+  cross train, validation, and test.
+- [ ] Save a pair/group leakage report and split seed before scoring.
 - [ ] Fit normal-only baselines only on allowed train/validation data.
 - [ ] Choose thresholds on validation data before reporting test results.
 - [ ] Check that generated clips from the same original video do not cross split boundaries.
@@ -69,6 +72,10 @@ Use this checklist before any result is copied into a paper draft, slide deck, o
 - [ ] Record whether threshold was fixed, chosen by validation F1, or chosen by another rule.
 - [ ] Do not tune threshold on the final test set.
 - [ ] If current MVP best-F1 thresholding is used, label it as exploratory.
+- [ ] Select scorer and aggregation on validation only; do not rank test candidates to choose a
+  reported configuration.
+- [ ] Evaluate exactly one saved selected configuration on locked test.
+- [ ] Report source- or pair-level confidence intervals for the locked test result.
 
 ## Figure/table provenance
 

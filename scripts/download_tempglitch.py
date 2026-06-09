@@ -32,6 +32,13 @@ def build_parser() -> argparse.ArgumentParser:
         default=1,
         help="Number of videos to download per category and label group.",
     )
+    parser.add_argument(
+        "--sample-mode",
+        choices=["sequential", "random-stratified"],
+        default="sequential",
+        help="Sequential smoke sampling or seeded random sampling within category/label groups.",
+    )
+    parser.add_argument("--seed", type=int, default=42)
     return parser
 
 
@@ -41,6 +48,8 @@ def main() -> None:
         output_dir=args.output_dir,
         categories=args.categories,
         limit_per_group=args.limit_per_group,
+        sample_mode=args.sample_mode,
+        seed=args.seed,
     )
     print(f"Dataset page: {DATASET_PAGE_URL}")
     print(f"Videos:       {len(samples)}")

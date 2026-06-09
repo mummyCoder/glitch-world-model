@@ -1,5 +1,10 @@
 # Phase 3B Scaled TempGlitch Failure Analysis
 
+> Phase 6C correction: this run was source-disjoint but not pair-suspect-disjoint. A later
+> heuristic audit found `19 / 35` suspected pairs crossing splits (`65` total grouping units).
+> All performance numbers
+> in this document are exploratory.
+
 ## 1. Objective
 
 Phase 3B scales beyond the 30-video split slice to understand why the leakage-aware baselines remain weak. The analysis asks:
@@ -128,7 +133,8 @@ Rationale:
 
 Allowed:
 
-- The repo executes a leakage-aware TempGlitch experiment on a 100-video public slice.
+- The repo executes a source-disjoint exploratory TempGlitch experiment on a 100-video public
+  slice.
 - Thresholds are calibrated on validation and applied unchanged to test.
 - `feature_distance` has the best global AUROC in Phase 3B, but only near-random.
 - `mini_latent` does not show global superiority.

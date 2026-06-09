@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import csv
 import json
+import random
 import urllib.parse
 import urllib.request
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -53,6 +54,8 @@ class TempGlitchSample:
     video_url: str
     dataset_revision: str
     local_video_path: str
+    sample_mode: str = "sequential"
+    seed: int = 42
 
 
 def normalize_tempglitch_label(label: str) -> str:
@@ -174,6 +177,8 @@ def _write_metadata_csv(output_dir: Path, samples: list[TempGlitchSample]) -> Pa
                 "dataset_revision",
                 "video_url",
                 "local_video_path",
+                "sample_mode",
+                "seed",
             ],
         )
         writer.writeheader()
@@ -190,9 +195,41 @@ def _write_metadata_csv(output_dir: Path, samples: list[TempGlitchSample]) -> Pa
                     "dataset_revision": sample.dataset_revision,
                     "video_url": sample.video_url,
                     "local_video_path": sample.local_video_path,
+                    "sample_mode": sample.sample_mode,
+                    "seed": sample.seed,
                 }
             )
     return metadata_path
+
+
+def select_tempglitch_samples(
+    candidates: list[TempGlitchSample],
+    limit_per_group: int,
+    sample_mode: str = "sequential",
+    seed: int = 42,
+) -> list[TempGlitchSample]:
+    if sample_mode not in {"sequential", "random-stratified"}:
+        raise ValueError("sample_mode must be 'sequential' or 'random-stratified'.")
+    if limit_per_group < 1:
+        raise ValueError("limit_per_group must be at least 1.")
+
+    grouped: dict[tuple[str, str], list[TempGlitchSample]] = {}
+    for sample in candidates:
+        grouped.setdefault((sample.category, sample.public_label), []).append(sample)
+
+    rng = random.Random(seed)
+    selected: list[TempGlitchSample] = []
+    for key in sorted(grouped):
+        group = sorted(grouped[key], key=lambda sample: sample.row_idx)
+        if sample_mode == "random-stratified":
+            rng.shuffle(group)
+        selected.extend(
+            replace(sample, sample_mode=sample_mode, seed=seed)
+            for sample in group[:limit_per_group]
+        )
+    return sorted(
+        selected, key=lambda sample: (sample.category, sample.public_label, sample.row_idx)
+    )
 
 
 def download_tempglitch_subset(
@@ -200,6 +237,8 @@ def download_tempglitch_subset(
     categories: list[str] | None = None,
     limit_per_group: int = 1,
     page_size: int = 100,
+    sample_mode: str = "sequential",
+    seed: int = 42,
 ) -> tuple[list[TempGlitchSample], Path, Path]:
     selected_categories = categories or list(DEFAULT_CATEGORIES)
     category_set = set(selected_categories)
@@ -210,8 +249,7 @@ def download_tempglitch_subset(
         for category in selected_categories
         for public_label in [BUGGY_LABEL, NORMAL_LABEL]
     }
-    downloaded_counts: Counter[tuple[str, str]] = Counter()
-    samples: list[TempGlitchSample] = []
+    candidates: list[TempGlitchSample] = []
 
     offset = 0
     while True:
@@ -234,21 +272,12 @@ def download_tempglitch_subset(
                 label_names[row["label"]] if label_names is not None else parsed.public_label_raw
             )
             public_label = normalize_tempglitch_label(public_label_raw)
-            key = (parsed.category, public_label)
-            if downloaded_counts[key] >= required_counts[key]:
-                continue
-
             relative_video_path = _relative_video_path(
                 category=parsed.category,
                 public_label=public_label,
                 file_name=parsed.file_name,
             )
-            local_video_path = output_dir / relative_video_path
-            local_video_path.parent.mkdir(parents=True, exist_ok=True)
-            if not local_video_path.exists():
-                urllib.request.urlretrieve(encode_tempglitch_video_url(video_url), local_video_path)
-
-            samples.append(
+            candidates.append(
                 TempGlitchSample(
                     row_idx=row_idx,
                     category=parsed.category,
@@ -260,28 +289,38 @@ def download_tempglitch_subset(
                     video_url=video_url,
                     dataset_revision=parsed.dataset_revision,
                     local_video_path=str(relative_video_path).replace("\\", "/"),
+                    sample_mode=sample_mode,
+                    seed=seed,
                 )
             )
-            downloaded_counts[key] += 1
-
-            if all(downloaded_counts[key] >= required for key, required in required_counts.items()):
-                metadata_path = _write_metadata_csv(output_dir, samples)
-                readme_path = _write_tempglitch_source_readme(
-                    output_dir=output_dir,
-                    dataset_info=dataset_info,
-                    selected_categories=selected_categories,
-                    limit_per_group=limit_per_group,
-                )
-                return samples, metadata_path, readme_path
         offset += len(rows)
 
+    available_counts = Counter((sample.category, sample.public_label) for sample in candidates)
     missing = {
         f"{category}/{public_label}": required_counts[(category, public_label)]
-        - downloaded_counts[(category, public_label)]
+        - available_counts[(category, public_label)]
         for category, public_label in required_counts
-        if downloaded_counts[(category, public_label)] < required_counts[(category, public_label)]
+        if available_counts[(category, public_label)] < required_counts[(category, public_label)]
     }
-    raise RuntimeError(f"Could not satisfy TempGlitch subset request: {missing}")
+    if missing:
+        raise RuntimeError(f"Could not satisfy TempGlitch subset request: {missing}")
+
+    samples = select_tempglitch_samples(candidates, limit_per_group, sample_mode, seed)
+    for sample in samples:
+        local_video_path = output_dir / Path(sample.local_video_path)
+        local_video_path.parent.mkdir(parents=True, exist_ok=True)
+        if not local_video_path.exists():
+            urllib.request.urlretrieve(
+                encode_tempglitch_video_url(sample.video_url), local_video_path
+            )
+    metadata_path = _write_metadata_csv(output_dir, samples)
+    readme_path = _write_tempglitch_source_readme(
+        output_dir=output_dir,
+        dataset_info=dataset_info,
+        selected_categories=selected_categories,
+        limit_per_group=limit_per_group,
+    )
+    return samples, metadata_path, readme_path
 
 
 def read_tempglitch_metadata(metadata_path: Path) -> list[dict[str, str]]:

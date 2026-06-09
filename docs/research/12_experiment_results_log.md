@@ -25,6 +25,9 @@ python scripts\run_tempglitch_video_level_experiments.py --experiment-name tempg
 
 Actual selected results:
 
+Correction after Phase 6C audit: the table below selected aggregations by test AUROC and is
+therefore exploratory only. It must not be used as the final selection or claim table.
+
 | Scorer | Best aggregation by test AUROC | Test AUROC | Test F1 | TP / FP / FN / TN |
 | --- | --- | ---: | ---: | --- |
 | `frame_diff` | `p90` | `0.460000` | `0.666667` | `10 / 10 / 0 / 0` |
@@ -56,3 +59,15 @@ All generated artifacts are gitignored:
 - Dataset download: skipped because all required Phase 3B artifacts existed locally.
 - Real LeWorldModel integration: `TBD`; outside Phase 6B scope.
 - Temporal localization metrics: `TBD`; public temporal spans are not verified.
+
+## Phase 6C: Protocol Hardening
+
+Status: protocol implementation complete; fresh repeated grouped performance run `TBD`.
+
+- Old Phase 3B split: `19 / 35` suspected pairs crossed splits (`65` total grouping units).
+- Five new grouped-split dry-runs: zero cross-split suspected groups.
+- Validation-only selected configuration: `mini_latent / p95`, validation AUROC `0.58`.
+- Locked-test rehearsal: AUROC `0.52`, pair-bootstrap 95% CI `[0.2395, 0.7693]`.
+
+See [26_phase6c_protocol_results.md](26_phase6c_protocol_results.md). The locked-test number is
+still exploratory because the test slice was already exposed during Phase 6B.
