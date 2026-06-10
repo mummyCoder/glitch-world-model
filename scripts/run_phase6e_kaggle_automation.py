@@ -73,7 +73,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--kernel-slug",
         default="thanhhuynhdieu/phase6e-video-autoencoder",
     )
-    parser.add_argument("--branch", default="codex/phase6e-kaggle-video-autoencoder")
+    parser.add_argument("--branch", default="main")
     parser.add_argument("--accelerator", default="NvidiaTeslaT4")
     parser.add_argument("--recursive-mode", choices=["zip", "tar"], default="zip")
     return parser

@@ -7,7 +7,7 @@ results.
 
 - Kaggle notebook URL:
 - Kaggle private dataset slug:
-- Branch: `codex/phase6e-kaggle-video-autoencoder`
+- Branch: `main`
 - Commit SHA:
 - Run date:
 

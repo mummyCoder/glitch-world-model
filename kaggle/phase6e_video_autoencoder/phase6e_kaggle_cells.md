@@ -5,7 +5,7 @@ Replace every `TEN-DATASET` occurrence with the attached private Kaggle Dataset 
 ## Cell 1: Clone And Install
 
 ```bash
-!git clone --branch codex/phase6e-kaggle-video-autoencoder https://github.com/thanhdicode/glitch-world-model.git
+!git clone --branch main https://github.com/thanhdicode/glitch-world-model.git
 %cd glitch-world-model
 !pip install -e . --no-deps
 ```

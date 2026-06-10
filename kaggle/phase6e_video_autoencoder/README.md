@@ -55,6 +55,25 @@ kaggle datasets create -p outputs\kaggle_phase6e_dataset
 
 Do not add `--public`; the dataset must remain private.
 
+## Authentication For Automation
+
+Install the current official Kaggle CLI once:
+
+```powershell
+python -m pip install --upgrade kaggle
+```
+
+For unattended automation, keep credentials outside this repo. Preferred options:
+
+1. Save the token from Kaggle Settings -> API -> Generate New Token as the only content of
+   `$HOME\.kaggle\access_token`.
+2. For a legacy API key, save the downloaded JSON as `$HOME\.kaggle\kaggle.json`.
+3. Set `KAGGLE_API_TOKEN` in the parent process that launches the automation.
+
+Do not paste a token into chat, commit it, put it under this workspace, or include it directly in
+a shell command that may be saved in history. The automation verifies authentication with a
+read-only dataset-list request and blocks instead of opening an interactive OAuth flow.
+
 ## Automated State-Machine Option
 
 The orchestrator defaults to dry-run, saves resumable state under

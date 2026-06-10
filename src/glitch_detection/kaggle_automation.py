@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
-import importlib.util
+import importlib.metadata
 import json
 import math
 import os
@@ -818,7 +818,7 @@ class AutomationConfig:
     ingested_root: Path
     dataset_slug: str = "thanhhuynhdieu/glitch-world-model-phase6e"
     kernel_slug: str = "thanhhuynhdieu/phase6e-video-autoencoder"
-    branch: str = "codex/phase6e-kaggle-video-autoencoder"
+    branch: str = "main"
     accelerator: str = "NvidiaTeslaT4"
     recursive_mode: str = "zip"
     max_attempts: int = 3
@@ -854,7 +854,12 @@ class DefaultPhase6EHandlers:
         return self.logs_root / f"{step}.log"
 
     def _kaggle(self, *args: str) -> list[str]:
-        return [sys.executable, "-m", "kaggle", *args]
+        return [
+            sys.executable,
+            "-c",
+            "from kaggle.cli import main; main()",
+            *args,
+        ]
 
     def _run(self, step: str, command: list[str]) -> CommandResult:
         return self.command_runner.run(step, command, self._log(step))
@@ -900,6 +905,10 @@ repo = Path("/kaggle/working/glitch-world-model")
 subprocess.run(
     ["git", "clone", "--branch", "{self.config.branch}",
      "https://github.com/thanhdicode/glitch-world-model.git", str(repo)],
+    check=True,
+)
+subprocess.run(
+    [sys.executable, "-m", "pip", "install", "-e", str(repo), "--no-deps"],
     check=True,
 )
 common = [
@@ -964,11 +973,14 @@ subprocess.run(common, check=True)
         missing = [str(path) for path in required if not path.is_file()]
         if missing:
             raise FileNotFoundError(f"Missing Phase 6E prerequisite(s): {', '.join(missing)}")
-        if not self.config.dry_run and importlib.util.find_spec("kaggle") is None:
-            self._run(
-                "preflight",
-                [sys.executable, "-m", "pip", "install", "--upgrade", "kaggle"],
-            )
+        try:
+            importlib.metadata.version("kaggle")
+        except importlib.metadata.PackageNotFoundError:
+            if not self.config.dry_run:
+                self._run(
+                    "preflight",
+                    [sys.executable, "-m", "pip", "install", "--upgrade", "kaggle"],
+                )
         return {}
 
     def auth_check_or_request_login(self, _state: AutomationState) -> dict[str, Any]:
@@ -976,9 +988,12 @@ subprocess.run(common, check=True)
             return {}
         try:
             self._run("auth_check_or_request_login", self._kaggle("datasets", "list", "--mine"))
-        except AutomationCommandError:
-            self._run("auth_check_or_request_login", self._kaggle("auth", "login"))
-            self._run("auth_check_or_request_login", self._kaggle("datasets", "list", "--mine"))
+        except AutomationCommandError as exc:
+            raise AutomationBlockedError(
+                "Kaggle authentication required. Store the API token outside the repo at "
+                "~/.kaggle/access_token, use ~/.kaggle/kaggle.json for a legacy key, or set "
+                "KAGGLE_API_TOKEN before starting the live run."
+            ) from exc
         return {}
 
     def repo_and_security_scan(self, _state: AutomationState) -> dict[str, Any]:
@@ -1212,6 +1227,8 @@ subprocess.run(common, check=True)
                 str(artifact_root),
                 "--output-root",
                 str(self.config.ingested_root),
+                "--labels",
+                str(self.config.processed_root / "labels.csv"),
             ],
         )
         return {

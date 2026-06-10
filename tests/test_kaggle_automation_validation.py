@@ -1,5 +1,6 @@
 import csv
 import json
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -9,7 +10,9 @@ from glitch_detection.kaggle_automation import (
     ArtifactValidator,
     AutomationBlockedError,
     AutomationCommandError,
+    AutomationConfig,
     CommandRunner,
+    DefaultPhase6EHandlers,
     PackageValidator,
     SecurityGuard,
     is_transient_error,
@@ -216,3 +219,75 @@ def test_artifact_validator_finds_nested_kaggle_output_root(tmp_path: Path):
     summary = ArtifactValidator().validate(root, output, expected_validation_rows=1)
 
     assert summary["artifact_root"] == str(nested)
+
+
+def test_generated_kernel_installs_repo_and_uses_main_branch(tmp_path: Path):
+    config = AutomationConfig(
+        repo_root=tmp_path,
+        automation_root=tmp_path / "automation",
+        processed_root=tmp_path / "processed",
+        split_path=tmp_path / "split.csv",
+        dataset_package_root=tmp_path / "dataset",
+        kernel_package_root=tmp_path / "kernel",
+        downloaded_root=tmp_path / "downloaded",
+        ingested_root=tmp_path / "ingested",
+    )
+
+    script = DefaultPhase6EHandlers(config)._render_kernel_script()
+
+    assert '"git", "clone", "--branch", "main"' in script
+    assert '"pip", "install", "-e", str(repo), "--no-deps"' in script
+
+
+def test_kaggle_command_uses_console_entrypoint_instead_of_python_module(tmp_path: Path):
+    config = AutomationConfig(
+        repo_root=tmp_path,
+        automation_root=tmp_path / "automation",
+        processed_root=tmp_path / "processed",
+        split_path=tmp_path / "split.csv",
+        dataset_package_root=tmp_path / "dataset",
+        kernel_package_root=tmp_path / "kernel",
+        downloaded_root=tmp_path / "downloaded",
+        ingested_root=tmp_path / "ingested",
+    )
+
+    command = DefaultPhase6EHandlers(config)._kaggle("datasets", "list", "--mine")
+
+    assert command[:3] == [
+        sys.executable,
+        "-c",
+        "from kaggle.cli import main; main()",
+    ]
+    assert command[3:] == ["datasets", "list", "--mine"]
+
+
+def test_live_auth_failure_blocks_without_starting_interactive_login(tmp_path: Path):
+    commands: list[list[str]] = []
+
+    def executor(command: list[str]) -> SimpleNamespace:
+        commands.append(command)
+        raise AutomationCommandError("Authentication required")
+
+    config = AutomationConfig(
+        repo_root=tmp_path,
+        automation_root=tmp_path / "automation",
+        processed_root=tmp_path / "processed",
+        split_path=tmp_path / "split.csv",
+        dataset_package_root=tmp_path / "dataset",
+        kernel_package_root=tmp_path / "kernel",
+        downloaded_root=tmp_path / "downloaded",
+        ingested_root=tmp_path / "ingested",
+        dry_run=False,
+    )
+    runner = CommandRunner(
+        executor=executor,
+        security_guard=SecurityGuard(),
+        max_attempts=1,
+    )
+    handlers = DefaultPhase6EHandlers(config, command_runner=runner)
+
+    with pytest.raises(AutomationBlockedError, match="Kaggle authentication required"):
+        handlers.auth_check_or_request_login(SimpleNamespace())
+
+    assert len(commands) == 1
+    assert "auth" not in commands[0]
