@@ -218,3 +218,28 @@ def test_switching_from_dry_run_to_live_resets_before_real_dataset_prepare(tmp_p
     assert "dataset_prepare" in calls
     assert result.execution_mode == "live"
     assert result.current_step == "dataset_upload_approval"
+
+
+def test_refresh_migrates_uploaded_dataset_inventory_before_fingerprint_change(tmp_path: Path):
+    calls: list[str] = []
+    handlers = _handlers(calls)
+    handlers["refresh_dataset_fingerprint"] = lambda _state: {
+        "dataset_fingerprint": "new-dataset-fp"
+    }
+    (tmp_path / "dataset_fingerprint.json").write_text(
+        '{"dataset_package_inventory_sha256": "inventory-fp"}',
+        encoding="utf-8",
+    )
+    orchestrator = Phase6EKaggleOrchestrator(root=tmp_path, handlers=handlers, dry_run=False)
+    orchestrator.state_store.save(
+        AutomationState(
+            current_step="dataset_upload_approval",
+            dataset_fingerprint="old-dataset-fp",
+            dataset_uploaded_fingerprint="old-dataset-fp",
+        )
+    )
+
+    state = orchestrator.run()
+
+    assert state.dataset_fingerprint == "new-dataset-fp"
+    assert state.dataset_uploaded_inventory_sha256 == "inventory-fp"

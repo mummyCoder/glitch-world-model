@@ -325,11 +325,97 @@ def test_missing_dataset_forbidden_status_falls_back_to_create(tmp_path: Path):
     )
     handlers = DefaultPhase6EHandlers(config, command_runner=runner)
 
+    config.automation_root.mkdir(parents=True)
+    (config.automation_root / "dataset_fingerprint.json").write_text(
+        json.dumps({"dataset_package_inventory_sha256": "inventory-fp"}),
+        encoding="utf-8",
+    )
     updates = handlers.dataset_create_or_version(
-        SimpleNamespace(dataset_uploaded_fingerprint=None, dataset_fingerprint="dataset-fp")
+        SimpleNamespace(
+            dataset_uploaded_fingerprint=None,
+            dataset_uploaded_inventory_sha256=None,
+            dataset_fingerprint="dataset-fp",
+        )
     )
 
-    assert updates == {"dataset_uploaded_fingerprint": "dataset-fp"}
+    assert updates == {
+        "dataset_uploaded_fingerprint": "dataset-fp",
+        "dataset_uploaded_inventory_sha256": "inventory-fp",
+    }
     assert len(commands) == 2
     assert "status" in commands[0]
     assert "create" in commands[1]
+
+
+def test_kernel_package_generation_requires_ready_dataset(tmp_path: Path):
+    def executor(_command: list[str]) -> SimpleNamespace:
+        return SimpleNamespace(returncode=0, stdout="creating", stderr="")
+
+    config = AutomationConfig(
+        repo_root=tmp_path,
+        automation_root=tmp_path / "automation",
+        processed_root=tmp_path / "processed",
+        split_path=tmp_path / "split.csv",
+        dataset_package_root=tmp_path / "dataset",
+        kernel_package_root=tmp_path / "kernel",
+        downloaded_root=tmp_path / "downloaded",
+        ingested_root=tmp_path / "ingested",
+        dry_run=False,
+    )
+    runner = CommandRunner(
+        executor=executor,
+        security_guard=SecurityGuard(),
+        max_attempts=1,
+    )
+    handlers = DefaultPhase6EHandlers(config, command_runner=runner)
+
+    with pytest.raises(AutomationBlockedError, match="not ready"):
+        handlers.kernel_package_generate(SimpleNamespace(dataset_fingerprint="dataset-fp"))
+
+    assert not config.kernel_package_root.exists()
+
+
+def test_ready_unchanged_dataset_inventory_skips_reupload(tmp_path: Path):
+    commands: list[list[str]] = []
+
+    def executor(command: list[str]) -> SimpleNamespace:
+        commands.append(command)
+        return SimpleNamespace(returncode=0, stdout="ready", stderr="")
+
+    config = AutomationConfig(
+        repo_root=tmp_path,
+        automation_root=tmp_path / "automation",
+        processed_root=tmp_path / "processed",
+        split_path=tmp_path / "split.csv",
+        dataset_package_root=tmp_path / "dataset",
+        kernel_package_root=tmp_path / "kernel",
+        downloaded_root=tmp_path / "downloaded",
+        ingested_root=tmp_path / "ingested",
+        dry_run=False,
+    )
+    config.automation_root.mkdir(parents=True)
+    (config.automation_root / "dataset_fingerprint.json").write_text(
+        json.dumps({"dataset_package_inventory_sha256": "inventory-fp"}),
+        encoding="utf-8",
+    )
+    runner = CommandRunner(
+        executor=executor,
+        security_guard=SecurityGuard(),
+        max_attempts=1,
+    )
+    handlers = DefaultPhase6EHandlers(config, command_runner=runner)
+
+    updates = handlers.dataset_create_or_version(
+        SimpleNamespace(
+            dataset_uploaded_fingerprint="old-dataset-fp",
+            dataset_uploaded_inventory_sha256="inventory-fp",
+            dataset_fingerprint="new-dataset-fp",
+        )
+    )
+
+    assert updates == {
+        "dataset_uploaded_fingerprint": "new-dataset-fp",
+        "dataset_uploaded_inventory_sha256": "inventory-fp",
+    }
+    assert len(commands) == 1
+    assert "status" in commands[0]

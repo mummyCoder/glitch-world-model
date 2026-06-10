@@ -44,6 +44,7 @@ class AutomationState:
     artifact_paths: dict[str, str] = field(default_factory=dict)
     gpu_push_fingerprints: list[str] = field(default_factory=list)
     dataset_uploaded_fingerprint: str | None = None
+    dataset_uploaded_inventory_sha256: str | None = None
     execution_mode: str | None = None
 
 
@@ -736,6 +737,16 @@ class Phase6EKaggleOrchestrator:
                 state.requires_approval = reset_step
 
     def _refresh_fingerprints(self, state: AutomationState) -> None:
+        fingerprint_path = self.root / "dataset_fingerprint.json"
+        if (
+            state.dataset_uploaded_inventory_sha256 is None
+            and state.dataset_uploaded_fingerprint == state.dataset_fingerprint
+            and fingerprint_path.is_file()
+        ):
+            payload = json.loads(fingerprint_path.read_text(encoding="utf-8-sig"))
+            state.dataset_uploaded_inventory_sha256 = str(
+                payload["dataset_package_inventory_sha256"]
+            )
         for handler_name in ["refresh_dataset_fingerprint", "refresh_kernel_fingerprint"]:
             handler = self.handlers.get(handler_name)
             if handler is not None:
@@ -963,6 +974,14 @@ subprocess.run(common, check=True)
         _write_json_atomic(self.config.automation_root / "dataset_fingerprint.json", payload)
         return str(payload["combined_sha256"])
 
+    def _dataset_inventory_sha256(self) -> str:
+        payload = json.loads(
+            (self.config.automation_root / "dataset_fingerprint.json").read_text(
+                encoding="utf-8-sig"
+            )
+        )
+        return str(payload["dataset_package_inventory_sha256"])
+
     def preflight(self, _state: AutomationState) -> dict[str, Any]:
         required = [
             self.config.processed_root / "manifest.csv",
@@ -1068,11 +1087,20 @@ subprocess.run(common, check=True)
     def dataset_create_or_version(self, state: AutomationState) -> dict[str, Any]:
         if state.dataset_uploaded_fingerprint == state.dataset_fingerprint:
             return {}
+        inventory_sha256 = self._dataset_inventory_sha256()
         try:
-            self._run(
+            status = self._run(
                 "dataset_create_or_version",
                 self._kaggle("datasets", "status", self.config.dataset_slug),
             )
+            if (
+                status.stdout.strip().lower() == "ready"
+                and state.dataset_uploaded_inventory_sha256 == inventory_sha256
+            ):
+                return {
+                    "dataset_uploaded_fingerprint": state.dataset_fingerprint,
+                    "dataset_uploaded_inventory_sha256": inventory_sha256,
+                }
             command = self._kaggle(
                 "datasets",
                 "version",
@@ -1101,9 +1129,20 @@ subprocess.run(common, check=True)
                 self.config.recursive_mode,
             )
         self._run("dataset_create_or_version", command)
-        return {"dataset_uploaded_fingerprint": state.dataset_fingerprint}
+        return {
+            "dataset_uploaded_fingerprint": state.dataset_fingerprint,
+            "dataset_uploaded_inventory_sha256": inventory_sha256,
+        }
 
     def kernel_package_generate(self, state: AutomationState) -> dict[str, Any]:
+        result = self._run(
+            "kernel_package_generate",
+            self._kaggle("datasets", "status", self.config.dataset_slug),
+        )
+        if result.stdout.strip().lower() != "ready":
+            raise AutomationBlockedError(
+                f"Kaggle dataset is not ready for kernel attachment: {result.stdout.strip()}"
+            )
         root = self.config.kernel_package_root
         root.mkdir(parents=True, exist_ok=True)
         script_path = root / "phase6e_train_kernel.py"
@@ -1112,7 +1151,7 @@ subprocess.run(common, check=True)
             root / "kernel-metadata.json",
             {
                 "id": self.config.kernel_slug,
-                "title": "Phase 6E Video Autoencoder",
+                "title": self.config.kernel_slug.split("/", 1)[1],
                 "code_file": script_path.name,
                 "language": "python",
                 "kernel_type": "script",
