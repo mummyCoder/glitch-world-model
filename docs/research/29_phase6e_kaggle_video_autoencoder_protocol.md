@@ -119,8 +119,9 @@ Expected under `/kaggle/working/tempglitch_phase6e/seed_42/`:
 Download these artifacts for audit, but do not commit checkpoint, generated manifests, scores,
 or outputs.
 
-The current local machine has no Kaggle CLI credential/token, so the Kaggle GPU job cannot be
-submitted from this environment yet.
+A real Kaggle CUDA run completed on June 10, 2026. Its downloaded artifacts passed strict local
+validation; see [31_phase6e_kaggle_validation_results.md](31_phase6e_kaggle_validation_results.md).
+The locked test was neither materialized nor scored.
 
 ## Launch And Artifact Handoff
 
@@ -149,8 +150,9 @@ Verified dry-run behavior:
 - stops at `dataset_upload_approval`
 - does not upload a dataset or push a GPU kernel
 
-Live dataset upload and kernel push are not part of the current verified run. Each action
-requires a separate approved record bound to its current fingerprint.
+The June 10, 2026 live run used separate approved records bound to the private-dataset and kernel
+fingerprints. The automation completed kernel polling; downloaded artifacts were then validated
+and ingested locally.
 
 ## Acceptance Gate Before Any Result Claim
 

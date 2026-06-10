@@ -354,7 +354,16 @@ class CommandRunner:
 
     @staticmethod
     def _default_executor(command: list[str]) -> Any:
-        completed = subprocess.run(command, capture_output=True, text=True, check=False)
+        environment = dict(os.environ)
+        environment.setdefault("PYTHONUTF8", "1")
+        environment.setdefault("PYTHONIOENCODING", "utf-8")
+        completed = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=False,
+            env=environment,
+        )
         if completed.returncode:
             raise AutomationCommandError(
                 f"Command failed with exit code {completed.returncode}: {' '.join(command)}",
@@ -1253,6 +1262,11 @@ subprocess.run(common, check=True)
 
     def artifact_download(self, _state: AutomationState) -> dict[str, Any]:
         self.config.downloaded_root.mkdir(parents=True, exist_ok=True)
+        artifact_pattern = (
+            r"(^|/)(video_autoencoder\.pt|training_metadata\.json|"
+            r"validation_scores\.csv|phase6e_summary\.json|protocol_audit\.json|"
+            r"train_normal_manifest\.csv|validation_manifest\.csv)$"
+        )
         self._run(
             "artifact_download",
             self._kaggle(
@@ -1262,6 +1276,8 @@ subprocess.run(common, check=True)
                 "-p",
                 str(self.config.downloaded_root),
                 "-o",
+                "--file-pattern",
+                artifact_pattern,
             ),
         )
         return {"artifact_paths": {"downloaded_root": str(self.config.downloaded_root)}}

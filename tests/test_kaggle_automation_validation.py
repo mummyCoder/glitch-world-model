@@ -1,5 +1,6 @@
 import csv
 import json
+import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -95,6 +96,24 @@ def test_command_runner_blocks_gpu_quota_without_retry(tmp_path: Path):
     with pytest.raises(AutomationBlockedError, match="GPU quota exhausted"):
         runner.run("kernel_push_once", ["kaggle", "kernels", "push"], tmp_path / "run.log")
     assert len(calls) == 1
+
+
+def test_default_executor_enables_utf8_environment(monkeypatch: pytest.MonkeyPatch):
+    captured_environment: dict[str, str] = {}
+
+    def run(command: list[str], **kwargs: object) -> SimpleNamespace:
+        captured_environment.update(kwargs["env"])  # type: ignore[arg-type]
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.delenv("PYTHONUTF8", raising=False)
+    monkeypatch.delenv("PYTHONIOENCODING", raising=False)
+    monkeypatch.setattr("glitch_detection.kaggle_automation.subprocess.run", run)
+
+    CommandRunner._default_executor(["kaggle", "kernels", "output"])
+
+    assert captured_environment["PYTHONUTF8"] == "1"
+    assert captured_environment["PYTHONIOENCODING"] == "utf-8"
+    assert os.environ.get("PYTHONUTF8") is None
 
 
 def test_dataset_package_requires_private_other_license_and_recursive_mode(tmp_path: Path):
@@ -264,6 +283,38 @@ def test_kaggle_command_uses_console_entrypoint_instead_of_python_module(tmp_pat
         "from kaggle.cli import main; main()",
     ]
     assert command[3:] == ["datasets", "list", "--mine"]
+
+
+def test_artifact_download_filters_out_unrelated_kernel_outputs(tmp_path: Path):
+    commands: list[list[str]] = []
+
+    def executor(command: list[str]) -> SimpleNamespace:
+        commands.append(command)
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    config = AutomationConfig(
+        repo_root=tmp_path,
+        automation_root=tmp_path / "automation",
+        processed_root=tmp_path / "processed",
+        split_path=tmp_path / "split.csv",
+        dataset_package_root=tmp_path / "dataset",
+        kernel_package_root=tmp_path / "kernel",
+        downloaded_root=tmp_path / "downloaded",
+        ingested_root=tmp_path / "ingested",
+    )
+    handlers = DefaultPhase6EHandlers(
+        config,
+        command_runner=CommandRunner(executor=executor, max_attempts=1),
+    )
+
+    handlers.artifact_download(SimpleNamespace())
+
+    command = commands[0]
+    pattern = command[command.index("--file-pattern") + 1]
+    assert "video_autoencoder\\.pt" in pattern
+    assert "validation_scores\\.csv" in pattern
+    assert "train_normal_manifest\\.csv" in pattern
+    assert "glitch-world-model" not in pattern
 
 
 def test_live_auth_failure_blocks_without_starting_interactive_login(tmp_path: Path):

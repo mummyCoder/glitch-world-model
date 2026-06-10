@@ -20,6 +20,7 @@ Research planning docs:
 - [Phase 6D repeated grouped protocol](docs/research/27_phase6d_repeated_grouped_experiment_protocol.md)
 - [Phase 6D repeated grouped results](docs/research/28_phase6d_repeated_grouped_results.md)
 - [Phase 6E Kaggle video autoencoder protocol](docs/research/29_phase6e_kaggle_video_autoencoder_protocol.md)
+- [Phase 6E Kaggle validation results](docs/research/31_phase6e_kaggle_validation_results.md)
 
 Phase 6D completed five pair-suspect grouped refit/selection/locked-test runs with zero
 cross-split groups. The selected pipeline achieved locked-test AUROC `0.573 +/- 0.118`; this
@@ -27,16 +28,20 @@ supports the reproducible protocol, not latent-dynamics superiority. Results rem
 the sequential fixed subset and prior exposure of the same 100 videos.
 
 Phase 6E adds the first gradient-trained neural baseline package: a compact Conv3D autoencoder
-that fits train-normal clips and scores validation clips. The package is ready for a real Kaggle
-GPU run, but no neural checkpoint or result is claimed yet.
+that fits train-normal clips and scores validation clips. A real Kaggle CUDA run completed on
+June 10, 2026. Strict local ingestion verified `1,071` validation scores, zero non-finite scores,
+zero cross-split groups, and an untouched locked test. Validation AUROC was `0.403865`; this is
+an engineering result and does not support a performance-improvement claim.
 
 ### Phase 6E Kaggle GPU run
 
 Use the [Kaggle launch package](kaggle/phase6e_video_autoencoder/README.md) to prepare the private
 dataset, run the five notebook cells, download artifacts, and validate them locally. Record a
 real run with the [Phase 6E Kaggle run log template](docs/research/30_phase6e_kaggle_run_log_template.md).
-No Kaggle GPU result, neural AUROC/F1, or locked-test score may be claimed before real artifacts
-pass ingestion.
+The verified run is recorded in the
+[Phase 6E Kaggle validation results](docs/research/31_phase6e_kaggle_validation_results.md).
+No locked-test neural score may be claimed before a validation decision is saved and the
+locked-test release gate is explicitly opened.
 
 The resumable Kaggle automation defaults to dry-run and stops at fingerprint-bound approval
 gates:
@@ -45,8 +50,8 @@ gates:
 python scripts\run_phase6e_kaggle_automation.py --dry-run
 ```
 
-Do not pass `--live` during implementation verification. Live upload and kernel push require
-separate one-time approvals and remain outside the current verified run.
+Live upload and kernel push require separate one-time approvals. The June 10, 2026 run consumed
+fingerprint-bound approvals and completed artifact ingestion while keeping locked test untouched.
 
 Phase 0 verification commands:
 
