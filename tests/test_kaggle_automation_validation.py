@@ -237,6 +237,11 @@ def test_generated_kernel_installs_repo_and_uses_main_branch(tmp_path: Path):
 
     assert '"git", "clone", "--branch", "main"' in script
     assert '"pip", "install", "-e", str(repo), "--no-deps"' in script
+    assert 'input_root = Path("/kaggle/input")' in script
+    assert 'input_root.rglob("manifest.csv")' in script
+    assert '"--manifest", str(manifest)' in script
+    assert '"--split", str(split)' in script
+    assert '"--clips-root", str(clips_root)' in script
 
 
 def test_kaggle_command_uses_console_entrypoint_instead_of_python_module(tmp_path: Path):

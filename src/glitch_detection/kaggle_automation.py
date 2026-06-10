@@ -907,10 +907,35 @@ class DefaultPhase6EHandlers:
         }
 
     def _render_kernel_script(self) -> str:
-        dataset_name = self.config.dataset_slug.split("/", 1)[1]
         return f"""from pathlib import Path
 import subprocess
 import sys
+
+input_root = Path("/kaggle/input")
+manifest_candidates = [
+    path for path in input_root.rglob("manifest.csv")
+    if path.parent.name == "tempglitch_phase3b"
+]
+split_candidates = list(input_root.rglob("split.csv"))
+if len(manifest_candidates) != 1:
+    raise RuntimeError(
+        f"Expected exactly one TempGlitch manifest under {{input_root}}, "
+        f"found {{manifest_candidates}}"
+    )
+manifest = manifest_candidates[0]
+clips_root = manifest.parent
+preferred_split = clips_root.parent / "split.csv"
+if preferred_split.is_file():
+    split = preferred_split
+elif len(split_candidates) == 1:
+    split = split_candidates[0]
+else:
+    raise RuntimeError(
+        f"Expected exactly one Phase 6E split under {{input_root}}, found {{split_candidates}}"
+    )
+print("resolved_manifest:", manifest)
+print("resolved_split:", split)
+print("resolved_clips_root:", clips_root)
 
 repo = Path("/kaggle/working/glitch-world-model")
 subprocess.run(
@@ -925,9 +950,9 @@ subprocess.run(
 common = [
     sys.executable,
     str(repo / "scripts" / "run_kaggle_video_autoencoder.py"),
-    "--manifest", "/kaggle/input/{dataset_name}/tempglitch_phase3b/manifest.csv",
-    "--split", "/kaggle/input/{dataset_name}/split.csv",
-    "--clips-root", "/kaggle/input/{dataset_name}/tempglitch_phase3b",
+    "--manifest", str(manifest),
+    "--split", str(split),
+    "--clips-root", str(clips_root),
     "--output-root", "/kaggle/working/tempglitch_phase6e/seed_42",
     "--device", "cuda",
     "--seed", "42",
