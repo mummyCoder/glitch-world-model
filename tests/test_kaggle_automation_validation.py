@@ -291,3 +291,45 @@ def test_live_auth_failure_blocks_without_starting_interactive_login(tmp_path: P
 
     assert len(commands) == 1
     assert "auth" not in commands[0]
+
+
+def test_missing_dataset_forbidden_status_falls_back_to_create(tmp_path: Path):
+    commands: list[list[str]] = []
+
+    def executor(command: list[str]) -> SimpleNamespace:
+        commands.append(command)
+        if "status" in command:
+            raise AutomationCommandError(
+                "Command failed",
+                stderr="403 Client Error: Forbidden",
+            )
+        return SimpleNamespace(returncode=0, stdout="created", stderr="")
+
+    dataset_root = tmp_path / "dataset"
+    dataset_root.mkdir()
+    config = AutomationConfig(
+        repo_root=tmp_path,
+        automation_root=tmp_path / "automation",
+        processed_root=tmp_path / "processed",
+        split_path=tmp_path / "split.csv",
+        dataset_package_root=dataset_root,
+        kernel_package_root=tmp_path / "kernel",
+        downloaded_root=tmp_path / "downloaded",
+        ingested_root=tmp_path / "ingested",
+        dry_run=False,
+    )
+    runner = CommandRunner(
+        executor=executor,
+        security_guard=SecurityGuard(),
+        max_attempts=1,
+    )
+    handlers = DefaultPhase6EHandlers(config, command_runner=runner)
+
+    updates = handlers.dataset_create_or_version(
+        SimpleNamespace(dataset_uploaded_fingerprint=None, dataset_fingerprint="dataset-fp")
+    )
+
+    assert updates == {"dataset_uploaded_fingerprint": "dataset-fp"}
+    assert len(commands) == 2
+    assert "status" in commands[0]
+    assert "create" in commands[1]

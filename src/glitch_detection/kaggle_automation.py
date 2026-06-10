@@ -1084,7 +1084,13 @@ subprocess.run(common, check=True)
                 self.config.recursive_mode,
             )
         except AutomationCommandError as exc:
-            if "not found" not in str(exc).lower():
+            details = "\n".join([str(exc), exc.stdout, exc.stderr]).lower()
+            missing_dataset_markers = (
+                "not found",
+                "403 client error: forbidden",
+                "permission 'datasets.get' was denied",
+            )
+            if not any(marker in details for marker in missing_dataset_markers):
                 raise
             command = self._kaggle(
                 "datasets",
