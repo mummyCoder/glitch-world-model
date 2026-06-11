@@ -1,7 +1,7 @@
 # Gate 6 LeWM Normal-Only Training Plan
 
 Status date: 2026-06-11
-Status: `prepared_not_run`
+Status: `partial_after_v3_infrastructure_failure`
 
 Gate 5 passed strict CUDA/resume validation, so Gate 6 may open. The first Gate 6 action is a
 bounded TempGlitch normal-only pilot described by `configs/lewm_gate6_pilot.yaml`.
@@ -35,5 +35,7 @@ Gate 6 package is approved.
 - Successful encoding of one normal validation clip and one non-locked glitch validation clip.
 - Protocol audit proves normal-only fitting and false locked-test flags.
 
-No Gate 6 live package or approval is created until the normal-only source audit passes.
-
+The source audit passed with 20 train-normal episodes, 10 validation-normal episodes, and one
+non-locked validation-buggy encoding probe. The v3 live kernel failed before epoch 1 because its
+bundled Python package was not available on Kaggle's script path. The corrected v5 package embeds
+the source as a root-level ZIP and remains approval-pending; it has not been pushed.

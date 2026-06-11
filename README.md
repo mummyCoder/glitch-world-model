@@ -15,7 +15,7 @@ Current LeWM gate status:
 
 - Gates 1-5 passed at their documented engineering/smoke level.
 - Gate 5 passed strict Kaggle CUDA train/resume artifact validation.
-- Gate 6 normal-only pilot is prepared but has not run.
+- Gate 6 data passed audit and materialization; the first live pilot failed before training.
 - Gates 7-10 have not run.
 - Locked test remains closed.
 - No LeWM glitch-detection performance, superiority, or neural locked-test claim is supported.
@@ -132,9 +132,11 @@ latexmk -pdf -cd paper/main.tex
 ```
 
 Current status: Phase 6E is complete as a validation-only Conv3D engineering result. The separate
-LeWM path has passed Gates 1-5, including strict validation of a Kaggle CUDA train/resume smoke,
-but it has no gameplay-scale checkpoint or glitch metric. Gate 6 is open for a normal-only pilot;
-Gate 7 remains closed for LeWM-based performance claims. Do not touch locked test without a
+LeWM path has passed Gates 1-5, including strict validation of a Kaggle CUDA train/resume smoke.
+Gate 6 now has audited normal-only gameplay data, but its first live pilot failed before epoch 1
+on a package import error. A corrected package is approval-pending; no gameplay checkpoint or
+glitch metric exists. Gate 7 infrastructure exists but experiments remain closed. Do not touch
+locked test without a
 frozen validation decision, the documented release gate, and explicit authorization.
 
 The June 11, 2026 Gate 5 TempGlitch dataset upload is ready. The first approved kernel push
@@ -255,9 +257,9 @@ isolated LeWM environment and compatible checkpoint/data contracts:
 python -m glitch_detection.lewm_latent --manifest data/processed/my_experiment/manifest.csv --labels data/raw/my_labels.csv --output outputs/my_experiment_lewm_scores.csv --checkpoint path/to/lewm.ckpt
 ```
 
-The next evidence step is to restore the v5 source root, prepare a fingerprint-bound package and
-approval request, then complete one approved CUDA train/resume smoke with locally validated
-artifacts. Gameplay-scale scoring and validation metrics remain later gates.
+The next evidence step is to revalidate and approve the corrected Gate 6 v5 fingerprint, then
+submit exactly one CUDA pilot and strictly validate its downloaded artifacts. Gate 7 scoring and
+validation metrics remain blocked until that pilot produces a valid checkpoint.
 
 Audit the Phase 6E neural training partition without loading PyTorch or touching test:
 

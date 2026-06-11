@@ -32,4 +32,3 @@ ignored artifact set passed `scripts/validate_lewm_kaggle_artifacts.py`.
 This proves Kaggle CUDA training/resume engineering only. It does not establish gameplay-scale
 training, glitch detection, superiority, SIGReg benefit, temporal localization, or a locked-test
 result.
-

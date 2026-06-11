@@ -61,7 +61,7 @@ under 200 lines without hiding safety rules.
 | Current venue format | Springer LNICST, anonymized English PDF |
 | Regular paper length | 12-15 pages, excluding appendices, references, acknowledgements |
 | Main research method | LeWM/JEPA latent prediction surprise |
-| Current gate state | Gates 1-5 passed; Gate 6 prepared; Gates 7-10 not run |
+| Current gate state | Gates 1-5 passed; Gate 6 partial after a pre-training package failure; Gates 7-10 not run |
 | Locked test | Closed, unmaterialized, unscored for the LeWM path |
 
 LeWM integration engineering exists. The repo has strict checkpoint loading, finite
@@ -98,7 +98,9 @@ The repository has not verified:
 - LeWM superiority, SIGReg benefit, temporal localization, or state of the art;
 - a neural locked-test result.
 
-Gate 5 passed strict CUDA/resume artifact validation. The immediate task is Gate 6 preparation:
+Gate 5 passed strict CUDA/resume artifact validation. Gate 6 data audit/materialization passed,
+but the first live pilot failed before epoch 1 because the bundled package was not importable.
+The immediate task is the approval-pending corrected Gate 6 package:
 audit and materialize a normal-only, source/pair-disjoint pilot dataset before approving any
 gameplay training. Positive LeWM language remains limited to integration and CUDA engineering.
 

@@ -1,70 +1,54 @@
 # LAST_HANDOFF.md
 
-Last completed task: Gate 5 v6 strict pass and Gate 6 pilot preparation
-Commit: pending commit after final verification
+Last completed task: Gate 6 data/live attempt and Gate 7 offline infrastructure
+Commit: pending final commit
 Date: 2026-06-11
 
 ## What Changed
-- Recorded the v4 failure: the minimal runtime installed and CUDA initialized, but
-  `LanceDataset` attempted to write under read-only `/kaggle/input` before epoch 1.
-- Patched `render_validation_kernel` to copy train and validation Lance directories to
-  `/tmp/lewm_input` and pass only writable `/tmp` paths to both `train_lewm` calls.
-- Added focused assertions for the `/tmp` copy and for the absence of `/kaggle/input` paths in
-  `train_lewm` arguments.
-- Verified the Gate 6 model config at image size 112 and the complete nine-file Gate 5 artifact
-  contract.
-- Regenerated paper tables successfully and kept the claim registry consistent.
-- Reused the existing ignored Lance source embedded in the original TempGlitch package.
-- Prepared v5 fingerprint `b98afd071bdf7ccc2bd1e4734689fdf09f67d0d44d4651369c3e1b112baaab79`,
-  self-approved it, consumed it, and submitted exactly one v5 kernel.
-- V5 failed before training because the runtime mount did not expose the Lance directories at the
-  fixed dataset-slug path. Strict validation failed because all nine artifacts were absent.
-- Patched the generator to discover each named Lance directory recursively under `/kaggle/input`.
-- Prepared an offline v6 request with fingerprint
-  `358e2d77c60c3986be2e84f3c6044200ebfcc2a5fe8f68b0800273fc8c7b6910`.
-- Self-approved and consumed the exact v6 fingerprint, then submitted exactly one kernel push.
-- Downloaded the complete v6 artifact set after Kaggle version 1 completed.
-- Strict validation proved CUDA training, epoch 1 to 2 resume, matching hashes, finite losses and
-  diagnostics, and false locked-test flags.
-- Added the Gate 5 validation report and prepared a fail-closed Gate 6 normal-only pilot config
-  and protocol.
-- Updated Gate 5 reports, README, PLAYBOOK, roadmap, claim registry, and context generator.
+- Audited deterministic TempGlitch Gate 6 inputs: 20 train-normal, 10 validation-normal, and one
+  separate non-locked validation-buggy probe with zero selected source/pair overlap.
+- Materialized and inspected all three ignored Lance datasets through the upstream loader.
+- Added Gate 6 package generation, strict validation, checkpoint selection/reload evidence, and
+  normal/buggy encoding-proof contracts.
+- Uploaded the Gate 6 Kaggle dataset; remote status is `ready`.
+- Consumed one exact v3 kernel approval and pushed one kernel. It failed before epoch 1 because
+  `glitch_detection` was not importable from the Kaggle script mount.
+- Preserved the v3 log and strict-validator failure in ignored outputs; no retry was submitted.
+- Prepared unapproved, unpushed v5 with root-level source ZIP bundling. Kernel fingerprint:
+  `ae0aae43793adb94f8498f8d07c292426e69a0657ba545dbecbfda8682e03504`.
+- Hardened package inventories to include each file's content SHA-256.
+- Added Gate 7 LeWM L2-surprise scorer, CLI, manifest builder, evaluation wrapper, plotting, and
+  tests. No Gate 7 experiment ran because Gate 6 did not produce a checkpoint.
 
 ## Checks Passed
-- `python -m pytest tests/test_lewm_kaggle.py -v` (14 passed).
-- `python -m pytest -x -q` (200 passed).
-- `python -m ruff check .`.
-- `python -m ruff format --check .`.
-- `python scripts/validate_research_release.py --ci`.
-- `python scripts/check_claim_registry.py`.
-- `python scripts/doctor.py`.
-- `python scripts/validate_context_cache.py`.
-- `pre-commit run --all-files`.
+- Focused Gate 6 and Gate 7 tests passed.
+- Full repository verification is rerun after this handoff update.
 
 ## Safety Status
-- Exactly one approved v6 kernel push; no retry.
-- No dataset upload.
-- No local GPU training.
-- No locked-test access.
-- No data/output/checkpoint/credential commit intended.
+- Gate 6 remains partial; no training artifact or performance metric exists.
+- Gate 7 experimental scoring, baselines, and ablations were not run.
+- Locked test was not materialized or scored.
+- No output, data, Lance dataset, checkpoint, Kaggle artifact, or credential is intended for Git.
+- Gate 10 remains closed.
 
 ## Gate Status After Task
 - Gates 1-5 passed.
-- Gate 6 prepared but not run.
-- Gates 7-10 not run.
+- Gate 6 partial after a pre-training infrastructure failure.
+- Gate 7 infrastructure only; Gates 8-10 not run.
 - Locked test closed.
 
 ## Open Blockers
-- Gate 6 normal-only pilot source has not been audited/materialized.
-- No Gate 6 package or approval exists.
+- Gate 6 v5 requires a fresh exact approval and one live run.
+- Gate 7 requires a strictly validated Gate 6 checkpoint.
 
 ## Next Recommended Task
-- Audit and materialize the Gate 6 normal-only, source/pair-disjoint TempGlitch pilot source.
+- Revalidate and explicitly approve v5 fingerprint, push exactly one kernel, download artifacts,
+  and run `scripts/validate_lewm_gate6_artifacts.py`.
+- Run Gate 7 validation scoring only if that strict validator passes.
 
 ## Files Likely Relevant Next
-- `docs/context/NEXT_ACTION.md`
-- `docs/research/41_gate5_current_state.md`
-- `docs/research/42_gate5_kernel_approval_status.md`
-- `docs/research/43_gate5_kaggle_cuda_smoke_results.md`
-- `src/glitch_detection/lewm_kaggle.py`
-- `scripts/validate_lewm_kaggle_artifacts.py`
+- `docs/research/46_gate6_lewm_training_pilot_results.md`
+- `docs/research/47_gate7_lewm_surprise_scoring_results.md`
+- `src/glitch_detection/lewm_gate6.py`
+- `src/glitch_detection/lewm_surprise.py`
+- `scripts/validate_lewm_gate6_artifacts.py`

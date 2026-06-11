@@ -1,7 +1,7 @@
 # REPO_MAP.md
 
-Generated: 2026-06-11T06:57:15+00:00
-Commit: `67ea096cedefdbd79acf725d00a472cf0149568c`
+Generated: 2026-06-11T16:00:34+00:00
+Commit: `a741dce5d334905830e6f385670d76429d7d5648`
 Generator: `scripts/update_context_cache.py`
 
 ## Top-Level Map
@@ -31,7 +31,7 @@ Generator: `scripts/update_context_cache.py`
 |---|---|---|
 | `scripts/build_lewm_lance_dataset.py` | _read_split, build_lewm_lance_dataset, build_parser, main | Python module. |
 | `scripts/build_lewm_split.py` | _read_rows, _read_exposed, build_parser, main | Python module. |
-| `scripts/build_tempglitch_lewm_lance.py` | _rows_by_source, build_parser, main | Python module. |
+| `scripts/build_tempglitch_lewm_lance.py` | build_parser, main | Python module. |
 | `scripts/build_wob_lewm_lance.py` | build_parser, main | Python module. |
 | `scripts/check_claim_registry.py` | Claim, parse_claim_registry, validate_claims, build_parser, main | Python module. |
 | `scripts/convert_tempglitch_labels.py` | build_parser, main | Python module. |
@@ -85,7 +85,7 @@ Generator: `scripts/update_context_cache.py`
 | `src/glitch_detection/lewm_kaggle.py` | LeWMKaggleConfig, validate_kaggle_slug, quota_allocation, render_validation_kernel, prepare_lewm_kaggle_package, _read_json, _sha256_json, validate_lewm_kaggle_package, _kernel_fingerprint_payload, _write_request, validate_kernel_push_preflight, request_package_approvals | Python module. |
 | `src/glitch_detection/lewm_latent.py` | LeWMUnavailableError, resolve_checkpoint, resolve_config, _require_torch, _list_frames, _load_pixels, score_record, score_manifest, build_parser, main | Python module. |
 | `src/glitch_detection/lewm_protocol.py` | LeWMSplitRecord, _hash_fraction, assign_hashed_group_splits, audit_lewm_splits, write_lewm_split | Python module. |
-| `src/glitch_detection/lewm_training.py` | LeWMTrainingError, LeWMTrainConfig, _require_runtime, _config_hash, build_model_config, _preprocess_pixels, _sigreg, _dataset, _run_epoch, train_lewm | Python module. |
+| `src/glitch_detection/lewm_training.py` | LeWMTrainingError, LeWMTrainConfig, _require_runtime, _config_hash, build_model_config, _preprocess_pixels, _sigreg, _dataset, _run_epoch, train_lewm, score_lance_probe | Python module. |
 | `src/glitch_detection/manifest.py` | ClipRecord, LabelInterval, write_manifest, read_manifest, read_labels, clip_has_glitch | Python module. |
 | `src/glitch_detection/mini_latent.py` | MiniLatentModel, list_clip_frames, load_frame_vector, load_clip_matrix, fit_pca_encoder, encode_frames, fit_transition, transition_error, fit_model, score_records_with_model, score_records, score_manifest | Python module. |
 | `src/glitch_detection/model_selection.py` | select_validation_config, evaluate_locked_test | Python module. |
@@ -253,6 +253,9 @@ Generator: `scripts/update_context_cache.py`
 | `docs/research/42_experiment_tracking_plan.md` | 42 experiment tracking plan |
 | `docs/research/42_gate5_kernel_approval_status.md` | 42 gate5 kernel approval status |
 | `docs/research/43_gate5_kaggle_cuda_smoke_results.md` | 43 gate5 kaggle cuda smoke results |
+| `docs/research/44_gate5_cuda_smoke_validation.md` | 44 gate5 cuda smoke validation |
+| `docs/research/45_gate6_lewm_normal_training_plan.md` | 45 gate6 lewm normal training plan |
+| `docs/research/46_gate6_lewm_training_pilot_results.md` | 46 gate6 lewm training pilot results |
 | `docs/research/adr/ADR-001-topic-scope.md` | ADR-001-topic-scope |
 | `docs/research/adr/ADR-002-dataset-strategy.md` | ADR-002-dataset-strategy |
 | `docs/research/adr/ADR-003-lewm-integration-strategy.md` | ADR-003-lewm-integration-strategy |
@@ -279,6 +282,3 @@ Generator: `scripts/update_context_cache.py`
 | `docs/workflows/experiment_tracking.md` | experiment tracking |
 | `docs/workflows/kaggle_gpu_protocol.md` | kaggle gpu protocol |
 | `docs/workflows/kaggle_live_approval.md` | kaggle live approval |
-| `docs/workflows/lewm_integration_protocol.md` | lewm integration protocol |
-| `docs/workflows/locked_test_release.md` | locked test release |
-| `docs/workflows/new_research_project_bootstrap.md` | new research project bootstrap |

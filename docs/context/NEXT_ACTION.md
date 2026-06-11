@@ -1,10 +1,10 @@
 # NEXT_ACTION.md
 
-Last updated: 2026-06-11T06:57:15+00:00
-Commit: `67ea096cedefdbd79acf725d00a472cf0149568c`
+Last updated: 2026-06-11T16:00:34+00:00
+Commit: `a741dce5d334905830e6f385670d76429d7d5648`
 
 ## Current Priority
-Prepare the Gate 6 normal-only LeWM training pilot.
+Approve and run the corrected Gate 6 v5 normal-only LeWM pilot.
 
 ## Success Criteria
 - Frozen TempGlitch source/pair-disjoint split audit.
@@ -15,5 +15,6 @@ Prepare the Gate 6 normal-only LeWM training pilot.
 - Checkpoint reload plus normal and non-locked glitch validation encoding.
 
 ## Current Known Blocker
-Gate 5 passed on v6. Gate 6 is blocked only on proving the pilot data contract; do not reuse the
-Gate 5 smoke package as gameplay-scale evidence.
+Gate 6 data is ready, but v3 failed before training on an import-path error. V5 fixes the source
+bundle and is approval-pending. Do not push it without revalidating the exact fingerprint, and do
+not run Gate 7 experiments before Gate 6 passes.

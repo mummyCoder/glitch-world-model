@@ -246,6 +246,14 @@ def train_lewm(
     start_epoch = 0
     loss_history_path = output_root / "loss_history.json"
     loss_history: list[dict[str, Any]] = []
+    best_weights_path = output_root / "best_weights.pt"
+    best_metadata_path = output_root / "best_checkpoint_metadata.json"
+    best_validation_loss = float("inf")
+    best_epoch = 0
+    if best_metadata_path.is_file():
+        best_metadata = json.loads(best_metadata_path.read_text(encoding="utf-8"))
+        best_validation_loss = float(best_metadata["validation_loss"])
+        best_epoch = int(best_metadata["epoch"])
     if resume:
         if not checkpoint_path.is_file():
             raise LeWMTrainingError("Resume requested but checkpoint_weights.pt is missing.")
@@ -289,6 +297,25 @@ def train_lewm(
         loss_history.append(
             {"epoch": epoch + 1, "train": train_losses, "validation": validation_losses}
         )
+        mean_validation_loss = float(
+            np.mean([row["loss"] for row in validation_losses], dtype=np.float64)
+        )
+        if mean_validation_loss <= best_validation_loss:
+            best_validation_loss = mean_validation_loss
+            best_epoch = epoch + 1
+            torch.save(model.state_dict(), best_weights_path)
+            best_metadata_path.write_text(
+                json.dumps(
+                    {
+                        "epoch": best_epoch,
+                        "validation_loss": best_validation_loss,
+                        "selection_split": "validation_normal",
+                    },
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
         torch.save(
             {
                 "epoch": epoch + 1,
@@ -335,4 +362,61 @@ def train_lewm(
     (output_root / "checkpoint.sha256").write_text(
         metadata["checkpoint_sha256"] + "\n", encoding="utf-8"
     )
+    reloaded_model = instantiate(model_config)
+    reloaded_model.load_state_dict(
+        torch.load(best_weights_path, map_location="cpu", weights_only=True),
+        strict=True,
+    )
+    reload_metadata = {
+        "checkpoint_reload_verified": True,
+        "best_epoch": best_epoch,
+        "best_validation_loss": best_validation_loss,
+        "best_weights_sha256": sha256_file(best_weights_path),
+        "strict": True,
+    }
+    (output_root / "checkpoint_reload.json").write_text(
+        json.dumps(reload_metadata, indent=2) + "\n", encoding="utf-8"
+    )
     return metadata
+
+
+def score_lance_probe(
+    dataset_path: Path,
+    weights_path: Path,
+    config_path: Path,
+    *,
+    action_mode: str = "zero_action",
+    device: str = "cpu",
+) -> dict[str, Any]:
+    from .lewm_adapter import ActionMode, LeWMAdapter, LeWMCheckpointSpec
+
+    torch, _ = _require_runtime()
+    adapter = LeWMAdapter(
+        LeWMCheckpointSpec(
+            weights_path=weights_path,
+            config_path=config_path,
+            action_mode=ActionMode(action_mode),
+            device=device,
+        )
+    ).load()
+    config = LeWMTrainConfig(
+        image_size=adapter.image_size,
+        history_size=adapter.history_size,
+        batch_size=1,
+    )
+    dataset = _dataset(dataset_path, config)
+    loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
+    batch = next(iter(loader))
+    pixels = _preprocess_pixels(torch, batch["pixels"], adapter.image_size, torch.device(device))
+    surprise = adapter.surprise(pixels)
+    if not torch.isfinite(surprise).all():
+        raise LeWMTrainingError(f"Non-finite LeWM probe score for {dataset_path}.")
+    return {
+        "dataset_path": str(dataset_path),
+        "window_count": len(dataset),
+        "pixels_shape": list(pixels.shape),
+        "surprise_shape": list(surprise.shape),
+        "surprise_mean": float(surprise.mean().item()),
+        "finite": True,
+        "action_mode": action_mode,
+    }

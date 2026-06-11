@@ -122,7 +122,13 @@ class LeWMAdapter:
             return actions.to(self.spec.device)
         return torch.zeros((batch, steps, self.action_dim), device=self.spec.device)
 
-    def surprise(self, pixels: Any, actions: Any | None = None) -> Any:
+    def surprise(
+        self,
+        pixels: Any,
+        actions: Any | None = None,
+        *,
+        distance: str = "mse",
+    ) -> Any:
         torch, _ = self._require_runtime()
         if self.model is None:
             raise LeWMIntegrationError("Load LeWM before inference.")
@@ -140,7 +146,12 @@ class LeWMAdapter:
             context_actions = output["act_emb"][:, : self.history_size]
             target = output["emb"][:, 1 : self.history_size + 1]
             predicted = self.model.predict(context, context_actions)
-            return (predicted - target).pow(2).mean(dim=-1)
+            error = predicted - target
+            if distance == "mse":
+                return error.pow(2).mean(dim=-1)
+            if distance == "l2":
+                return error.pow(2).sum(dim=-1).sqrt()
+            raise LeWMIntegrationError(f"Unsupported LeWM surprise distance: {distance}")
 
     def audit(self) -> dict[str, Any]:
         if self.model is None or self.config is None:

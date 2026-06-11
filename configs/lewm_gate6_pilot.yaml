@@ -32,4 +32,3 @@ acceptance:
   require_normal_validation_encoding: true
   require_nonlocked_glitch_validation_encoding: true
   allow_detection_performance_claim: false
-

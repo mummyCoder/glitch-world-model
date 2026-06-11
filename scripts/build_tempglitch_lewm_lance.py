@@ -1,16 +1,11 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 from pathlib import Path
 
+from glitch_detection.gate6_data import read_rows_by_source, select_tempglitch_rows
 from glitch_detection.lewm_data import episode_from_video, write_lance_dataset
-
-
-def _rows_by_source(path: Path) -> dict[str, dict[str, str]]:
-    with path.open("r", newline="", encoding="utf-8-sig") as handle:
-        return {row["source"]: row for row in csv.DictReader(handle)}
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -24,24 +19,26 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--image-size", type=int, default=112)
     parser.add_argument("--max-episodes", type=int, default=None)
     parser.add_argument("--max-steps", type=int, default=None)
+    parser.add_argument("--label-filter", choices=["Normal", "Buggy"], default=None)
+    parser.add_argument("--seed", type=int, default=42)
     return parser
 
 
 def main() -> None:
     args = build_parser().parse_args()
-    metadata = _rows_by_source(args.metadata)
-    split = _rows_by_source(args.split)
-    rows = []
-    for source in metadata:
-        row = split.get(source)
-        if row is None:
-            raise ValueError(f"Missing frozen TempGlitch split row for source {source!r}.")
-        if row["split"] == args.partition and row["materialize"].lower() == "true":
-            rows.append(row)
-    if args.partition == "train":
-        rows = [row for row in rows if row["label"] == "Normal"]
-    if args.max_episodes is not None:
-        rows = rows[: args.max_episodes]
+    metadata = read_rows_by_source(args.metadata)
+    split = read_rows_by_source(args.split)
+    label_filter = args.label_filter
+    if label_filter is None and args.partition == "train":
+        label_filter = "Normal"
+    rows = select_tempglitch_rows(
+        metadata,
+        split,
+        partition=args.partition,
+        label_filter=label_filter,
+        max_episodes=args.max_episodes,
+        seed=args.seed,
+    )
     episodes = []
     for row in rows:
         metadata_row = metadata.get(row["source"])
@@ -72,6 +69,8 @@ def main() -> None:
                 "dataset": "tempglitch",
                 "partition": args.partition,
                 "episode_count": len(episodes),
+                "label_filter": label_filter,
+                "seed": args.seed,
                 "action_mode": "zero_action",
                 "action_dim": 1,
                 "output": str(args.output),

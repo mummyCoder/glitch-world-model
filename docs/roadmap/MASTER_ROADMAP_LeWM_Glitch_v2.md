@@ -453,10 +453,10 @@ The project may call the method **LeWM-based** only when all are true:
 
 ## 12. Immediate Next Gate
 
-Gate 5 passed on v6. Gate 6 is now open for preparation and requires a verified normal-only,
-source/pair-disjoint pilot source before any package approval or live training. Gate 7 remains the
-first point at which gameplay-scale LeWM surprise scores and validation metrics can support a
-LeWM method claim.
+Gate 5 passed on v6. Gate 6 data audit/materialization passed, but its first live pilot failed
+before epoch 1 on a package import error. A corrected package is prepared offline and awaits a
+fresh approval/run. Gate 7 infrastructure exists, but gameplay surprise scores and metrics remain
+blocked until Gate 6 strictly passes.
 
 ## 13. Codex Master Prompt To Implement Phase 1-4
 

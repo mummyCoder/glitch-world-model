@@ -37,6 +37,17 @@ def test_quota_allocation_matches_locked_plan():
     }
 
 
+def test_inventory_fingerprint_changes_when_same_size_content_changes(tmp_path: Path):
+    from glitch_detection.kaggle_automation import FingerprintBuilder
+
+    path = tmp_path / "artifact.bin"
+    path.write_bytes(b"first")
+    first = FingerprintBuilder.inventory_sha256(tmp_path)
+    path.write_bytes(b"other")
+
+    assert FingerprintBuilder.inventory_sha256(tmp_path) != first
+
+
 def test_kaggle_package_dry_run_is_validation_only(tmp_path: Path):
     source = tmp_path / "source"
     source.mkdir()

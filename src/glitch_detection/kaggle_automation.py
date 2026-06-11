@@ -143,7 +143,8 @@ class FingerprintBuilder:
         digest = hashlib.sha256()
         for path in sorted(item for item in root.rglob("*") if item.is_file()):
             relative = path.relative_to(root).as_posix()
-            digest.update(f"{relative}\0{path.stat().st_size}\n".encode())
+            content_sha256 = FingerprintBuilder.sha256_file(path)
+            digest.update(f"{relative}\0{path.stat().st_size}\0{content_sha256}\n".encode())
         return digest.hexdigest()
 
     def build(
