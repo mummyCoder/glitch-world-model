@@ -1,7 +1,7 @@
 # NEXT_ACTION.md
 
-Last updated: 2026-06-11T05:12:17+00:00
-Commit: `54d35e80d23fabff8dd8d02a5c2bac0fd6d29533`
+Last updated: 2026-06-11T06:17:37+00:00
+Commit: `0bec339afc854fa7f518c46c63867e691c16a362`
 
 ## Current Priority
 Complete or unblock Gate 5 Kaggle CUDA smoke/resume artifact.
@@ -27,10 +27,8 @@ Execute exactly the approved kernel push/smoke, download artifacts, validate, up
 playbook/cache, commit and push.
 
 ## Current Known Blocker
-The 2026-06-11 TempGlitch path consumed three kernel approvals: the first push returned HTTP 409
-before execution because the package reused the dataset slug, the second v2 push failed before
-training because the generated script looked for `/kaggle/src/lewm-runtime.txt`, and the third v3
-push failed before training because full LeWM environment dependency installation failed on
-`box2d-py`. A v4 package/request exists with kernel slug
-`huynhdieuthanh/lewm-gate5-cuda-smoke-v4`; obtain fresh approval for fingerprint
-`e3a3ad6bcfd73c99ee295003041db7651e375a1d970b11bd3665a7393c87382a` before any live push.
+The 2026-06-11 TempGlitch path has four failed submissions: v1 returned HTTP 409, v2 failed on a
+runtime-file path, v3 failed installing `box2d-py`, and v4 reached the Lance loader but failed
+because `/kaggle/input` is read-only. The v5 generator copies both Lance datasets to writable
+`/tmp/lewm_input`, but `outputs/gate5/source` is absent. Restore that source before preparing a
+new fingerprint-bound request. No live push is authorized.

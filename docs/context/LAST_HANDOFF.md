@@ -1,30 +1,26 @@
 # LAST_HANDOFF.md
 
-Last completed task: Gate 5 approved v3 Kaggle push failure diagnosis and v4 request
+Last completed task: Gate 5 v5 kernel fix and blocked package preparation
 Commit: pending commit after final verification
 Date: 2026-06-11
 
 ## What Changed
-- Created the fresh v3 approval for fingerprint
-  `47107246ea537fce9c435717301b12c0408f296b34567602f6408b77a5d856c9`.
-- Verified `approval_status: valid`, confirmed the dataset was `ready`, consumed the approval,
-  and performed exactly one Kaggle kernel push.
-- Kaggle accepted `huynhdieuthanh/lewm-gate5-cuda-smoke-v3` version 1, then the run reached
-  `KernelWorkerStatus.ERROR`.
-- Downloaded the error log to ignored output storage; dependency installation failed before
-  training because full `stable-worldmodel[env,train]` pulled `box2d-py`, which failed to build
-  on Kaggle Python 3.12.
-- Updated the generated kernel to clone the repo into `/tmp/glitch-world-model` and install only
-  minimal LeWM smoke dependencies.
-- Prepared a new ignored v4 package/request with kernel slug
-  `huynhdieuthanh/lewm-gate5-cuda-smoke-v4`.
-- New v4 kernel approval fingerprint:
-  `e3a3ad6bcfd73c99ee295003041db7651e375a1d970b11bd3665a7393c87382a`.
-- Updated Gate 5 reports, workflow docs, README, PLAYBOOK, roadmap, claim registry, tests, and
-  context cache.
+- Recorded the v4 failure: the minimal runtime installed and CUDA initialized, but
+  `LanceDataset` attempted to write under read-only `/kaggle/input` before epoch 1.
+- Patched `render_validation_kernel` to copy train and validation Lance directories to
+  `/tmp/lewm_input` and pass only writable `/tmp` paths to both `train_lewm` calls.
+- Added focused assertions for the `/tmp` copy and for the absence of `/kaggle/input` paths in
+  `train_lewm` arguments.
+- Verified the Gate 6 model config at image size 112 and the complete nine-file Gate 5 artifact
+  contract.
+- Regenerated paper tables successfully and kept the claim registry consistent.
+- V5 package preparation is `BLOCKED_ON_DATASET` because the required local source root is absent.
+- V5 kernel fingerprint and approval request remain `PENDING`; no v5 live action was performed.
+- Updated Gate 5 reports, README, PLAYBOOK, roadmap, claim registry, and context generator.
 
 ## Checks Passed
-- `python -m pytest` (200 passed).
+- `python -m pytest tests/test_lewm_kaggle.py -v` (14 passed).
+- `python -m pytest -x -q` (200 passed).
 - `python -m ruff check .`.
 - `python -m ruff format --check .`.
 - `python scripts/validate_research_release.py --ci`.
@@ -32,14 +28,11 @@ Date: 2026-06-11
 - `python scripts/doctor.py`.
 - `python scripts/validate_context_cache.py`.
 - `pre-commit run --all-files`.
-- Strict Gate 5 validator was intentionally run on the v3 error-output directory and failed
-  because required artifacts were missing; Gate 5 remains partial.
 
 ## Safety Status
-- Exactly one approved v3 Kaggle kernel push was performed.
-- No kernel push retry.
+- No Kaggle live action in the v5 fix task.
 - No dataset upload.
-- No verified model training; the run failed before training.
+- No local GPU training.
 - No locked-test access.
 - No data/output/checkpoint/credential commit intended.
 
@@ -51,12 +44,12 @@ Date: 2026-06-11
 
 ## Open Blockers
 - Gate 5 Kaggle CUDA/resume artifact set is still missing.
-- Fresh approval is required for v4 fingerprint
-  `e3a3ad6bcfd73c99ee295003041db7651e375a1d970b11bd3665a7393c87382a`.
+- The required local v5 source root is missing.
+- V5 package, fingerprint, and approval request are pending.
 
 ## Next Recommended Task
-- After human approval is created for the v4 package, perform exactly one approved kernel push and
-  validate downloaded artifacts.
+- Restore the required local v5 source root, prepare the package/request, then obtain explicit
+  owner approval for the exact v5 fingerprint before any live push.
 
 ## Files Likely Relevant Next
 - `docs/context/NEXT_ACTION.md`
