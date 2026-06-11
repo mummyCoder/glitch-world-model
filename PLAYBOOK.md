@@ -3,8 +3,8 @@
 Last updated: 2026-06-11
 Status owner: repository owner / technical program lead
 Canonical branch at update: `main`
-Evidence cutoff: commit `54fa49f` plus the documented 2026-06-11 Gate 5 v1-v5 failures and
-offline v6 mount-discovery fix
+Evidence cutoff: commit `67ea096` plus the strictly validated 2026-06-11 Gate 5 v6 CUDA/resume
+artifact set
 
 ## 0. How To Use This Playbook
 
@@ -61,7 +61,7 @@ under 200 lines without hiding safety rules.
 | Current venue format | Springer LNICST, anonymized English PDF |
 | Regular paper length | 12-15 pages, excluding appendices, references, acknowledgements |
 | Main research method | LeWM/JEPA latent prediction surprise |
-| Current gate state | Gates 1-4 passed; Gate 5 partial; Gates 6-10 not run |
+| Current gate state | Gates 1-5 passed; Gate 6 prepared; Gates 7-10 not run |
 | Locked test | Closed, unmaterialized, unscored for the LeWM path |
 
 LeWM integration engineering exists. The repo has strict checkpoint loading, finite
@@ -93,16 +93,14 @@ trains with prediction loss plus SIGReg. The repository has already verified:
 
 The repository has not verified:
 
-- LeWM Kaggle CUDA training and resume artifacts;
 - gameplay-scale LeWM training;
 - gameplay validation `scores.csv` and metrics from a LeWM checkpoint;
 - LeWM superiority, SIGReg benefit, temporal localization, or state of the art;
 - a neural locked-test result.
 
-The immediate blocker is Gate 5: obtain fresh exact approval for the offline v6 package, run the
-CUDA smoke once, prove checkpoint resume, download the expected artifact set, and pass strict
-local validation. Until that happens, all positive LeWM language must remain at the
-integration-engineering level.
+Gate 5 passed strict CUDA/resume artifact validation. The immediate task is Gate 6 preparation:
+audit and materialize a normal-only, source/pair-disjoint pilot dataset before approving any
+gameplay training. Positive LeWM language remains limited to integration and CUDA engineering.
 
 ## 3. Why This Project Exists
 
@@ -203,8 +201,8 @@ described as components of the audited method, but their gameplay detection bene
 | Checkpoint-level LeWM integration | paper-safe, limited | strict load report and finite smoke | "We verify checkpoint-level LeWM integration feasibility." |
 | Real-data conversion | paper-safe, limited | frozen protocols and upstream Lance loader proof | "We convert reduced TempGlitch and WOB episodes to the audited data contract." |
 | CPU forward/backward/resume smoke | paper-safe, engineering | local metadata and hash-matching resume | "Reduced CPU engineering smokes complete." |
-| Gates 1-4 passed | paper-safe, governance | gate reports and validators | State the exact engineering scope. |
-| Gate 5 partial | paper-safe, limitation | missing strict CUDA/resume artifact | State that CUDA proof is missing. |
+| Gates 1-5 passed | paper-safe, governance | gate reports and validators | State the exact engineering scope. |
+| Gate 5 CUDA/resume smoke | paper-safe, engineering | strict v6 artifact validation | State that this is bounded engineering evidence. |
 | LeWM glitch-detection performance | paper-unsafe | Gate 7 scores and metrics | Do not say. |
 | LeWM beats baselines | paper-unsafe | Gate 8 comparison on identical splits | Do not say. |
 | SIGReg improves detection | paper-unsafe | Gate 9 controlled ablation | Do not say. |
@@ -239,8 +237,8 @@ Status date: 2026-06-11.
 | 2 | passed | `37_lewm_runtime_checkpoint_report.md` | gameplay use | Checkpoint integration only. |
 | 3 | passed | frozen TempGlitch/WOB protocol artifacts summarized in report 40 | official TempGlitch pair IDs; replay action audit | Dataset protocol claim allowed with limitations. |
 | 4 | passed | real-data Lance loader proof in reports 38 and 40 | full-scale materialization | Reduced conversion claim allowed. |
-| 5 | partial | package, hardened validator, CPU train/resume smokes, ready private dataset, v1-v5 failure diagnoses, v6 recursive mount discovery | fresh v6 approval and validated Kaggle CUDA/resume artifact set | No LeWM GPU-training claim. |
-| 6 | not run | none | gameplay-scale normal-only checkpoint and diagnostics | No gameplay-training claim. |
+| 5 | passed | v6 T4 run, CUDA device, epoch 1 to 2 resume, matching hashes, finite artifacts, locked-test false | none | Kaggle CUDA engineering smoke claim allowed. |
+| 6 | prepared | frozen pilot config and normal-only protocol plan | audited pilot source, gameplay checkpoint, reload and encoding proof | No gameplay-training claim yet. |
 | 7 | not run | none | LeWM validation scores/metrics/hashes | No LeWM detection claim or LeWM title. |
 | 8 | not run | none | same-split baseline comparison | No superiority claim. |
 | 9 | not run | none | controlled ablations | No SIGReg/action/aggregation effect claim. |
@@ -256,11 +254,10 @@ one push; Kaggle accepted the kernel version, but full LeWM environment dependen
 failed on `box2d-py` before training. V4 installed minimal dependencies and reached the real Lance
 loader, then failed because `LanceDataset` attempted to write under read-only `/kaggle/input`.
 V5 copied both Lance datasets to writable `/tmp/lewm_input`, but failed because its fixed
-dataset-slug path did not contain the Lance directories at runtime. V6 recursively discovers the
-named Lance directories before copying them; its offline request fingerprint is
-`358e2d77c60c3986be2e84f3c6044200ebfcc2a5fe8f68b0800273fc8c7b6910` and remains unapproved.
-Gate 5 remains partial with no CUDA train/resume artifact set. The Phase 6E Conv3D run is separate
-and must not be mistaken for LeWM Gate 5.
+dataset-slug path did not contain the Lance directories at runtime. V6 recursively discovered
+the named Lance directories, completed on a T4, advanced resume from epoch 1 to epoch 2, and
+passed the strict local validator with matching hashes and false locked-test flags. The Phase 6E
+Conv3D run remains separate from LeWM Gate 5.
 
 ## 9. Gate Roadmap To FISAT 2026
 
@@ -487,7 +484,7 @@ metrics.
 | VideoMAE + Mahalanobis | frozen video representation baseline | future-work | normal feature statistics | no claim yet |
 | TimeSformer + Mahalanobis | frozen/supervised reference | future-work | protocol-dependent | no claim yet |
 | Qwen/LLaVA-style VLM | semantic fallback | future-work | prompt/runtime dependent | no temporal claim without spans |
-| LeWM surprise | mandatory main method | Gates 2-4 engineering; Gate 5 partial | train-normal | no performance claim before Gate 7 |
+| LeWM surprise | mandatory main method | Gates 2-5 engineering; Gate 6 prepared | train-normal | no performance claim before Gate 7 |
 
 All comparisons must use identical split records. Advanced baselines should wait until Gate 7
 unless a task explicitly scopes them as independent engineering work.
@@ -890,15 +887,15 @@ granularity, negative results, and lessons for reproducible game-QA anomaly rese
 | Priority | Owner | Action | Files/commands | Acceptance criteria | Main risk |
 | --- | --- | --- | --- | --- | --- |
 | 1, complete | owner | Merge/push governance foundation | `main` at `0ceef40` | governance files are on `origin/main` | none |
-| 2 | Dataset + Kaggle operator | Approve the exact v6 package request | reports 41-43, Section 23, Gate 5 workflow | exact v6 approval exists | approval missing |
-| 3 | Kaggle GPU Operator + owner | Complete Gate 5 CUDA smoke/resume | Section 23 and Gate 5 workflow | strict validator passes | quota/OOM/runtime failure |
-| 4 | Security Artifact Guard | Download and validate artifacts | `validate_lewm_kaggle_artifacts.py` | immutable report and hashes | partial/mismatched download |
-| 5 | LeWM Integration + ML Research Engineers | Open Gates 6-7 validation-only path | training/scoring modules and protocol | gameplay checkpoint and finite validation metrics | collapse/domain mismatch |
+| 2, complete | Kaggle GPU Operator | Complete Gate 5 CUDA smoke/resume | reports 41-44 | strict validator passes | none |
+| 3 | Dataset protocol engineer | Audit Gate 6 normal-only pilot source | reports 40 and 45, frozen split | normal-only source/pair-disjoint Lance inventories | leakage or missing videos |
+| 4 | LeWM Integration + ML Research Engineers | Run approved Gate 6 pilot | config and reports 45-46 | gameplay checkpoint, reload, finite diagnostics, validation encoding | collapse/domain mismatch |
+| 5 | ML Research Engineers | Open Gate 7 validation scoring | scoring modules and protocol | finite validation scores and metrics | scorer mismatch |
 | 6 | Locked Test Release Officer | Keep locked test closed | release workflow | no materialization/scoring before frozen decision | schedule pressure |
 
-Current recommended task: obtain fresh exact approval for v6 fingerprint
-`358e2d77c60c3986be2e84f3c6044200ebfcc2a5fe8f68b0800273fc8c7b6910`, then perform exactly one
-CUDA smoke/resume push and strict artifact validation.
+Current recommended task: audit and materialize the Gate 6 normal-only, source/pair-disjoint
+pilot data defined in `configs/lewm_gate6_pilot.yaml`, then prepare a new fingerprint-bound
+validation-only package.
 
 ## 29. Maintenance Rules For This Playbook
 

@@ -1,7 +1,7 @@
 # BOOT.md - Fast Start Context For Agents
 
-Generated: 2026-06-11T06:32:55+00:00
-Commit: `54fa49f37b99dca85fcd9329c8924ede05776c21`
+Generated: 2026-06-11T06:57:15+00:00
+Commit: `67ea096cedefdbd79acf725d00a472cf0149568c`
 
 ## Read Order
 1. `RULES.md`
@@ -17,17 +17,17 @@ context cache is stale. Use `docs/context/REPO_MAP.md` before broad repo searche
 
 ## Current Status
 - Gates 1-4 passed at engineering/smoke level.
-- Gate 5 is partial.
-- Gates 6-10 have not run.
+- Gate 5 passed strict Kaggle CUDA/resume artifact validation.
+- Gate 6 pilot is prepared but has not run.
+- Gates 7-10 have not run.
 - Locked test is closed.
 - LeWM integration engineering exists.
 - LeWM gameplay evaluation is not established.
 
 ## Immediate Next Task
-- Complete or unblock Gate 5 Kaggle CUDA smoke/resume artifact.
-- Current known blocker: v5 failed because its fixed Kaggle mount path did not contain the Lance
-  directories. The offline v6 package discovers each named Lance directory under
-  `/kaggle/input`; its exact fingerprint is awaiting approval.
+- Audit and materialize a normal-only, source/pair-disjoint Gate 6 pilot dataset from the frozen
+  TempGlitch protocol.
+- Do not approve or push Gate 6 until that source audit passes.
 
 ## Safety
 - No Kaggle live action without a current fingerprint-bound approval.

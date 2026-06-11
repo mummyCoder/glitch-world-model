@@ -7,15 +7,16 @@ This workspace starts with a small baseline pipeline for video game glitch detec
 This repo is currently a baseline research MVP for the topic "Latent World Models for Video Game Glitch Detection: A JEPA-based Approach." See the [research overview](docs/research/00_research_overview.md) for the project scope and hypothesis.
 
 `mini_latent` remains the lightweight latent-dynamics proxy. LeWM integration engineering now
-includes strict checkpoint loading, finite non-gameplay CPU inference, real-data conversion, and
-reduced CPU forward/backward/resume smokes. This is not gameplay-scale LeWM evaluation.
+includes strict checkpoint loading, finite non-gameplay CPU inference, real-data conversion,
+reduced CPU smokes, and a strictly validated Kaggle CUDA train/resume smoke. This is not
+gameplay-scale LeWM evaluation.
 
 Current LeWM gate status:
 
-- Gates 1-4 passed at the engineering and smoke level.
-- Gate 5 is partial: local CPU train/resume evidence exists, but Kaggle CUDA train/resume proof
-  is missing.
-- Gates 6-10 have not run.
+- Gates 1-5 passed at their documented engineering/smoke level.
+- Gate 5 passed strict Kaggle CUDA train/resume artifact validation.
+- Gate 6 normal-only pilot is prepared but has not run.
+- Gates 7-10 have not run.
 - Locked test remains closed.
 - No LeWM glitch-detection performance, superiority, or neural locked-test claim is supported.
 
@@ -44,6 +45,9 @@ Research planning docs:
 - [Gate 5 current-state audit](docs/research/41_gate5_current_state.md)
 - [Gate 5 approval status](docs/research/42_gate5_kernel_approval_status.md)
 - [Gate 5 Kaggle execution record](docs/research/43_gate5_kaggle_cuda_smoke_results.md)
+- [Gate 5 CUDA validation](docs/research/44_gate5_cuda_smoke_validation.md)
+- [Gate 6 normal-only training plan](docs/research/45_gate6_lewm_normal_training_plan.md)
+- [Gate 6 pilot results](docs/research/46_gate6_lewm_training_pilot_results.md)
 
 Phase 6D completed five pair-suspect grouped refit/selection/locked-test runs with zero
 cross-split groups. The selected pipeline achieved locked-test AUROC `0.573 +/- 0.118`; this
@@ -128,10 +132,10 @@ latexmk -pdf -cd paper/main.tex
 ```
 
 Current status: Phase 6E is complete as a validation-only Conv3D engineering result. The separate
-LeWM path has passed Gates 1-4 and has partial Gate 5 local CPU evidence, but it has no verified
-Kaggle CUDA train/resume artifact and no gameplay-scale glitch metric. Gate 7 therefore remains
-closed for LeWM-based paper claims. Do not touch locked test without a frozen validation decision,
-the documented release gate, and explicit authorization.
+LeWM path has passed Gates 1-5, including strict validation of a Kaggle CUDA train/resume smoke,
+but it has no gameplay-scale checkpoint or glitch metric. Gate 6 is open for a normal-only pilot;
+Gate 7 remains closed for LeWM-based performance claims. Do not touch locked test without a
+frozen validation decision, the documented release gate, and explicit authorization.
 
 The June 11, 2026 Gate 5 TempGlitch dataset upload is ready. The first approved kernel push
 returned HTTP `409 Conflict` before a run was established; the local cause was a kernel slug that
@@ -139,10 +143,10 @@ matched the dataset slug. A second approved v2 push was accepted by Kaggle, then
 training because the generated script looked for `/kaggle/src/lewm-runtime.txt`. A third approved
 v3 push was accepted by Kaggle, then failed before training because full LeWM environment
 dependency installation failed while building `box2d-py`. A v4 package now uses
-`huynhdieuthanh/lewm-gate5-cuda-smoke-v4` with minimal smoke dependencies and has a fresh request
-fingerprint. Its approved run reached the Lance loader, then failed because `/kaggle/input` is
-read-only. The v5 generator copies the Lance datasets to `/tmp/lewm_input`; v5 packaging is
-blocked until the required local source root is restored.
+`huynhdieuthanh/lewm-gate5-cuda-smoke-v4` with minimal smoke dependencies. Its approved run
+reached the Lance loader, then failed because `/kaggle/input` is read-only. V5 fixed writable
+copying but assumed the wrong mount path. V6 recursively discovered the Lance directories,
+completed on CUDA, resumed from epoch 1 to epoch 2, and passed the strict artifact validator.
 
 The reusable split-safe core is implemented in
 `src/glitch_detection/experiment_protocol.py`. It validates grouped splits, fits

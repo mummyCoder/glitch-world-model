@@ -11,10 +11,9 @@ requires deep context.
 
 Current verified status:
 
-- Gates 1-4 passed at the engineering and smoke level.
-- Gate 5 is partial: local CPU train/resume exists, but Kaggle CUDA train/resume proof is
-  missing.
-- Gates 6-10 have not run.
+- Gates 1-5 passed; Gate 5 includes strict Kaggle CUDA train/resume artifact validation.
+- Gate 6 normal-only pilot is prepared but has not run.
+- Gates 7-10 have not run.
 - Locked test is closed.
 - LeWM integration engineering exists; LeWM gameplay evaluation is not yet established.
 

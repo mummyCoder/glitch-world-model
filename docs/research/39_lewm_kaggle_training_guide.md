@@ -13,9 +13,9 @@ fingerprints, and requires fresh fingerprint-bound approvals before any live act
 5. Request and consume a separate kernel-push approval bound to the final kernel fingerprint.
 6. Run CUDA smoke, download artifacts, and verify checkpoint resume.
 
-No locked-test dataset is included. Gate 5 remains incomplete because no locally validated LeWM
-Kaggle CUDA train/resume artifact exists. An approval record, upload, or kernel push by itself
-does not prove successful training.
+No locked-test dataset is included. Gate 5 passed only after the downloaded v6 artifacts passed
+the strict local validator. An approval record, upload, kernel push, or Kaggle completion status
+alone does not prove successful training.
 
 On 2026-06-11, the approved TempGlitch dataset upload was confirmed ready and matched the local
 Lance package inventory by file name and size. One exact fingerprint-approved kernel push first
@@ -55,8 +55,9 @@ The approved v4 push installed the minimal runtime and reached the Lance loader,
 epoch 1 because `stable-worldmodel==0.1.1` attempted to create writable Lance connection state
 under read-only `/kaggle/input`. V5 copied train and validation Lance directories to
 `/tmp/lewm_input`, but failed because Kaggle did not expose them under the fixed dataset-slug
-mount path. V6 resolves each uniquely named Lance directory recursively under `/kaggle/input`
-before copying it. V6 is prepared offline and remains unapproved.
+mount path. V6 resolved each uniquely named Lance directory recursively under `/kaggle/input`
+before copying it. The approved v6 run completed on a T4, resumed from epoch 1 to epoch 2, and
+passed strict local artifact validation.
 
 The reusable runner `scripts/run_kaggle_lewm.py` was first verified locally on synthetic data.
 On 2026-06-11, reduced real-gameplay CPU smokes also completed forward/backward and hash-matching

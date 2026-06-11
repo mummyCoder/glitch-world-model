@@ -2,7 +2,7 @@
 
 Status date: 2026-06-11
 
-## Status: BLOCKED_ON_V6_APPROVAL
+## Status: V6_CONSUMED_AND_VALIDATED
 
 The one-time kernel approval matched fingerprint
 `8c918c264e3a840e47ab11b540de38c2ce0520ca0688bb280637fff49d68d0a4`,
@@ -115,5 +115,8 @@ v5 failed because its fixed dataset-slug mount path did not contain
 
 The offline v6 package now recursively discovers the two uniquely named Lance directories under
 `/kaggle/input` before copying them to `/tmp`. Its request fingerprint is
-`358e2d77c60c3986be2e84f3c6044200ebfcc2a5fe8f68b0800273fc8c7b6910`. Approval is missing, so no
-v6 live push is authorized.
+`358e2d77c60c3986be2e84f3c6044200ebfcc2a5fe8f68b0800273fc8c7b6910`. Its approval was created,
+validated, and consumed at `2026-06-11T06:43:13.400785+00:00` immediately before exactly one
+push. Kaggle version 1 completed, and the downloaded artifacts passed the strict validator.
+
+The v6 approval is consumed and must not be reused. Gate 5 needs no retry.

@@ -10,16 +10,12 @@ Status: implementation roadmap; all unexecuted experiments remain `experiment-pe
 - Gate 2: passed for strict official checkpoint loading and finite non-gameplay CPU inference.
 - Gate 3: passed for frozen real WOB and TempGlitch grouped protocol artifacts.
 - Gate 4: passed for synthetic and reduced real-data Lance loader-contract evidence.
-- Gate 5: partial. Synthetic and reduced real-gameplay CPU forward/backward/resume smokes passed;
-  the private TempGlitch dataset is ready. The first approved kernel push returned HTTP 409 before
-  execution. The second approved v2 push was accepted by Kaggle, then failed before training due
-  to a generated-script dependency path issue. The third approved v3 push was accepted by Kaggle,
-  then failed before training because full LeWM environment dependency installation failed on
-  `box2d-py`. V4 reached the Lance loader, then failed because `/kaggle/input` is read-only. V5
-  copied Lance data to `/tmp` but failed on a fixed Kaggle mount-path assumption; offline v6 now
-  discovers the named Lance directories recursively and awaits exact approval. Kaggle CUDA
-  train/resume proof remains missing.
-- Gates 6-10: not run. Locked test remains closed.
+- Gate 5: passed. The approved v6 T4 run completed CUDA training, advanced resume from epoch 1 to
+  epoch 2, and passed strict local validation with matching hashes, finite diagnostics, and false
+  locked-test flags.
+- Gate 6: prepared but not run. The normal-only pilot config and protocol are frozen; source audit
+  and materialization remain.
+- Gates 7-10: not run. Locked test remains closed.
 
 ## 1. Executive Decision
 
@@ -457,15 +453,10 @@ The project may call the method **LeWM-based** only when all are true:
 
 ## 12. Immediate Next Gate
 
-Gate 5 now requires exact approval for offline v6 fingerprint
-`358e2d77c60c3986be2e84f3c6044200ebfcc2a5fe8f68b0800273fc8c7b6910`, one Kaggle CUDA
-train/resume smoke, and strict local artifact validation. The prior kernel-push approvals were
-consumed by the HTTP 409 attempt and v2-v5 failures, and do not authorize a retry. Dataset upload
-and kernel push remain separate fingerprint-bound approvals. No live action is authorized by
-this roadmap update.
-
-After Gate 5, Gate 6 may open for normal-only gameplay training. Gate 7 remains the first point at
-which gameplay-scale LeWM surprise scores and validation metrics can support a LeWM method claim.
+Gate 5 passed on v6. Gate 6 is now open for preparation and requires a verified normal-only,
+source/pair-disjoint pilot source before any package approval or live training. Gate 7 remains the
+first point at which gameplay-scale LeWM surprise scores and validation metrics can support a
+LeWM method claim.
 
 ## 13. Codex Master Prompt To Implement Phase 1-4
 

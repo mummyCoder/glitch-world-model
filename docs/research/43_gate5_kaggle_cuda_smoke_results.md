@@ -1,7 +1,7 @@
 # Gate 5 Kaggle CUDA Smoke Results
 
 Status date: 2026-06-11
-Result: fifth approved submission executed and failed before training
+Result: sixth approved submission completed and passed strict validation
 
 ## Execution Record
 
@@ -93,25 +93,37 @@ FileNotFoundError: [Errno 2] No such file or directory:
 The Kaggle dataset API still listed all eight expected Lance files. The next offline package
 therefore discovers each uniquely named Lance directory recursively under `/kaggle/input` and
 then copies it to `/tmp/lewm_input`. V6 fingerprint is
-`358e2d77c60c3986be2e84f3c6044200ebfcc2a5fe8f68b0800273fc8c7b6910`; it is not approved.
+`358e2d77c60c3986be2e84f3c6044200ebfcc2a5fe8f68b0800273fc8c7b6910`.
+
+## V6 Success
+
+V6 preflight matched the expected fingerprint, its one-time approval was consumed at
+`2026-06-11T06:43:13.400785+00:00`, and exactly one version 1 push was submitted. Kaggle
+completed the run. The downloaded artifacts passed `scripts/validate_lewm_kaggle_artifacts.py`.
+
+- CUDA available: true
+- Training device: `cuda`
+- Resume advancement: epoch 1 to epoch 2
+- Config and dataset hashes: matched
+- Checkpoint SHA-256:
+  `3ce9f439cda96f6dff24a39dda45ee394eb753852081edef824b129057d1b585`
+- Loss history and collapse diagnostics: finite
+- Locked test materialized/scored: false/false
 
 ## Evidence Outcome
 
-- CUDA run started: v4 initialized the CUDA environment, but no epoch completed; v5 failed before
-  CUDA initialization.
-- CUDA used for training: not established.
-- Training completed: not established.
-- Resume advanced: not established.
-- Expected artifacts downloaded: no; only error logs and partial ignored output were downloaded.
-- Strict artifact validator run on Kaggle artifacts: yes, and it failed because all required Gate 5
-  artifacts were missing.
+- CUDA run started: yes.
+- CUDA used for training: verified.
+- Training completed: verified for the bounded smoke.
+- Resume advanced: verified from epoch 1 to epoch 2.
+- Expected artifacts downloaded: yes.
+- Strict artifact validator: passed.
 - Locked test materialized or scored: no.
 
-Gate 5 therefore remains `partial`. Approval consumption and an attempted push are operational
-records, not training evidence.
+Gate 5 therefore passes. This remains engineering smoke evidence, not gameplay-scale training or
+glitch-detection performance.
 
 ## Next Action
 
-The v2-v5 approvals are consumed and must not be reused. Obtain fresh explicit owner approval for
-v6 fingerprint `358e2d77c60c3986be2e84f3c6044200ebfcc2a5fe8f68b0800273fc8c7b6910` before any further live
-push. Do not retry v5.
+Prepare Gate 6 by auditing and materializing a normal-only, source/pair-disjoint pilot source.
+Do not promote the reduced Gate 5 smoke dataset without that audit.

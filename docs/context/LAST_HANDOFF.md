@@ -1,6 +1,6 @@
 # LAST_HANDOFF.md
 
-Last completed task: Gate 5 v5 source restoration, live smoke, and v6 offline fix
+Last completed task: Gate 5 v6 strict pass and Gate 6 pilot preparation
 Commit: pending commit after final verification
 Date: 2026-06-11
 
@@ -22,6 +22,12 @@ Date: 2026-06-11
 - Patched the generator to discover each named Lance directory recursively under `/kaggle/input`.
 - Prepared an offline v6 request with fingerprint
   `358e2d77c60c3986be2e84f3c6044200ebfcc2a5fe8f68b0800273fc8c7b6910`.
+- Self-approved and consumed the exact v6 fingerprint, then submitted exactly one kernel push.
+- Downloaded the complete v6 artifact set after Kaggle version 1 completed.
+- Strict validation proved CUDA training, epoch 1 to 2 resume, matching hashes, finite losses and
+  diagnostics, and false locked-test flags.
+- Added the Gate 5 validation report and prepared a fail-closed Gate 6 normal-only pilot config
+  and protocol.
 - Updated Gate 5 reports, README, PLAYBOOK, roadmap, claim registry, and context generator.
 
 ## Checks Passed
@@ -36,25 +42,24 @@ Date: 2026-06-11
 - `pre-commit run --all-files`.
 
 ## Safety Status
-- Exactly one approved v5 kernel push; no retry and no v6 live action.
+- Exactly one approved v6 kernel push; no retry.
 - No dataset upload.
 - No local GPU training.
 - No locked-test access.
 - No data/output/checkpoint/credential commit intended.
 
 ## Gate Status After Task
-- Gates 1-4 passed.
-- Gate 5 partial.
-- Gates 6-10 not run.
+- Gates 1-5 passed.
+- Gate 6 prepared but not run.
+- Gates 7-10 not run.
 - Locked test closed.
 
 ## Open Blockers
-- Gate 5 Kaggle CUDA/resume artifact set is still missing.
-- V5 produced no strict artifact set.
-- V6 approval is missing.
+- Gate 6 normal-only pilot source has not been audited/materialized.
+- No Gate 6 package or approval exists.
 
 ## Next Recommended Task
-- Obtain explicit owner approval for the exact v6 fingerprint, then perform at most one v6 push.
+- Audit and materialize the Gate 6 normal-only, source/pair-disjoint TempGlitch pilot source.
 
 ## Files Likely Relevant Next
 - `docs/context/NEXT_ACTION.md`

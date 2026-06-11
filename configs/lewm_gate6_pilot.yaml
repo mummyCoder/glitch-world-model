@@ -1,0 +1,35 @@
+phase: gate6_normal_only_training_pilot
+status: prepared_not_run
+validation_only: true
+locked_test_enabled: false
+
+dataset:
+  name: TempGlitch
+  revision: 1d46a63c31ebfe3b675b51a2231d547da372eff9
+  action_mode: zero_action
+  train_labels:
+    - Normal
+  validation_labels:
+    - Normal
+  require_source_pair_disjoint: true
+  require_locked_test_materialized_false: true
+
+training:
+  accelerator: NvidiaTeslaT4
+  image_size: 112
+  batch_size: 2
+  epochs: 1
+  max_train_steps: 16
+  max_validation_steps: 8
+  predictor_depth: 6
+  sigreg_projections: 128
+  seed: 42
+
+acceptance:
+  require_finite_losses: true
+  require_finite_noncollapsed_latents: true
+  require_checkpoint_reload: true
+  require_normal_validation_encoding: true
+  require_nonlocked_glitch_validation_encoding: true
+  allow_detection_performance_claim: false
+

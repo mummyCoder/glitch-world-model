@@ -92,7 +92,8 @@ memory. Smoke training must start with a small batch, short run, and checkpoint 
 ## Go / No-Go
 
 **Gate 2 passed for checkpoint loading and non-gameplay CPU inference. Gates 3-4 passed for
-frozen real-data protocols and reduced real-data Lance loader contracts. Gate 5 is partial.**
+frozen real-data protocols, reduced real-data Lance loader contracts, and a strictly validated
+Kaggle CUDA/resume smoke. Gate 6 gameplay training remains pending.**
 
 Do not claim training success yet. The next required proof is:
 

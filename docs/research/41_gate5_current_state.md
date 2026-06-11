@@ -2,9 +2,8 @@
 
 Status date: 2026-06-11
 
-Gate 5 remains `partial`. The validation-only TempGlitch package exists in ignored storage, its
-private dataset is ready on Kaggle, and the remote Lance file names and sizes match the approved
-local package. No downloaded Kaggle CUDA train/resume artifact set exists.
+Gate 5 is `passed`. The validation-only TempGlitch v6 package completed on Kaggle, and the
+downloaded ignored artifact set passed strict CUDA/resume validation.
 
 ## Package And Approval Audit
 
@@ -62,7 +61,13 @@ local package. No downloaded Kaggle CUDA train/resume artifact set exists.
 - v6 offline fix: discover each named Lance directory recursively under `/kaggle/input` before
   copying it to `/tmp/lewm_input`.
 - v6 request fingerprint:
-  `358e2d77c60c3986be2e84f3c6044200ebfcc2a5fe8f68b0800273fc8c7b6910`; approval is missing.
+  `358e2d77c60c3986be2e84f3c6044200ebfcc2a5fe8f68b0800273fc8c7b6910`.
+- v6 approval: consumed at `2026-06-11T06:43:13.400785+00:00`.
+- v6 result: Kaggle version 1 completed; strict validator returned
+  `gate5_cuda_resume_verified`.
+- v6 resume: epoch 1 to epoch 2 on device `cuda`.
+- v6 checkpoint SHA-256:
+  `3ce9f439cda96f6dff24a39dda45ee394eb753852081edef824b129057d1b585`.
 - Locked test: not packaged, materialized, or scored.
 
 ## 409 Diagnosis Matrix
@@ -103,15 +108,15 @@ local package. No downloaded Kaggle CUDA train/resume artifact set exists.
 
 | Expected artifact | Produced by | Currently available from Kaggle run? | Blocker | Fix needed |
 | --- | --- | --- | --- | --- |
-| `run_config.json` | generated validation kernel | no | v3 failed before writing outputs | approve v4 fingerprint and run once |
-| `environment.json` | generated validation kernel | no | v3 failed before writing outputs | same |
-| `dataset_metadata.json` | generated validation kernel after training | no | no completed Kaggle training | same |
-| `training_metadata.json` | `train_lewm` | no | no completed Kaggle training | same |
-| `loss_history.json` | `train_lewm` | no | no completed Kaggle training | same |
-| `collapse_diagnostics.json` | `train_lewm` | no | no completed Kaggle training | same |
-| `checkpoint.sha256` | `train_lewm` | no | no completed Kaggle training | same |
-| `protocol_audit.json` | generated validation kernel | no | v3 failed before writing outputs | same |
-| `resume_metadata.json` | generated validation kernel after resume | no | no completed Kaggle resume | same |
+| `run_config.json` | generated validation kernel | yes | none | maintain ignored evidence |
+| `environment.json` | generated validation kernel | yes | none | same |
+| `dataset_metadata.json` | generated validation kernel after training | yes | none | same |
+| `training_metadata.json` | `train_lewm` | yes | none | same |
+| `loss_history.json` | `train_lewm` | yes | none | same |
+| `collapse_diagnostics.json` | `train_lewm` | yes | none | same |
+| `checkpoint.sha256` | `train_lewm` | yes | none | same |
+| `protocol_audit.json` | generated validation kernel | yes | none | same |
+| `resume_metadata.json` | generated validation kernel after resume | yes | none | same |
 
 Local CPU smoke directories contain training outputs, but they are not Kaggle CUDA evidence and
 do not satisfy this table.
@@ -128,6 +133,6 @@ The strict validator now checks:
 - finite collapse diagnostics;
 - false locked-test flags in both protocol and training metadata.
 
-The focused generator tests pass locally. V5 produced only an error log, and strict validation
-failed because all nine required artifacts were missing. The offline v6 package is ready but
-unapproved; this engineering evidence does not upgrade Gate 5.
+The focused generator tests pass locally. V6 produced all nine required artifacts, and strict
+validation confirmed CUDA, resume advancement, matching hashes, finite losses/diagnostics, and
+false locked-test flags. This upgrades Gate 5 only; Gate 6 gameplay training remains pending.

@@ -64,5 +64,5 @@ writer-managed episode boundaries. Conversion commands do not accept a test part
 - Full TempGlitch and WOB train/validation materialization must run as Kaggle shards.
 - WOB action semantics are supported by the upstream writer contract and structural tar audit,
   but not by a replay-based synchronization test.
-- No Gate 5 CUDA smoke, gameplay checkpoint, validation surprise score, or LeWM paper result
-  exists yet.
+- Gate 5 CUDA/resume smoke now passes; no gameplay checkpoint, validation surprise score, or LeWM
+  performance result exists yet.
