@@ -1,0 +1,5 @@
+# Isolated Python 3.10 runtime for the audited LeWorldModel integration.
+stable-worldmodel[train,env]==0.1.1
+stable-pretraining==0.1.7
+transformers==4.57.6
+

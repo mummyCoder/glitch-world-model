@@ -8,8 +8,10 @@
 - Upstream implementation files: `train.py`, `jepa.py`, `module.py`, `utils.py`
 - External runtime dependencies: `stable-worldmodel[train,env]`, `stable-pretraining`, Hydra,
   Lightning, PyTorch
-- Current local default environment does not contain `stable_worldmodel`,
-  `stable_pretraining`, `lightning`, `h5py`, or `torch`.
+- The default Python 3.14 environment intentionally remains lightweight.
+- An ignored isolated Python 3.10.12 environment has now verified
+  `stable-worldmodel==0.1.1`, `stable-pretraining==0.1.7`, `torch==2.12.0`, and
+  `transformers==4.57.6`.
 
 ## Verified Model And Training Contract
 
@@ -29,10 +31,11 @@
 
 ## Dataset Findings
 
-The README describes HDF5 datasets under `STABLEWM_HOME`, but the current PushT training config
-uses a `.lance` dataset while DMC/OGB configs use `.h5`. Therefore the exact custom-writer
-contract must be verified against the installed `stable-worldmodel` version before implementing
-the converter.
+The README describes HDF5 datasets, but installed `stable-worldmodel==0.1.1` does not export
+`swm.data.HDF5Dataset`, and importing its internal HDF5 format additionally requires an
+uninstalled `hdf5plugin`. The verified custom path is therefore the public `LanceWriter` and
+`LanceDataset` API. A five-episode synthetic dataset produced 15 valid four-step windows without
+crossing episode boundaries.
 
 The minimum logical columns inferred from upstream code are:
 
@@ -88,15 +91,25 @@ memory. Smoke training must start with a small batch, short run, and checkpoint 
 
 ## Go / No-Go
 
-**GO for Phase 1-4 integration engineering.**
+**Gate 2 passed for checkpoint loading and non-gameplay CPU inference. Gate 4 passed for the
+synthetic Lance loader contract. GO for gameplay conversion and Kaggle smoke preparation.**
 
 Do not claim training success yet. The next required proof is:
 
+Completed:
+
 1. isolated Python 3.10 dependency environment;
-2. official checkpoint load smoke test;
-3. verified custom dataset schema and 5-10 clip loader test;
-4. local CPU forward/backward smoke;
-5. Kaggle GPU smoke with a saved checkpoint.
+2. strict official PushT checkpoint load and finite CPU inference smoke;
+3. verified custom Lance schema and five-episode loader test.
+
+Still required:
+
+1. real WOB and TempGlitch conversion;
+2. approved Kaggle GPU smoke with a saved and resumed checkpoint.
+
+A reduced synthetic CPU smoke has now verified real LeWM forward/backward, prediction plus SIGReg
+loss, checkpoint save, and hash-matching resume from epoch 1 to epoch 2. This is integration
+evidence only and does not satisfy gameplay-training Gate 6.
 
 If action-logged data cannot be obtained, proceed with zero-action and action-free adaptations
 but restrict the paper claim accordingly.

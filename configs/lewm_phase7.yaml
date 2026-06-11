@@ -1,11 +1,14 @@
-phase: phase7a_lewm_integration_audit
-mode: audit_only
+phase: mandatory_real_lewm_phase1_4
+mode: integration_engineering
 
 implementation:
-  enabled: false
+  enabled: true
   fine_tuning_enabled: false
-  checkpoint_loading_verified: false
-  inference_verified: false
+  checkpoint_loading_verified: true
+  inference_verified: true
+  training_verified: false
+  synthetic_training_smoke_verified: true
+  scoring_on_gameplay_verified: false
 
 evaluation:
   validation_only: true
@@ -19,3 +22,17 @@ required_audits:
   - preprocessing
   - tensor_interfaces
   - scorer_contract
+
+runtime:
+  python: "3.10.12"
+  stable_worldmodel: "0.1.1"
+  stable_pretraining: "0.1.7"
+  transformers: "4.57.6"
+  upstream_commit: "8edfeb336732b5f3ce7b8b210d0ba370a09e2cac"
+
+checkpoint_smoke:
+  repository: quentinll/lewm-pusht
+  weights_sha256: 48938400ae3464c9680731287f583a9cb516f55a8ec64ea13a91be47fb15b607
+  strict_load_verified: true
+  finite_inference_smoke_verified: true
+  compatible_with_gameplay_actions: false

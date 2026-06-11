@@ -1,0 +1,24 @@
+phase: mandatory_real_lewm
+validation_only: true
+locked_test_enabled: false
+
+runtime:
+  python: "3.10"
+  stable_worldmodel: "0.1.1"
+  stable_pretraining: "0.1.7"
+  transformers: "4.57.6"
+
+smoke:
+  accelerator: NvidiaTeslaT4
+  image_size: 112
+  batch_size: 4
+  max_epochs: 1
+  sigreg_projections: 128
+  checkpoint_every_epoch: true
+  require_hash_matching_resume: true
+
+quota_percent:
+  lewm_dual_primary: 50
+  video_baselines: 25
+  lewm_ablations: 15
+  open_vlm: 10

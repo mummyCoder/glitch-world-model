@@ -70,6 +70,20 @@ def auroc(labels: list[int], scores: list[float]) -> float | None:
     return wins / total
 
 
+def average_precision(labels: list[int], scores: list[float]) -> float | None:
+    positive_count = sum(labels)
+    if positive_count == 0:
+        return None
+    ranked = sorted(zip(scores, labels), key=lambda item: item[0], reverse=True)
+    true_positives = 0
+    precision_sum = 0.0
+    for rank, (_score, label) in enumerate(ranked, start=1):
+        if label == 1:
+            true_positives += 1
+            precision_sum += true_positives / rank
+    return precision_sum / positive_count
+
+
 def evaluate_scores(
     scores_path: Path,
     labels_path: Path | None,
@@ -112,6 +126,7 @@ def evaluate_scores(
         "threshold": threshold,
         "threshold_source": threshold_source,
         "auroc": auroc(labels, scores),
+        "pr_auc": average_precision(labels, scores),
         "clip_count": len(rows),
         "positive_clip_count": sum(labels),
         **metrics,

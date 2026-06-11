@@ -1,4 +1,11 @@
-from glitch_detection.evaluate import auroc, binary_metrics, choose_best_f1_threshold
+import pytest
+
+from glitch_detection.evaluate import (
+    auroc,
+    average_precision,
+    binary_metrics,
+    choose_best_f1_threshold,
+)
 
 
 def test_binary_metrics():
@@ -19,3 +26,8 @@ def test_choose_best_f1_threshold_and_auroc():
     assert threshold in scores
     assert metrics["f1"] == 1.0
     assert auroc(labels, scores) == 1.0
+
+
+def test_average_precision_ranks_positive_scores():
+    assert average_precision([1, 0, 1], [0.9, 0.8, 0.7]) == pytest.approx((1.0 + 2 / 3) / 2)
+    assert average_precision([0, 0], [0.9, 0.1]) is None

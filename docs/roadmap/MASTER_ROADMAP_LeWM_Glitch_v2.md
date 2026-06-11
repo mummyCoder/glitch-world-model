@@ -4,6 +4,18 @@ Date: June 10, 2026
 Target deadline: July 20, 2026
 Status: implementation roadmap; all unexecuted experiments remain `experiment-pending`.
 
+## Implementation Status — June 10, 2026
+
+- Gate 1: passed.
+- Gate 2: passed for strict official checkpoint loading and finite non-gameplay CPU inference.
+- Gate 3: deterministic grouped split tooling implemented; real WOB/TempGlitch split artifacts
+  remain experiment-pending.
+- Gate 4: passed for a five-episode synthetic Lance loader-contract smoke; real dataset conversion
+  remains experiment-pending.
+- Gate 5: validation-only Kaggle package foundation implemented; live CUDA and resume proof remain
+  blocked on fresh fingerprint-bound approvals.
+- Gates 6-10: not run. Locked test remains closed.
+
 ## 1. Executive Decision
 
 The project strategy changes from “real LeWM optional” to **real LeWM mandatory for any
