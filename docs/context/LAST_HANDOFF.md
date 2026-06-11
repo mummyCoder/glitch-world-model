@@ -1,29 +1,36 @@
 # LAST_HANDOFF.md
 
-Last completed task: Context Efficiency Layer implementation
+Last completed task: Gate 5 409 conflict preflight hardening
 Commit: pending commit after final verification
 Date: 2026-06-11
 
 ## What Changed
-- Added `docs/context/` fast-start cache files: boot context, project state, next action,
-  handoff, repo map, task router, policy, and README.
-- Added stdlib-only context cache generator and validator scripts.
-- Integrated context validation into release validation, doctor, and pre-commit.
-- Updated AGENTS, PLAYBOOK, and README to prefer fast context before deep playbook reads.
+- Diagnosed the Gate 5 HTTP 409 as locally caused by the consumed package using the same Kaggle
+  slug for dataset and kernel.
+- Added local preflight guards for Kaggle slug format, placeholder owners, kernel/dataset slug
+  equality, required kernel metadata fields, missing code file, dataset-source mismatch, and
+  consumed approval reuse.
+- Prepared corrected ignored package/request using kernel slug
+  `huynhdieuthanh/lewm-gate5-cuda-smoke-v2`.
+- New kernel approval fingerprint:
+  `4d1108f7e9b5f62ba969961f2bee56f9bd226d794ab350386ce510006f91e3f8`.
+- Updated Gate 5 incident docs, workflow docs, README, PLAYBOOK, claim registry, and context
+  cache.
 
 ## Checks Passed
-- `python scripts/update_context_cache.py --refresh-boot`
-- `python scripts/validate_context_cache.py`
-- `python -m pytest` (194 passed)
-- `python -m ruff check .`
-- `python -m ruff format --check .`
-- `python scripts/validate_research_release.py --ci`
-- `python scripts/check_claim_registry.py`
-- `python scripts/doctor.py`
-- `pre-commit run --all-files`
+- `python -m pytest` (200 passed).
+- `python -m ruff check .`.
+- `python -m ruff format --check .`.
+- `python scripts/validate_research_release.py --ci`.
+- `python scripts/check_claim_registry.py`.
+- `python scripts/doctor.py`.
+- `python scripts/validate_context_cache.py`.
+- `pre-commit run --all-files`.
 
 ## Safety Status
 - No Kaggle live action.
+- No kernel push retry.
+- No dataset upload.
 - No model training.
 - No locked-test access.
 - No data/output/checkpoint/credential commit intended.
@@ -36,9 +43,12 @@ Date: 2026-06-11
 
 ## Open Blockers
 - Gate 5 Kaggle CUDA/resume artifact set is still missing.
+- Fresh approval is required for fingerprint
+  `4d1108f7e9b5f62ba969961f2bee56f9bd226d794ab350386ce510006f91e3f8`.
 
 ## Next Recommended Task
-- Resolve Gate 5 Kaggle HTTP 409 conflict and prepare a fresh approval-bound kernel package.
+- After human approval is created for the corrected package, perform exactly one approved kernel
+  push and validate downloaded artifacts.
 
 ## Files Likely Relevant Next
 - `docs/context/NEXT_ACTION.md`

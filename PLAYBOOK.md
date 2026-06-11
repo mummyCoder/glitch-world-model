@@ -3,8 +3,8 @@
 Last updated: 2026-06-11
 Status owner: repository owner / technical program lead
 Canonical branch at update: `main`
-Evidence cutoff: commit `e32a77a836ae565f4c5b5cd4b0fd85e0b4344f5a` plus the documented
-2026-06-11 Gate 5 live-attempt record
+Evidence cutoff: commit `d50e3c7f0072219abdfd83eeec9622cf648a3351` plus the documented
+2026-06-11 Gate 5 409 diagnosis and corrected approval request
 
 ## 0. How To Use This Playbook
 
@@ -99,10 +99,10 @@ The repository has not verified:
 - LeWM superiority, SIGReg benefit, temporal localization, or state of the art;
 - a neural locked-test result.
 
-The immediate blocker is Gate 5: resolve the Kaggle HTTP 409 kernel submission conflict, obtain a
-fresh exact approval, run the CUDA smoke, prove checkpoint resume, download the expected artifact
-set, and pass strict local validation. Until that happens, all positive LeWM language must remain
-at the integration-engineering level.
+The immediate blocker is Gate 5: obtain fresh exact approval for the corrected kernel fingerprint,
+run the CUDA smoke once, prove checkpoint resume, download the expected artifact set, and pass
+strict local validation. Until that happens, all positive LeWM language must remain at the
+integration-engineering level.
 
 ## 3. Why This Project Exists
 
@@ -239,7 +239,7 @@ Status date: 2026-06-11.
 | 2 | passed | `37_lewm_runtime_checkpoint_report.md` | gameplay use | Checkpoint integration only. |
 | 3 | passed | frozen TempGlitch/WOB protocol artifacts summarized in report 40 | official TempGlitch pair IDs; replay action audit | Dataset protocol claim allowed with limitations. |
 | 4 | passed | real-data Lance loader proof in reports 38 and 40 | full-scale materialization | Reduced conversion claim allowed. |
-| 5 | partial | package, hardened validator, CPU train/resume smokes, ready private dataset, documented failed push | resolved HTTP 409 conflict and validated Kaggle CUDA/resume artifact set | No LeWM GPU-training claim. |
+| 5 | partial | package, hardened validator, CPU train/resume smokes, ready private dataset, 409 diagnosis, corrected request | fresh approval and validated Kaggle CUDA/resume artifact set | No LeWM GPU-training claim. |
 | 6 | not run | none | gameplay-scale normal-only checkpoint and diagnostics | No gameplay-training claim. |
 | 7 | not run | none | LeWM validation scores/metrics/hashes | No LeWM detection claim or LeWM title. |
 | 8 | not run | none | same-split baseline comparison | No superiority claim. |
@@ -248,8 +248,10 @@ Status date: 2026-06-11.
 
 The LeWM TempGlitch private dataset is ready and matched the local approved Lance inventory by
 name and size. One exact fingerprint-approved kernel push on 2026-06-11 returned HTTP 409 before
-a run was established; its one-time approval is consumed. Gate 5 remains partial with no CUDA
-artifact set. The Phase 6E Conv3D run is separate and must not be mistaken for LeWM Gate 5.
+a run was established; its one-time approval is consumed. The local cause was a kernel slug equal
+to the dataset slug. A corrected kernel slug and fresh request fingerprint now exist, but Gate 5
+remains partial with no CUDA artifact set. The Phase 6E Conv3D run is separate and must not be
+mistaken for LeWM Gate 5.
 
 ## 9. Gate Roadmap To FISAT 2026
 
@@ -879,14 +881,15 @@ granularity, negative results, and lessons for reproducible game-QA anomaly rese
 | Priority | Owner | Action | Files/commands | Acceptance criteria | Main risk |
 | --- | --- | --- | --- | --- | --- |
 | 1, complete | owner | Merge/push governance foundation | `main` at `0ceef40` | governance files are on `origin/main` | none |
-| 2 | Kaggle GPU Operator + owner | Resolve HTTP 409, rebuild/revalidate package, and obtain fresh approval | reports 41-43, Section 23, Gate 5 workflow | new exact approval exists without another unapproved push | submission conflict/approval expiry |
+| 2 | owner | Approve corrected Gate 5 kernel fingerprint | reports 41-43, Section 23, Gate 5 workflow | exact approval exists for `4d1108...e3f8` | approval expiry |
 | 3 | Kaggle GPU Operator + owner | Complete Gate 5 CUDA smoke/resume | Section 23 and Gate 5 workflow | strict validator passes | quota/OOM/runtime failure |
 | 4 | Security Artifact Guard | Download and validate artifacts | `validate_lewm_kaggle_artifacts.py` | immutable report and hashes | partial/mismatched download |
 | 5 | LeWM Integration + ML Research Engineers | Open Gates 6-7 validation-only path | training/scoring modules and protocol | gameplay checkpoint and finite validation metrics | collapse/domain mismatch |
 | 6 | Locked Test Release Officer | Keep locked test closed | release workflow | no materialization/scoring before frozen decision | schedule pressure |
 
-Current recommended task: investigate the Gate 5 HTTP 409 save conflict without another push,
-then prepare a corrected final kernel fingerprint and request a fresh explicit approval.
+Current recommended task: create the fresh approval artifact for corrected kernel fingerprint
+`4d1108f7e9b5f62ba969961f2bee56f9bd226d794ab350386ce510006f91e3f8`, then perform exactly one
+approved kernel push and validate downloaded artifacts.
 
 ## 29. Maintenance Rules For This Playbook
 

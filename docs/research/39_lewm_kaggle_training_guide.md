@@ -26,6 +26,11 @@ downloaded artifacts exist. See
 [execution record](43_gate5_kaggle_cuda_smoke_results.md). A fresh exact approval is required
 before any retry.
 
+The local 409 diagnosis found that the consumed package reused the dataset slug as the kernel
+slug. Current package preflight rejects placeholder owners, kernel/dataset slug equality, missing
+kernel code files, dataset-source mismatches, and consumed approval reuse. The corrected ignored
+package uses kernel slug `huynhdieuthanh/lewm-gate5-cuda-smoke-v2` and waits for fresh approval.
+
 The reusable runner `scripts/run_kaggle_lewm.py` was first verified locally on synthetic data.
 On 2026-06-11, reduced real-gameplay CPU smokes also completed forward/backward and hash-matching
 resume from epoch 1 to epoch 2 for both the TempGlitch zero-action and WOB real-action paths.

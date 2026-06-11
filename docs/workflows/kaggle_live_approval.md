@@ -15,6 +15,24 @@ Documentation, package creation, and dry-runs never authorize a live Kaggle acti
 
 Changing package contents invalidates the associated approval.
 
+## Local Preflight Before Approval
+
+Before requesting or consuming a kernel approval, the package must pass local preflight:
+
+- dataset and kernel slugs are explicit `owner/slug` values;
+- placeholder owners such as `private`, `user`, `username`, `owner`, or `your-username` are
+  rejected;
+- the kernel slug differs from the dataset slug;
+- `kernel-metadata.json` contains `id`, `title`, `code_file`, `language`, `kernel_type`,
+  `is_private`, `enable_gpu`, and `dataset_sources`;
+- `code_file` exists;
+- `dataset_sources` exactly matches the approved remote dataset slug;
+- kernel metadata hash, kernel code hash, kernel inventory hash, dataset slug, and kernel slug are
+  included in the approval fingerprint.
+
+Consumed approvals cannot be reused. A metadata-only fix requires a new package fingerprint and a
+new approval request before any live push.
+
 ## Required Downloaded Artifacts
 
 - run config and environment

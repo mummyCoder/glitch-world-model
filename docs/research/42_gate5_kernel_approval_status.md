@@ -2,7 +2,7 @@
 
 Status date: 2026-06-11
 
-## Status: CONSUMED
+## Status: READY_FOR_NEW_KERNEL_APPROVAL
 
 The one-time kernel approval matched fingerprint
 `8c918c264e3a840e47ab11b540de38c2ce0520ca0688bb280637fff49d68d0a4`,
@@ -25,3 +25,20 @@ No retry is authorized. The next live attempt requires:
 
 Changing the kernel identity, metadata, script, dependencies, or packaged source invalidates the
 old fingerprint.
+
+## Corrected Request
+
+A corrected validation-only package was prepared locally under ignored storage without any live
+Kaggle action:
+
+- Dataset slug: `huynhdieuthanh/lewm-tempglitch-gate5-smoke`
+- New kernel slug: `huynhdieuthanh/lewm-gate5-cuda-smoke-v2`
+- Dataset fingerprint: `897f4a8f310aa9891db5c45cc5bc78285c7cb965a469e46d78346d28c1877f51`
+- Kernel inventory SHA-256: `8f6474331d4873971d42757ccee96494cd306f455399443b97e860dc40906e4c`
+- Kernel metadata SHA-256: `c3749bcf9c41b009f853577eb75fc94338e38312625a1ea372bea66da328abf1`
+- Kernel script SHA-256: `0d484a956d29b15c866f60e37efe1c1979b53b1c39bd70762036d4abcea59fca`
+- New kernel approval fingerprint:
+  `4d1108f7e9b5f62ba969961f2bee56f9bd226d794ab350386ce510006f91e3f8`
+
+The request records are in ignored storage at `outputs/gate5/approvals/tempglitch_kernel_v2`.
+They are not approvals. Live push remains blocked until the exact new fingerprint is approved.

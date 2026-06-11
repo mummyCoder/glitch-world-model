@@ -10,14 +10,16 @@ from glitch_detection.lewm_kaggle import (
     quota_allocation,
     render_validation_kernel,
     request_package_approvals,
+    validate_kernel_push_preflight,
+    validate_lewm_kaggle_package,
     validate_lewm_smoke_artifacts,
 )
 
 
 def _config() -> LeWMKaggleConfig:
     return LeWMKaggleConfig(
-        dataset_slug="user/lewm-private",
-        kernel_slug="user/lewm-smoke",
+        dataset_slug="huynhdieuthanh/lewm-tempglitch-gate5-smoke",
+        kernel_slug="huynhdieuthanh/lewm-gate5-cuda-smoke-v2",
         dataset_id="tempglitch-lewm",
         action_mode="zero_action",
         train_dataset_name="train.lance",
@@ -66,10 +68,101 @@ def test_kaggle_package_creates_separate_fingerprint_bound_requests(tmp_path: Pa
     dataset = requests["dataset_upload_approval"]
     kernel = requests["kernel_push_approval"]
     assert dataset["fingerprint"] != kernel["fingerprint"]
+    assert dataset["dataset_slug"] == "huynhdieuthanh/lewm-tempglitch-gate5-smoke"
+    assert kernel["dataset_slug"] == "huynhdieuthanh/lewm-tempglitch-gate5-smoke"
+    assert kernel["kernel_slug"] == "huynhdieuthanh/lewm-gate5-cuda-smoke-v2"
     assert dataset["one_time_use"] is True
     assert kernel["one_time_use"] is True
     assert requests["live_actions_performed"] is False
     assert (package / "kernel" / "src" / "glitch_detection" / "lewm_training.py").is_file()
+
+
+def test_kaggle_config_rejects_placeholder_kernel_owner():
+    with pytest.raises(ValueError, match="placeholder"):
+        LeWMKaggleConfig(
+            dataset_slug="huynhdieuthanh/lewm-tempglitch-gate5-smoke",
+            kernel_slug="private/lewm-gate5-cuda-smoke-v2",
+            dataset_id="tempglitch-lewm",
+            action_mode="zero_action",
+            train_dataset_name="train.lance",
+            validation_dataset_name="validation.lance",
+        )
+
+
+def test_kaggle_config_rejects_kernel_slug_equal_to_dataset_slug():
+    with pytest.raises(ValueError, match="must differ"):
+        LeWMKaggleConfig(
+            dataset_slug="huynhdieuthanh/lewm-tempglitch-gate5-smoke",
+            kernel_slug="huynhdieuthanh/lewm-tempglitch-gate5-smoke",
+            dataset_id="tempglitch-lewm",
+            action_mode="zero_action",
+            train_dataset_name="train.lance",
+            validation_dataset_name="validation.lance",
+        )
+
+
+def test_kaggle_package_rejects_missing_code_file(tmp_path: Path):
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "train.lance").mkdir()
+    (source / "validation.lance").mkdir()
+    package = tmp_path / "package"
+    prepare_lewm_kaggle_package(source, package, _config(), dry_run=False)
+    (package / "kernel" / "lewm_validation_kernel.py").unlink()
+
+    with pytest.raises(FileNotFoundError, match="Kernel code_file does not exist"):
+        validate_lewm_kaggle_package(package)
+
+
+def test_kaggle_package_rejects_dataset_source_mismatch(tmp_path: Path):
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "train.lance").mkdir()
+    (source / "validation.lance").mkdir()
+    package = tmp_path / "package"
+    prepare_lewm_kaggle_package(source, package, _config(), dry_run=False)
+    metadata_path = package / "kernel" / "kernel-metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["dataset_sources"] = ["huynhdieuthanh/other-dataset"]
+    metadata_path.write_text(json.dumps(metadata) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="dataset_sources must match"):
+        validate_lewm_kaggle_package(package)
+
+
+def test_kernel_push_preflight_rejects_consumed_approval(tmp_path: Path):
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "train.lance").mkdir()
+    (source / "validation.lance").mkdir()
+    package = tmp_path / "package"
+    approvals = tmp_path / "approvals"
+    prepare_lewm_kaggle_package(source, package, _config(), dry_run=False)
+    requests = request_package_approvals(package, approvals)
+
+    from glitch_detection.kaggle_automation import ApprovalStore
+
+    store = ApprovalStore(approvals)
+    store.approve("kernel_push_approval", requests["kernel_push_approval"]["fingerprint"])
+    store.consume("kernel_push_approval", requests["kernel_push_approval"]["fingerprint"])
+
+    with pytest.raises(ValueError, match="already consumed"):
+        validate_kernel_push_preflight(package, approvals)
+
+
+def test_kaggle_package_accepts_corrected_kernel_slug(tmp_path: Path):
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "train.lance").mkdir()
+    (source / "validation.lance").mkdir()
+    package = tmp_path / "package"
+    prepare_lewm_kaggle_package(source, package, _config(), dry_run=False)
+
+    result = validate_lewm_kaggle_package(package)
+
+    assert result["dataset_slug"] == "huynhdieuthanh/lewm-tempglitch-gate5-smoke"
+    assert result["kernel_slug"] == "huynhdieuthanh/lewm-gate5-cuda-smoke-v2"
+    assert result["kernel_slug"] != result["dataset_slug"]
 
 
 def _write_valid_gate5_artifacts(tmp_path: Path) -> tuple[str, dict[str, str]]:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 import shutil
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -21,6 +22,18 @@ REQUIRED_OUTPUTS = (
     "protocol_audit.json",
     "resume_metadata.json",
 )
+PLACEHOLDER_OWNERS = {"private", "your-username", "user", "username", "owner", ""}
+KAGGLE_SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*/[a-z0-9][a-z0-9-]*$")
+REQUIRED_KERNEL_METADATA_FIELDS = {
+    "id",
+    "title",
+    "code_file",
+    "language",
+    "kernel_type",
+    "is_private",
+    "enable_gpu",
+    "dataset_sources",
+}
 
 
 @dataclass(frozen=True)
@@ -42,6 +55,10 @@ class LeWMKaggleConfig:
     validation_only: bool = True
 
     def __post_init__(self) -> None:
+        validate_kaggle_slug(self.dataset_slug, label="dataset_slug")
+        validate_kaggle_slug(self.kernel_slug, label="kernel_slug")
+        if self.dataset_slug == self.kernel_slug:
+            raise ValueError("Kaggle kernel_slug must differ from dataset_slug.")
         if self.action_mode not in {"real", "zero_action"}:
             raise ValueError("Kaggle LeWM action_mode must be real or zero_action.")
         if not self.validation_only:
@@ -52,6 +69,17 @@ class LeWMKaggleConfig:
             raise ValueError("LeWM Kaggle batch_size and max_epochs must be positive.")
         if self.max_train_steps < 1 or self.max_validation_steps < 1:
             raise ValueError("LeWM Kaggle smoke step limits must be positive.")
+
+
+def validate_kaggle_slug(slug: str, *, label: str) -> None:
+    if not KAGGLE_SLUG_PATTERN.match(slug):
+        raise ValueError(
+            f"Kaggle {label} must be explicit owner/slug with lowercase letters, "
+            "digits, and hyphens only."
+        )
+    owner, _name = slug.split("/", 1)
+    if owner in PLACEHOLDER_OWNERS:
+        raise ValueError(f"Kaggle {label} uses placeholder owner: {owner}")
 
 
 def quota_allocation(total_hours: float) -> dict[str, float]:
@@ -231,24 +259,137 @@ def prepare_lewm_kaggle_package(
     return summary
 
 
-def request_package_approvals(package_root: Path, approvals_root: Path) -> dict[str, Any]:
+def _read_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8-sig"))
+
+
+def _sha256_json(payload: Any) -> str:
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
+def validate_lewm_kaggle_package(package_root: Path) -> dict[str, Any]:
     dataset_root = package_root / "dataset"
     kernel_root = package_root / "kernel"
-    kernel_script = kernel_root / "lewm_validation_kernel.py"
+    dataset_metadata_path = dataset_root / "dataset-metadata.json"
+    kernel_metadata_path = kernel_root / "kernel-metadata.json"
+    if not dataset_metadata_path.is_file():
+        raise FileNotFoundError(f"Missing dataset metadata: {dataset_metadata_path}")
+    if not kernel_metadata_path.is_file():
+        raise FileNotFoundError(f"Missing kernel metadata: {kernel_metadata_path}")
+
+    dataset_metadata = _read_json(dataset_metadata_path)
+    kernel_metadata = _read_json(kernel_metadata_path)
+    missing = sorted(REQUIRED_KERNEL_METADATA_FIELDS - set(kernel_metadata))
+    if missing:
+        raise ValueError(f"Kernel metadata missing required fields: {', '.join(missing)}")
+
+    dataset_slug = str(dataset_metadata.get("id", ""))
+    kernel_slug = str(kernel_metadata.get("id", ""))
+    validate_kaggle_slug(dataset_slug, label="dataset_slug")
+    validate_kaggle_slug(kernel_slug, label="kernel_slug")
+    if dataset_slug == kernel_slug:
+        raise ValueError("Kaggle kernel_slug must differ from dataset_slug.")
+
+    code_file = kernel_root / str(kernel_metadata.get("code_file", ""))
+    if not code_file.is_file():
+        raise FileNotFoundError(f"Kernel code_file does not exist: {code_file.name}")
+    if kernel_metadata.get("language") != "python":
+        raise ValueError("Kernel metadata language must be python.")
+    if kernel_metadata.get("kernel_type") != "script":
+        raise ValueError("Kernel metadata kernel_type must be script.")
+    if kernel_metadata.get("is_private") is not True:
+        raise ValueError("Kernel metadata must keep is_private=true.")
+    if kernel_metadata.get("enable_gpu") is not True:
+        raise ValueError("Kernel metadata must keep enable_gpu=true.")
+    dataset_sources = kernel_metadata.get("dataset_sources")
+    if dataset_sources != [dataset_slug]:
+        raise ValueError("Kernel metadata dataset_sources must match the dataset slug exactly.")
+
     SecurityGuard().scan_package(dataset_root, "dataset")
     SecurityGuard().scan_package(kernel_root, "kernel")
-    dataset_fingerprint = FingerprintBuilder.inventory_sha256(dataset_root)
-    kernel_payload = {
-        "dataset_fingerprint": dataset_fingerprint,
+    return {
+        "dataset_slug": dataset_slug,
+        "kernel_slug": kernel_slug,
+        "kernel_metadata_sha256": FingerprintBuilder.sha256_file(kernel_metadata_path),
+        "kernel_code_sha256": FingerprintBuilder.sha256_file(code_file),
         "kernel_inventory_sha256": FingerprintBuilder.inventory_sha256(kernel_root),
-        "kernel_script_sha256": FingerprintBuilder.sha256_file(kernel_script),
+        "dataset_inventory_sha256": FingerprintBuilder.inventory_sha256(dataset_root),
     }
-    kernel_fingerprint = hashlib.sha256(
-        json.dumps(kernel_payload, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
+
+
+def _kernel_fingerprint_payload(package_root: Path) -> dict[str, Any]:
+    validation = validate_lewm_kaggle_package(package_root)
+    return {
+        "dataset_slug": validation["dataset_slug"],
+        "kernel_slug": validation["kernel_slug"],
+        "dataset_fingerprint": validation["dataset_inventory_sha256"],
+        "kernel_inventory_sha256": validation["kernel_inventory_sha256"],
+        "kernel_metadata_sha256": validation["kernel_metadata_sha256"],
+        "kernel_script_sha256": validation["kernel_code_sha256"],
+    }
+
+
+def _write_request(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def validate_kernel_push_preflight(
+    package_root: Path,
+    approvals_root: Path | None = None,
+) -> dict[str, Any]:
+    kernel_payload = _kernel_fingerprint_payload(package_root)
+    kernel_fingerprint = _sha256_json(kernel_payload)
+    result = {
+        **kernel_payload,
+        "kernel_fingerprint": kernel_fingerprint,
+        "approval_status": "not_checked",
+    }
+    if approvals_root is None:
+        return result
+    approved_path = approvals_root / "kernel_push_approval.approved.json"
+    if not approved_path.is_file():
+        result["approval_status"] = "missing"
+        return result
+    approved = _read_json(approved_path)
+    if approved.get("fingerprint") != kernel_fingerprint:
+        result["approval_status"] = "fingerprint_mismatch"
+        return result
+    if approved.get("consumed_at") is not None:
+        raise ValueError("Kernel push approval for this fingerprint was already consumed.")
+    result["approval_status"] = "valid"
+    return result
+
+
+def request_package_approvals(package_root: Path, approvals_root: Path) -> dict[str, Any]:
+    validation = validate_lewm_kaggle_package(package_root)
+    dataset_fingerprint = validation["dataset_inventory_sha256"]
+    kernel_payload = _kernel_fingerprint_payload(package_root)
+    kernel_fingerprint = _sha256_json(kernel_payload)
     store = ApprovalStore(approvals_root)
     dataset_request = store.request("dataset_upload_approval", dataset_fingerprint)
     kernel_request = store.request("kernel_push_approval", kernel_fingerprint)
+    dataset_request.update(
+        {
+            "dataset_slug": validation["dataset_slug"],
+            "dataset_inventory_sha256": dataset_fingerprint,
+        }
+    )
+    kernel_request.update(
+        {
+            **kernel_payload,
+            "old_approval_consumed": True,
+            "live_actions_performed": False,
+            "approval_note": (
+                "Prior Gate 5 kernel approval was consumed by the HTTP 409 attempt; "
+                "this request does not authorize a live retry."
+            ),
+        }
+    )
+    _write_request(approvals_root / "dataset_upload_approval.request.json", dataset_request)
+    _write_request(approvals_root / "kernel_push_approval.request.json", kernel_request)
     return {
         "dataset_upload_approval": dataset_request,
         "kernel_push_approval": kernel_request,

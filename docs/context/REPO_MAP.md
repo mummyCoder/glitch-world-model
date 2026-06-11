@@ -1,7 +1,7 @@
 # REPO_MAP.md
 
-Generated: 2026-06-11T03:11:02+00:00
-Commit: `24d269ff3ca7ff8a4d979d954ef44b922ed22f8e`
+Generated: 2026-06-11T03:26:01+00:00
+Commit: `d50e3c7f0072219abdfd83eeec9622cf648a3351`
 Generator: `scripts/update_context_cache.py`
 
 ## Top-Level Map
@@ -65,6 +65,8 @@ Generator: `scripts/update_context_cache.py`
 | `scripts/select_tempglitch_protocol_config.py` | load_validation_candidates, build_parser, main | Python module. |
 | `scripts/smoke_lewm_checkpoint.py` | build_parser, main | Python module. |
 | `scripts/summarize_all_experiments.py` | read_json, fmt, row_for, main | Python module. |
+| `scripts/update_context_cache.py` | CacheMetadata, git_sha, metadata, read_optional, has_gate5_conflict_record, build_boot, build_project_state, build_next_action, build_last_handoff_template, build_context_readme, build_context_policy, build_task_router | Python module. |
+| `scripts/validate_context_cache.py` | main | Python module. |
 | `scripts/validate_lewm_kaggle_artifacts.py` | main | Python module. |
 | `scripts/validate_research_release.py` | git_tracked_files, validate_tracked_files, validate_required_paths, validate_playbook_structure, validate_release, working_tree_errors, build_parser, main | Python module. |
 | `src/glitch_detection/__init__.py` | - | Glitch detection research pipeline. |
@@ -80,7 +82,7 @@ Generator: `scripts/update_context_cache.py`
 | `src/glitch_detection/kaggle_automation.py` | _utc_now, _write_json_atomic, AutomationState, StateStore, ApprovalStore, FingerprintBuilder, SecurityViolation, SecurityGuard, is_transient_error, _gpu_block_reason, AutomationCommandError, AutomationBlockedError | Python module. |
 | `src/glitch_detection/lewm_adapter.py` | LeWMIntegrationError, ActionMode, sha256_file, LeWMCheckpointSpec, LeWMAdapter | Python module. |
 | `src/glitch_detection/lewm_data.py` | LeWMDataUnavailableError, LeWMEpisode, _frame_paths, episode_from_clip, episode_from_wob_tar, episode_from_video, write_lance_dataset, inspect_lance_dataset, write_dataset_inspection | Python module. |
-| `src/glitch_detection/lewm_kaggle.py` | LeWMKaggleConfig, quota_allocation, render_validation_kernel, prepare_lewm_kaggle_package, request_package_approvals, _validate_finite_numbers, validate_lewm_smoke_artifacts | Python module. |
+| `src/glitch_detection/lewm_kaggle.py` | LeWMKaggleConfig, validate_kaggle_slug, quota_allocation, render_validation_kernel, prepare_lewm_kaggle_package, _read_json, _sha256_json, validate_lewm_kaggle_package, _kernel_fingerprint_payload, _write_request, validate_kernel_push_preflight, request_package_approvals | Python module. |
 | `src/glitch_detection/lewm_latent.py` | LeWMUnavailableError, resolve_checkpoint, resolve_config, _require_torch, _list_frames, _load_pixels, score_record, score_manifest, build_parser, main | Python module. |
 | `src/glitch_detection/lewm_protocol.py` | LeWMSplitRecord, _hash_fraction, assign_hashed_group_splits, audit_lewm_splits, write_lewm_split | Python module. |
 | `src/glitch_detection/lewm_training.py` | LeWMTrainingError, LeWMTrainConfig, _require_runtime, _config_hash, build_model_config, _preprocess_pixels, _sigreg, _dataset, _run_epoch, train_lewm | Python module. |
@@ -140,6 +142,8 @@ Generator: `scripts/update_context_cache.py`
 | `scripts/select_tempglitch_protocol_config.py` | CLI/helper script. | general |
 | `scripts/smoke_lewm_checkpoint.py` | CLI/helper script. | Gate 5 |
 | `scripts/summarize_all_experiments.py` | CLI/helper script. | general |
+| `scripts/update_context_cache.py` | CLI/helper script. | general |
+| `scripts/validate_context_cache.py` | CLI/helper script. | general |
 | `scripts/validate_lewm_kaggle_artifacts.py` | CLI/helper script. | Gate 5 |
 | `scripts/validate_research_release.py` | CLI/helper script. | general |
 
@@ -150,6 +154,7 @@ Generator: `scripts/update_context_cache.py`
 | `tests/test_analysis.py` | analysis |
 | `tests/test_calibration.py` | calibration |
 | `tests/test_compare_experiments.py` | compare_experiments |
+| `tests/test_context_cache.py` | context_cache |
 | `tests/test_dataset_protocols.py` | dataset_protocols |
 | `tests/test_dataset_report.py` | dataset_report |
 | `tests/test_doctor.py` | doctor |
@@ -197,6 +202,14 @@ Generator: `scripts/update_context_cache.py`
 ## Docs
 | Doc | Purpose |
 |---|---|
+| `docs/context/BOOT.md` | BOOT |
+| `docs/context/CONTEXT_POLICY.md` | CONTEXT POLICY |
+| `docs/context/LAST_HANDOFF.md` | LAST HANDOFF |
+| `docs/context/NEXT_ACTION.md` | NEXT ACTION |
+| `docs/context/PROJECT_STATE.md` | PROJECT STATE |
+| `docs/context/README.md` | README |
+| `docs/context/REPO_MAP.md` | REPO MAP |
+| `docs/context/TASK_ROUTER.md` | TASK ROUTER |
 | `docs/research/00_research_overview.md` | 00 research overview |
 | `docs/research/01_problem_statement.md` | 01 problem statement |
 | `docs/research/02_literature_matrix.md` | 02 literature matrix |
@@ -269,11 +282,3 @@ Generator: `scripts/update_context_cache.py`
 | `docs/workflows/lewm_integration_protocol.md` | lewm integration protocol |
 | `docs/workflows/locked_test_release.md` | locked test release |
 | `docs/workflows/new_research_project_bootstrap.md` | new research project bootstrap |
-| `docs/workflows/paper_claim_rules.md` | paper claim rules |
-| `docs/workflows/paper_writing_protocol.md` | paper writing protocol |
-| `docs/workflows/research_claim_protocol.md` | research claim protocol |
-| `docs/workflows/research_project_template.md` | research project template |
-| `docs/workflows/research_tooling_stack.md` | research tooling stack |
-| `docs/workflows/runtime_management.md` | runtime management |
-| `docs/workflows/security_checks.md` | security checks |
-| `docs/workflows/windows_commands.md` | windows commands |

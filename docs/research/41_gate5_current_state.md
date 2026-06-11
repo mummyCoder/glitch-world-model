@@ -15,13 +15,35 @@ local package. No downloaded Kaggle CUDA train/resume artifact set exists.
 - Dataset status: ready; eight Lance files matched by relative name and byte size.
 - Dataset approval: consumed by the completed upload.
 - Kernel approval: consumed by the single 2026-06-11 push attempt.
+- Confirmed 409 preflight cause: the consumed package used the same Kaggle slug for dataset and
+  kernel, `huynhdieuthanh/lewm-tempglitch-gate5-smoke`.
+- Corrected ignored package prepared after the incident:
+  `outputs/gate5/packages/tempglitch_kernel_v2`.
+- Corrected kernel slug: `huynhdieuthanh/lewm-gate5-cuda-smoke-v2`.
+- Corrected kernel fingerprint:
+  `4d1108f7e9b5f62ba969961f2bee56f9bd226d794ab350386ce510006f91e3f8`.
+- Corrected approval request root:
+  `outputs/gate5/approvals/tempglitch_kernel_v2`.
 - Locked test: not packaged, materialized, or scored.
+
+## 409 Diagnosis Matrix
+
+| Hypothesis | Status | Evidence |
+| --- | --- | --- |
+| Kernel slug already exists or was reserved | UNKNOWN | No read-only local artifact proves a pre-existing Kaggle kernel; the failed slug was not visible in the account list after the 409. |
+| Kernel slug equals dataset slug | CONFIRMED | Consumed `kernel-metadata.json` and `dataset-metadata.json` both used `huynhdieuthanh/lewm-tempglitch-gate5-smoke`. |
+| Placeholder owner such as `private/...` | RULED_OUT | Consumed package used owner `huynhdieuthanh`, not a placeholder owner. |
+| Bad `id` in kernel metadata | CONFIRMED | The kernel `id` was validly formatted but conflicted with the dataset slug; the new guard requires a distinct kernel slug. |
+| Bad or stale dataset source slug | RULED_OUT | Kernel `dataset_sources` matched the ready dataset slug. |
+| Duplicate title/slug behavior in Kaggle CLI | LIKELY | Kernel title `lewm-tempglitch-gate5-smoke` slugified to the same slug as the dataset and kernel `id`. |
+| Package fingerprint approved before metadata fix | CONFIRMED | Old approval fingerprint `8c918...d0a4` covered the pre-fix package and is consumed. |
+| Unresolved Kaggle-side stale state | POSSIBLE | The local metadata conflict is sufficient, but Kaggle-side reservation cannot be fully ruled out without another live action, which is forbidden here. |
 
 ## Artifact Contract Audit
 
 | Expected artifact | Produced by | Currently available from Kaggle run? | Blocker | Fix needed |
 | --- | --- | --- | --- | --- |
-| `run_config.json` | generated validation kernel | no | kernel submission returned HTTP 409 | resolve submission conflict, obtain fresh approval, run once |
+| `run_config.json` | generated validation kernel | no | kernel submission returned HTTP 409 | obtain fresh approval for corrected package, run once |
 | `environment.json` | generated validation kernel | no | no Kaggle run | same |
 | `dataset_metadata.json` | generated validation kernel after training | no | no Kaggle run | same |
 | `training_metadata.json` | `train_lewm` | no | no Kaggle run | same |
@@ -46,5 +68,5 @@ The strict validator now checks:
 - finite collapse diagnostics;
 - false locked-test flags in both protocol and training metadata.
 
-The package dry-run and focused validator fixtures pass locally. This is engineering evidence
-only; it does not upgrade Gate 5.
+The package dry-run and focused validator fixtures pass locally. The corrected package/request are
+ready for a new human approval, but this is engineering evidence only; it does not upgrade Gate 5.

@@ -135,7 +135,9 @@ the documented release gate, and explicit authorization.
 
 The June 11, 2026 Gate 5 TempGlitch dataset upload is ready, but the single approved kernel push
 returned HTTP `409 Conflict` before a run was established. That one-time approval is consumed;
-another live attempt requires a corrected final package fingerprint and fresh explicit approval.
+the local cause was a kernel slug that matched the dataset slug. A corrected package now uses
+`huynhdieuthanh/lewm-gate5-cuda-smoke-v2` and has a fresh request fingerprint, but another live
+attempt still requires explicit approval.
 
 The reusable split-safe core is implemented in
 `src/glitch_detection/experiment_protocol.py`. It validates grouped splits, fits
@@ -244,9 +246,9 @@ isolated LeWM environment and compatible checkpoint/data contracts:
 python -m glitch_detection.lewm_latent --manifest data/processed/my_experiment/manifest.csv --labels data/raw/my_labels.csv --output outputs/my_experiment_lewm_scores.csv --checkpoint path/to/lewm.ckpt
 ```
 
-The next evidence step is to resolve the Kaggle submission conflict, obtain a fresh
-fingerprint-bound approval, and complete a CUDA train/resume smoke with locally validated
-artifacts. Gameplay-scale scoring and validation metrics remain later gates.
+The next evidence step is to approve the corrected Gate 5 kernel fingerprint, then complete one
+CUDA train/resume smoke with locally validated artifacts. Gameplay-scale scoring and validation
+metrics remain later gates.
 
 Audit the Phase 6E neural training partition without loading PyTorch or touching test:
 

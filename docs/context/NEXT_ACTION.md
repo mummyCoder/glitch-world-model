@@ -1,7 +1,7 @@
 # NEXT_ACTION.md
 
-Last updated: 2026-06-11T03:11:02+00:00
-Commit: `24d269ff3ca7ff8a4d979d954ef44b922ed22f8e`
+Last updated: 2026-06-11T03:26:01+00:00
+Commit: `d50e3c7f0072219abdfd83eeec9622cf648a3351`
 
 ## Current Priority
 Complete or unblock Gate 5 Kaggle CUDA smoke/resume artifact.
@@ -28,5 +28,7 @@ playbook/cache, commit and push.
 
 ## Current Known Blocker
 The 2026-06-11 TempGlitch kernel push returned HTTP 409 before execution and consumed its
-one-time approval. Investigate the save conflict without another push, then request a fresh
-fingerprint-bound approval for any corrected package.
+one-time approval. The local cause was a kernel slug equal to the dataset slug. A corrected
+package/request exists with kernel slug `huynhdieuthanh/lewm-gate5-cuda-smoke-v2`; obtain fresh
+approval for fingerprint `4d1108f7e9b5f62ba969961f2bee56f9bd226d794ab350386ce510006f91e3f8`
+before any live push.

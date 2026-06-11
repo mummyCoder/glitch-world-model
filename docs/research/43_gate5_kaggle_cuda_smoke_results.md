@@ -28,6 +28,8 @@ records, not training evidence.
 
 ## Next Action
 
-Investigate the Kaggle save conflict using read-only metadata and a distinct reviewed kernel
-identity if needed. Any changed package must be fingerprinted and approved again before another
-live push.
+The 409 cause is now locally classified: the consumed package used the same slug for the Kaggle
+dataset and kernel. A corrected package with kernel slug
+`huynhdieuthanh/lewm-gate5-cuda-smoke-v2` has been prepared and fingerprinted, but no retry was
+performed. Any live push requires fresh approval for fingerprint
+`4d1108f7e9b5f62ba969961f2bee56f9bd226d794ab350386ce510006f91e3f8`.
