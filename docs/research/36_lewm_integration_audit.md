@@ -91,8 +91,8 @@ memory. Smoke training must start with a small batch, short run, and checkpoint 
 
 ## Go / No-Go
 
-**Gate 2 passed for checkpoint loading and non-gameplay CPU inference. Gate 4 passed for the
-synthetic Lance loader contract. GO for gameplay conversion and Kaggle smoke preparation.**
+**Gate 2 passed for checkpoint loading and non-gameplay CPU inference. Gates 3-4 passed for
+frozen real-data protocols and reduced real-data Lance loader contracts. Gate 5 is partial.**
 
 Do not claim training success yet. The next required proof is:
 
@@ -100,16 +100,19 @@ Completed:
 
 1. isolated Python 3.10 dependency environment;
 2. strict official PushT checkpoint load and finite CPU inference smoke;
-3. verified custom Lance schema and five-episode loader test.
+3. verified custom Lance schema and five-episode loader test;
+4. frozen WOB and TempGlitch grouped protocols and reduced real-data Lance conversion;
+5. synthetic and reduced real-gameplay CPU forward/backward/resume smokes.
 
 Still required:
 
-1. real WOB and TempGlitch conversion;
-2. approved Kaggle GPU smoke with a saved and resumed checkpoint.
+1. approved Kaggle CUDA smoke with a saved and resumed checkpoint;
+2. gameplay-scale LeWM surprise scoring and validation metrics in later gates.
 
-A reduced synthetic CPU smoke has now verified real LeWM forward/backward, prediction plus SIGReg
-loss, checkpoint save, and hash-matching resume from epoch 1 to epoch 2. This is integration
-evidence only and does not satisfy gameplay-training Gate 6.
+Reduced synthetic and real-gameplay CPU smokes have verified LeWM forward/backward, prediction
+plus SIGReg loss, checkpoint save, and hash-matching resume from epoch 1 to epoch 2. This is
+integration evidence only and does not satisfy Kaggle CUDA Gate 5, gameplay training Gate 6, or
+evaluation Gate 7.
 
 If action-logged data cannot be obtained, proceed with zero-action and action-free adaptations
 but restrict the paper claim accordingly.

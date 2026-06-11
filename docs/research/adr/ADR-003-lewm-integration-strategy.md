@@ -11,7 +11,10 @@ makes a verified real LeWM integration mandatory before the paper may use LeWM-b
 
 ## Context
 
-The current `lewm_latent.py` file is intentionally guarded and does not load a real LeWorldModel checkpoint. The scorer registry already reserves the name `lewm_latent`, so integration can happen later without changing the pipeline shape.
+This historical ADR predates the current optional-runtime `lewm_latent` implementation. The
+scorer registry still preserves the same pipeline shape, while current verified evidence is
+limited to strict checkpoint loading, data conversion, and reduced CPU smokes. See ADR-004 and
+the claim registry for the active policy.
 
 ## Reason
 

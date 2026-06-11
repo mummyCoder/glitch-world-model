@@ -2,53 +2,65 @@
 
 ## Project Identity
 
-This repository studies latent-surprise methods for video game glitch detection. The current
-verified phase is Phase 6E: a real Kaggle CUDA Conv3D autoencoder engineering run with
-validation-only metrics. Real LeWorldModel (LeWM), JEPA, and SIGReg integration are not
-implemented.
+This repository studies LeWM/JEPA-style latent-surprise methods for video game glitch
+detection.
 
-## Scientific Honesty
+Current verified status:
 
-- `verified` means supported by a checked artifact, repository document, or primary source.
-- `experiment-pending` means the experiment has not been run.
-- `rejected` means the statement must not appear as a positive claim.
-- `future-work` means planned only.
-- Register paper-facing claims in `docs/research/16_claim_registry.md`.
-- Do not claim LeWM, JEPA, or SIGReg until code, checkpoint loading, inference, and metrics exist.
-- Do not claim state of the art.
-- Do not claim a locked-test neural result until the validation decision is frozen and the
-  locked-test release gate is explicitly opened.
+- Gates 1-4 passed at the engineering and smoke level.
+- Gate 5 is partial: local CPU train/resume exists, but Kaggle CUDA train/resume proof is
+  missing.
+- Gates 6-10 have not run.
+- Locked test is closed.
+- LeWM integration engineering exists; LeWM gameplay evaluation is not yet established.
 
-## Engineering Rules
+Safe claims are limited to checkpoint-level LeWM integration, real-data conversion, and local
+CPU forward/backward/resume smoke evidence. Do not claim LeWM glitch-detection performance,
+superiority, state of the art, temporal localization, or a neural locked-test result.
 
-- Preserve `manifest.csv`, `scores.csv`, labels CSV, and `metrics.json` interfaces.
+## Agent Operating Mode
+
+- Work as a senior research engineer: inspect evidence before editing or claiming.
+- Use gate-based execution and keep `docs/research/16_claim_registry.md` synchronized.
+- Prefer small, testable changes and tests first for behavioral code.
+- Preserve unrelated user changes and report skipped checks honestly.
+- Never convert scaffolding, fixture output, or smoke evidence into an experiment claim.
+- Follow the non-negotiable rules in `RULES.md`.
+
+## Repository Map
+
+- `src/`: reusable pipeline and model integration code.
+- `scripts/`: auditable command-line entry points.
+- `tests/`: fast default-environment tests.
+- `docs/research/`: evidence, protocols, results, and claim registry.
+- `docs/roadmap/`: gate definitions and planned work.
+- `docs/workflows/`: operational playbooks.
+- `configs/`: experiment and runtime configuration.
+- `kaggle/`: validation-only launch packages.
+- `paper/`: cautious manuscript scaffold and generated tables.
+- `external/`: read-only upstream references unless an integration task explicitly says otherwise.
+
+## Engineering Contracts
+
+- Preserve `manifest.csv`, labels CSV, `scores.csv`, and `metrics.json` interfaces.
 - Keep scorers pluggable through `src/glitch_detection/score_clips.py`.
-- Prefer small, testable changes; use tests first for behavioral code.
-- Keep methodology aligned with preprocess -> score -> evaluate -> report.
-- Do not implement LeWM or fine-tune models unless the task explicitly opens that phase.
+- Keep the default install and CI free of heavy GPU dependencies.
+- Split by source/pair/episode before windowing; fit train-dependent methods on allowed
+  train-normal data only.
+- Select configurations and thresholds on validation only.
+- Do not edit upstream code under `external/` to make local checks pass.
 
-## Git And Artifact Hygiene
+## Safety Gates
 
-- Never commit raw data, generated outputs, checkpoints, artifacts, caches, credentials,
-  `kaggle.json`, `.env`, access tokens, or private keys.
-- Do not commit files under `outputs/`, `data/raw/`, or `data/processed/` except `.gitkeep`.
-- Do not revert unrelated user changes.
+- Do not run new GPU training, Kaggle live actions, or locked-test scoring without explicit,
+  action-specific approval.
+- Dataset upload and kernel push require separate fingerprint-bound approvals.
+- Locked test requires a frozen validation decision naming exactly one configuration and claim
+  scope.
+- Never print or commit credentials, tokens, private keys, `.env`, or `kaggle.json`.
+- Never commit raw data, processed data, outputs, Lance datasets, checkpoints, or caches.
 
-## Kaggle, GPU, And Locked Test Gates
-
-- Dataset upload and kernel push each require a separate, fingerprint-bound user approval.
-- Never upload credentials or print their values.
-- Do not run new GPU training unless explicitly requested and approved.
-- Locked test must remain untouched until a saved validation decision names one configuration,
-  claim scope is recorded, and the user explicitly opens the locked-test gate.
-
-## LeWM Integration
-
-- Treat `external/le-wm` as reference code until an integration audit is complete.
-- Audit license, checkpoint provenance, preprocessing, tensor interfaces, and inference first.
-- A guarded placeholder or proxy is not a real LeWM result.
-
-## Required Verification
+## Required Commands
 
 Run before completion:
 
@@ -58,11 +70,25 @@ python -m ruff check .
 python -m ruff format --check .
 python scripts/validate_research_release.py --ci
 python scripts/check_claim_registry.py
+python scripts/doctor.py
 ```
 
-Document skipped checks and missing dependencies honestly.
+When pre-commit is available:
 
-## Final Codex Response
+```powershell
+pre-commit run --all-files
+```
 
-Report: changed files, verification evidence, scientific claim status, locked-test status,
-unresolved risks, commit SHA/branch, and the recommended next research step.
+## Documentation And Claims
+
+- `verified`: supported by a checked artifact, repository document, or primary source.
+- `experiment-pending`: experiment has not run.
+- `future-work`: planned only.
+- `rejected`: must not appear as a positive claim.
+- Paper-facing claims must be registered before use.
+- Cite primary sources and keep negative results and limitations visible.
+
+## Final Report
+
+Report changed files, verification evidence, scientific claim status, locked-test and Kaggle-live
+status, artifact/credential safety, unresolved risks, branch/SHA, and the next gate.

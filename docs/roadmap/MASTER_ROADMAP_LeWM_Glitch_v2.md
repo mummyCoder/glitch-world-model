@@ -1,19 +1,17 @@
 # MASTER ROADMAP V2 — Mandatory Real LeWM Main Method
 
-Date: June 10, 2026
+Date: June 11, 2026
 Target deadline: July 20, 2026
 Status: implementation roadmap; all unexecuted experiments remain `experiment-pending`.
 
-## Implementation Status — June 10, 2026
+## Implementation Status — June 11, 2026
 
 - Gate 1: passed.
 - Gate 2: passed for strict official checkpoint loading and finite non-gameplay CPU inference.
-- Gate 3: deterministic grouped split tooling implemented; real WOB/TempGlitch split artifacts
-  remain experiment-pending.
-- Gate 4: passed for a five-episode synthetic Lance loader-contract smoke; real dataset conversion
-  remains experiment-pending.
-- Gate 5: validation-only Kaggle package foundation implemented; live CUDA and resume proof remain
-  blocked on fresh fingerprint-bound approvals.
+- Gate 3: passed for frozen real WOB and TempGlitch grouped protocol artifacts.
+- Gate 4: passed for synthetic and reduced real-data Lance loader-contract evidence.
+- Gate 5: partial. Synthetic and reduced real-gameplay CPU forward/backward/resume smokes passed;
+  Kaggle CUDA train/resume proof remains missing and requires fresh fingerprint-bound approvals.
 - Gates 6-10: not run. Locked test remains closed.
 
 ## 1. Executive Decision
@@ -47,7 +45,7 @@ without direct evidence.
 
 **Objective:** preserve the verified research foundation before model integration.
 
-**Current evidence:** editable install works; `162` tests pass as of this roadmap session;
+**Current evidence:** editable install works; `182` tests pass as of June 11, 2026;
 synthetic and real-data baseline pipelines exist; split/threshold/locked-test gates are present.
 
 **Commands**
@@ -450,29 +448,14 @@ The project may call the method **LeWM-based** only when all are true:
 - locked test, if reported, passed the explicit release gate;
 - claim registry and paper wording match the exact integration mode.
 
-## 12. Immediate Next 72 Hours
+## 12. Immediate Next Gate
 
-### Hours 0-12
+Gate 5 now requires one approved Kaggle CUDA train/resume smoke and strict local artifact
+validation. Dataset upload and kernel push remain separate fingerprint-bound approvals. No live
+action is authorized by this roadmap update.
 
-- Pin a Python 3.10 LeWM environment.
-- Inspect installed stable-worldmodel dataset reader/writer.
-- Download one official checkpoint outside Git and record SHA-256.
-- Implement checkpoint-load/shape smoke test.
-
-### Hours 12-36
-
-- Implement `LeWMAdapter` with isolated optional imports.
-- Implement and test a 5-10 clip zero-action dataset converter.
-- Prove upstream loader reads it without episode leakage.
-
-### Hours 36-72
-
-- Run local CPU forward/backward smoke.
-- Prepare Kaggle LeWM package and dry-run.
-- Run no live action without fresh approvals.
-- If approved later, run CUDA smoke and verify checkpoint resume.
-
-**72-hour success condition:** Gate 4 passes locally and the Kaggle smoke package is ready.
+After Gate 5, Gate 6 may open for normal-only gameplay training. Gate 7 remains the first point at
+which gameplay-scale LeWM surprise scores and validation metrics can support a LeWM method claim.
 
 ## 13. Codex Master Prompt To Implement Phase 1-4
 

@@ -10,6 +10,7 @@ repos:
       - id: check-yaml
       - id: check-toml
       - id: check-json
+      - id: check-case-conflict
       - id: check-added-large-files
       - id: detect-private-key
 
@@ -19,3 +20,18 @@ repos:
       - id: ruff
       - id: ruff-format
         args: [--check]
+
+  - repo: local
+    hooks:
+      - id: research-release-validator
+        name: research release validator
+        entry: python scripts/validate_research_release.py --ci
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: claim-registry-validator
+        name: claim registry validator
+        entry: python scripts/check_claim_registry.py
+        language: system
+        pass_filenames: false
+        always_run: true

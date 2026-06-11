@@ -65,6 +65,7 @@ ipython_config.py
 
 # Environments
 .env
+kaggle.json
 .venv
 env/
 venv/
@@ -76,6 +77,7 @@ venv.bak/
 .vscode/
 .idea/
 .qodo/
+_external_references/
 
 # Project data and generated outputs
 data/*
@@ -91,6 +93,7 @@ outputs/*
 !outputs/.gitkeep
 
 checkpoints/
+*.lance/
 *.ckpt
 *.pt
 *.pth

@@ -34,6 +34,30 @@ def test_release_validator_accepts_required_files_and_safe_tracked_paths(tmp_pat
     assert errors == []
 
 
+def test_release_validator_requires_agent_governance_files(tmp_path: Path):
+    validator = load_script("validate_research_release")
+
+    expected = {
+        "AGENTS.md",
+        "RULES.md",
+        "CLAUDE.md",
+        "CONVENTIONS.md",
+        ".aider.conf.yml",
+        ".github/copilot-instructions.md",
+        ".codex/skills",
+        "docs/workflows/agent_task_template.md",
+        "docs/workflows/kaggle_live_approval.md",
+        "docs/workflows/locked_test_release.md",
+        "docs/workflows/artifact_policy.md",
+        "docs/workflows/experiment_tracking.md",
+        "docs/workflows/paper_claim_rules.md",
+        "docs/workflows/runtime_management.md",
+        "docs/workflows/security_checks.md",
+    }
+
+    assert expected <= set(validator.REQUIRED_PATHS)
+
+
 @pytest.mark.parametrize(
     "tracked_path",
     [

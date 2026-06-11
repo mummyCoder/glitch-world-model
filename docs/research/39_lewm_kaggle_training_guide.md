@@ -13,8 +13,9 @@ fingerprints, and requires fresh fingerprint-bound approvals before any live act
 5. Request and consume a separate kernel-push approval bound to the final kernel fingerprint.
 6. Run CUDA smoke, download artifacts, and verify checkpoint resume.
 
-No locked-test dataset is included. No live upload, kernel push, or GPU training was performed
-during Phase 1-4 implementation.
+No locked-test dataset is included. Gate 5 remains incomplete because no locally validated LeWM
+Kaggle CUDA train/resume artifact exists. An approval record, upload, or kernel push by itself
+does not prove successful training.
 
 The reusable runner `scripts/run_kaggle_lewm.py` was first verified locally on synthetic data.
 On 2026-06-11, reduced real-gameplay CPU smokes also completed forward/backward and hash-matching

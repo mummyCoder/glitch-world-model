@@ -18,6 +18,11 @@ OPTIONAL_IMPORTS = {
 REQUIRED_PATHS = [
     "README.md",
     "AGENTS.md",
+    "RULES.md",
+    "CLAUDE.md",
+    "CONVENTIONS.md",
+    ".github/copilot-instructions.md",
+    ".codex/skills",
     "pyproject.toml",
     "docs/research",
 ]
@@ -27,6 +32,9 @@ GITIGNORE_PROBES = [
     "outputs/probe.file",
     "checkpoints/probe.ckpt",
     ".test-tmp/probe.file",
+    "_external_references/probe.file",
+    "probe.lance/data.bin",
+    "kaggle.json",
 ]
 
 

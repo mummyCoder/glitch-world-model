@@ -6,7 +6,18 @@ This workspace starts with a small baseline pipeline for video game glitch detec
 
 This repo is currently a baseline research MVP for the topic "Latent World Models for Video Game Glitch Detection: A JEPA-based Approach." See the [research overview](docs/research/00_research_overview.md) for the project scope and hypothesis.
 
-`mini_latent` is the current lightweight latent-dynamics proxy. `lewm_latent` is reserved for future real LeWorldModel integration and is intentionally guarded until that work is explicitly scoped.
+`mini_latent` remains the lightweight latent-dynamics proxy. LeWM integration engineering now
+includes strict checkpoint loading, finite non-gameplay CPU inference, real-data conversion, and
+reduced CPU forward/backward/resume smokes. This is not gameplay-scale LeWM evaluation.
+
+Current LeWM gate status:
+
+- Gates 1-4 passed at the engineering and smoke level.
+- Gate 5 is partial: local CPU train/resume evidence exists, but Kaggle CUDA train/resume proof
+  is missing.
+- Gates 6-10 have not run.
+- Locked test remains closed.
+- No LeWM glitch-detection performance, superiority, or neural locked-test claim is supported.
 
 Research planning docs:
 
@@ -23,6 +34,10 @@ Research planning docs:
 - [Phase 6D repeated grouped results](docs/research/28_phase6d_repeated_grouped_results.md)
 - [Phase 6E Kaggle video autoencoder protocol](docs/research/29_phase6e_kaggle_video_autoencoder_protocol.md)
 - [Phase 6E Kaggle validation results](docs/research/31_phase6e_kaggle_validation_results.md)
+- [LeWM runtime and checkpoint report](docs/research/37_lewm_runtime_checkpoint_report.md)
+- [LeWM data contract](docs/research/38_lewm_data_format.md)
+- [LeWM Kaggle training guide](docs/research/39_lewm_kaggle_training_guide.md)
+- [Real-dataset Gate 3-4 protocol](docs/research/40_gate3_gate4_real_dataset_protocol.md)
 
 Phase 6D completed five pair-suspect grouped refit/selection/locked-test runs with zero
 cross-split groups. The selected pipeline achieved locked-test AUROC `0.573 +/- 0.118`; this
@@ -99,11 +114,11 @@ python scripts\make_paper_tables.py
 latexmk -pdf -cd paper/main.tex
 ```
 
-Current status: Phase 6E is complete as a validation-only engineering result; real LeWM is not
-implemented. The revised strategy makes verified real LeWM integration mandatory before any
-LeWM-based paper claim. The next gate is the LeWM runtime/checkpoint/data-contract audit. Do not
-touch locked test without satisfying the documented release gate and receiving explicit
-authorization.
+Current status: Phase 6E is complete as a validation-only Conv3D engineering result. The separate
+LeWM path has passed Gates 1-4 and has partial Gate 5 local CPU evidence, but it has no verified
+Kaggle CUDA train/resume artifact and no gameplay-scale glitch metric. Gate 7 therefore remains
+closed for LeWM-based paper claims. Do not touch locked test without a frozen validation decision,
+the documented release gate, and explicit authorization.
 
 The reusable split-safe core is implemented in
 `src/glitch_detection/experiment_protocol.py`. It validates grouped splits, fits
@@ -205,13 +220,15 @@ Run the mini latent transition scorer for a demo only:
 python -m glitch_detection.run_baseline --input data/raw/my_frames --labels data/raw/my_labels.csv --name my_mini_latent_experiment --clip-length 16 --stride 8 --size 128 --scorer mini_latent --demo-allow-evaluation-label-fitting
 ```
 
-The LeWM scorer slot is registered but intentionally guarded until a checkpoint is available:
+The optional-runtime LeWM scorer preserves the repository scoring interface. It requires the
+isolated LeWM environment and compatible checkpoint/data contracts:
 
 ```powershell
 python -m glitch_detection.lewm_latent --manifest data/processed/my_experiment/manifest.csv --labels data/raw/my_labels.csv --output outputs/my_experiment_lewm_scores.csv --checkpoint path/to/lewm.ckpt
 ```
 
-Expected next implementation step: load LeWM, encode each clip, predict next latent embeddings, and write latent prediction error scores.
+The next evidence step is an approved Kaggle CUDA train/resume smoke with locally validated
+artifacts. Gameplay-scale scoring and validation metrics remain later gates.
 
 Audit the Phase 6E neural training partition without loading PyTorch or touching test:
 

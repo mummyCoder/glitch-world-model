@@ -33,4 +33,3 @@ surprise with shape `(1,3)`.
 Checkpoint loading and non-gameplay inference are verified engineering results. Gameplay
 training, gameplay scoring, SIGReg benefit, LeWM glitch-detection performance, and locked-test
 results remain experiment-pending.
-
