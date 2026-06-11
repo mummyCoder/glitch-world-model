@@ -39,6 +39,9 @@ Research planning docs:
 - [LeWM data contract](docs/research/38_lewm_data_format.md)
 - [LeWM Kaggle training guide](docs/research/39_lewm_kaggle_training_guide.md)
 - [Real-dataset Gate 3-4 protocol](docs/research/40_gate3_gate4_real_dataset_protocol.md)
+- [Gate 5 current-state audit](docs/research/41_gate5_current_state.md)
+- [Gate 5 approval status](docs/research/42_gate5_kernel_approval_status.md)
+- [Gate 5 Kaggle execution record](docs/research/43_gate5_kaggle_cuda_smoke_results.md)
 
 Phase 6D completed five pair-suspect grouped refit/selection/locked-test runs with zero
 cross-split groups. The selected pipeline achieved locked-test AUROC `0.573 +/- 0.118`; this
@@ -120,6 +123,10 @@ LeWM path has passed Gates 1-4 and has partial Gate 5 local CPU evidence, but it
 Kaggle CUDA train/resume artifact and no gameplay-scale glitch metric. Gate 7 therefore remains
 closed for LeWM-based paper claims. Do not touch locked test without a frozen validation decision,
 the documented release gate, and explicit authorization.
+
+The June 11, 2026 Gate 5 TempGlitch dataset upload is ready, but the single approved kernel push
+returned HTTP `409 Conflict` before a run was established. That one-time approval is consumed;
+another live attempt requires a corrected final package fingerprint and fresh explicit approval.
 
 The reusable split-safe core is implemented in
 `src/glitch_detection/experiment_protocol.py`. It validates grouped splits, fits
@@ -228,7 +235,8 @@ isolated LeWM environment and compatible checkpoint/data contracts:
 python -m glitch_detection.lewm_latent --manifest data/processed/my_experiment/manifest.csv --labels data/raw/my_labels.csv --output outputs/my_experiment_lewm_scores.csv --checkpoint path/to/lewm.ckpt
 ```
 
-The next evidence step is an approved Kaggle CUDA train/resume smoke with locally validated
+The next evidence step is to resolve the Kaggle submission conflict, obtain a fresh
+fingerprint-bound approval, and complete a CUDA train/resume smoke with locally validated
 artifacts. Gameplay-scale scoring and validation metrics remain later gates.
 
 Audit the Phase 6E neural training partition without loading PyTorch or touching test:

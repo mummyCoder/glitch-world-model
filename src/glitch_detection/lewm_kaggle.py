@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import shutil
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -255,6 +256,30 @@ def request_package_approvals(package_root: Path, approvals_root: Path) -> dict[
     }
 
 
+def _validate_finite_numbers(payload: Any, *, label: str) -> None:
+    numeric_values: list[float] = []
+
+    def collect(value: Any) -> None:
+        if isinstance(value, bool):
+            return
+        if isinstance(value, int | float):
+            numeric_values.append(float(value))
+            return
+        if isinstance(value, dict):
+            for nested in value.values():
+                collect(nested)
+            return
+        if isinstance(value, list):
+            for nested in value:
+                collect(nested)
+
+    collect(payload)
+    if not numeric_values:
+        raise ValueError(f"LeWM {label} contains no numeric values.")
+    if not all(math.isfinite(value) for value in numeric_values):
+        raise ValueError(f"LeWM {label} contains non-finite values.")
+
+
 def validate_lewm_smoke_artifacts(root: Path) -> dict[str, Any]:
     missing = [name for name in REQUIRED_OUTPUTS if not (root / name).is_file()]
     if missing:
@@ -264,6 +289,8 @@ def validate_lewm_smoke_artifacts(root: Path) -> dict[str, Any]:
     dataset = json.loads((root / "dataset_metadata.json").read_text(encoding="utf-8-sig"))
     protocol = json.loads((root / "protocol_audit.json").read_text(encoding="utf-8-sig"))
     resume = json.loads((root / "resume_metadata.json").read_text(encoding="utf-8-sig"))
+    loss_history = json.loads((root / "loss_history.json").read_text(encoding="utf-8-sig"))
+    diagnostics = json.loads((root / "collapse_diagnostics.json").read_text(encoding="utf-8-sig"))
     checkpoint_hash = (root / "checkpoint.sha256").read_text(encoding="utf-8-sig").strip()
     if environment.get("cuda_available") is not True or training.get("device") != "cuda":
         raise ValueError("LeWM Gate 5 artifacts do not prove CUDA execution.")
@@ -279,8 +306,16 @@ def validate_lewm_smoke_artifacts(root: Path) -> dict[str, Any]:
         raise ValueError("LeWM dataset/training hashes differ.")
     if checkpoint_hash != training.get("checkpoint_sha256"):
         raise ValueError("LeWM checkpoint SHA-256 does not match training metadata.")
+    if not isinstance(loss_history, list) or not loss_history:
+        raise ValueError("LeWM loss history must contain at least one epoch.")
+    _validate_finite_numbers(loss_history, label="loss history")
+    if diagnostics.get("finite") is not True:
+        raise ValueError("LeWM collapse diagnostics are not finite.")
+    _validate_finite_numbers(diagnostics, label="collapse diagnostics")
     if protocol.get("locked_test_materialized") or protocol.get("locked_test_scored"):
         raise ValueError("LeWM Gate 5 artifacts indicate locked-test access.")
+    if training.get("locked_test_materialized") or training.get("locked_test_scored"):
+        raise ValueError("LeWM training metadata indicates locked-test access.")
     return {
         "status": "gate5_cuda_resume_verified",
         "device": training["device"],

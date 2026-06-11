@@ -17,6 +17,15 @@ No locked-test dataset is included. Gate 5 remains incomplete because no locally
 Kaggle CUDA train/resume artifact exists. An approval record, upload, or kernel push by itself
 does not prove successful training.
 
+On 2026-06-11, the approved TempGlitch dataset upload was confirmed ready and matched the local
+Lance package inventory by file name and size. One exact fingerprint-approved kernel push was
+attempted, but Kaggle returned HTTP `409 Conflict`; the approval is now consumed and no run or
+downloaded artifacts exist. See
+[the current-state audit](41_gate5_current_state.md),
+[approval status](42_gate5_kernel_approval_status.md), and
+[execution record](43_gate5_kaggle_cuda_smoke_results.md). A fresh exact approval is required
+before any retry.
+
 The reusable runner `scripts/run_kaggle_lewm.py` was first verified locally on synthetic data.
 On 2026-06-11, reduced real-gameplay CPU smokes also completed forward/backward and hash-matching
 resume from epoch 1 to epoch 2 for both the TempGlitch zero-action and WOB real-action paths.
@@ -24,7 +33,9 @@ This does not establish Kaggle CUDA training or gameplay glitch-detection perfor
 
 The generated Gate 5 kernel now fails closed without CUDA, trains once, resumes once with the same
 config/data hashes, and requires the resumed epoch to advance. Downloaded artifacts must pass
-`scripts/validate_lewm_kaggle_artifacts.py`.
+`scripts/validate_lewm_kaggle_artifacts.py`. The validator rejects missing artifacts, non-finite
+losses or collapse diagnostics, hash/resume mismatches, non-CUDA execution, and locked-test flags
+in protocol or training metadata.
 
 ## Quota Policy
 

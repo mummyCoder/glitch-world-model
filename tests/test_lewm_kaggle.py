@@ -1,4 +1,7 @@
+import json
 from pathlib import Path
+
+import pytest
 
 from glitch_detection.lewm_kaggle import (
     REQUIRED_OUTPUTS,
@@ -69,7 +72,7 @@ def test_kaggle_package_creates_separate_fingerprint_bound_requests(tmp_path: Pa
     assert (package / "kernel" / "src" / "glitch_detection" / "lewm_training.py").is_file()
 
 
-def test_strict_gate5_artifact_validation_requires_cuda_resume_and_matching_hashes(tmp_path: Path):
+def _write_valid_gate5_artifacts(tmp_path: Path) -> tuple[str, dict[str, str]]:
     for name in REQUIRED_OUTPUTS:
         (tmp_path / name).write_text("{}\n", encoding="utf-8")
     config_hash = "config-hash"
@@ -100,10 +103,68 @@ def test_strict_gate5_artifact_validation_requires_cuda_resume_and_matching_hash
         ),
         encoding="utf-8",
     )
+    (tmp_path / "loss_history.json").write_text(
+        '[{"epoch":1,"train":{"total":1.0},"validation":{"total":0.9}}]\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "collapse_diagnostics.json").write_text(
+        '{"latent_variance_mean":0.2,"latent_variance_min":0.1,"finite":true}\n',
+        encoding="utf-8",
+    )
     (tmp_path / "checkpoint.sha256").write_text(checkpoint_hash + "\n", encoding="utf-8")
+    return config_hash, dataset_hashes
+
+
+def test_strict_gate5_artifact_validation_requires_cuda_resume_and_matching_hashes(tmp_path: Path):
+    config_hash, dataset_hashes = _write_valid_gate5_artifacts(tmp_path)
 
     result = validate_lewm_smoke_artifacts(tmp_path)
 
     assert result["status"] == "gate5_cuda_resume_verified"
     assert result["config_hash"] == config_hash
     assert result["dataset_hashes"] == dataset_hashes
+
+
+def test_strict_gate5_artifact_validation_rejects_non_finite_loss(tmp_path: Path):
+    _write_valid_gate5_artifacts(tmp_path)
+    (tmp_path / "loss_history.json").write_text(
+        json.dumps([{"epoch": 1, "train": {"total": float("nan")}}]) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="loss history contains non-finite"):
+        validate_lewm_smoke_artifacts(tmp_path)
+
+
+def test_strict_gate5_artifact_validation_rejects_invalid_collapse_diagnostics(
+    tmp_path: Path,
+):
+    _write_valid_gate5_artifacts(tmp_path)
+    (tmp_path / "collapse_diagnostics.json").write_text(
+        '{"latent_variance_mean":0.2,"latent_variance_min":0.1,"finite":false}\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="collapse diagnostics are not finite"):
+        validate_lewm_smoke_artifacts(tmp_path)
+
+
+def test_strict_gate5_artifact_validation_rejects_training_locked_test_access(
+    tmp_path: Path,
+):
+    _write_valid_gate5_artifacts(tmp_path)
+    training_path = tmp_path / "training_metadata.json"
+    training = json.loads(training_path.read_text(encoding="utf-8"))
+    training["locked_test_scored"] = True
+    training_path.write_text(json.dumps(training) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="training metadata indicates locked-test access"):
+        validate_lewm_smoke_artifacts(tmp_path)
+
+
+def test_strict_gate5_artifact_validation_lists_missing_artifacts(tmp_path: Path):
+    with pytest.raises(
+        FileNotFoundError,
+        match=r"Missing LeWM smoke artifacts: run_config\.json, environment\.json",
+    ):
+        validate_lewm_smoke_artifacts(tmp_path)
