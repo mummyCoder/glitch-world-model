@@ -40,6 +40,17 @@ The generator now makes the kernel clone the repository and install from
 `huynhdieuthanh/lewm-gate5-cuda-smoke-v3` and waits for fresh approval of fingerprint
 `47107246ea537fce9c435717301b12c0408f296b34567602f6408b77a5d856c9`.
 
+A third exact approval for fingerprint `47107246...56c9` was created and consumed for one v3
+kernel push. Kaggle accepted version 1, then the run failed before training because full
+`stable-worldmodel[env,train]` installation pulled `box2d-py`, which failed to build on Kaggle
+Python 3.12. The strict artifact validator again failed because the required Gate 5 artifacts
+were missing.
+
+The generator now clones the repository into `/tmp/glitch-world-model`, keeping the clone out of
+Kaggle output artifacts, and installs only the minimal LeWM smoke dependencies. A new ignored
+package/request uses kernel slug `huynhdieuthanh/lewm-gate5-cuda-smoke-v4` and waits for fresh
+approval of fingerprint `e3a3ad6bcfd73c99ee295003041db7651e375a1d970b11bd3665a7393c87382a`.
+
 The reusable runner `scripts/run_kaggle_lewm.py` was first verified locally on synthetic data.
 On 2026-06-11, reduced real-gameplay CPU smokes also completed forward/backward and hash-matching
 resume from epoch 1 to epoch 2 for both the TempGlitch zero-action and WOB real-action paths.

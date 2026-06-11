@@ -32,6 +32,8 @@ Before requesting or consuming a kernel approval, the package must pass local pr
 - generated kernels must not assume auxiliary package files are available beside
   `/kaggle/src/script.py`; dependencies and repo code must be resolved from an explicit Kaggle
   input or a documented repository clone path.
+- repository clones used only as runtime source must live outside `/kaggle/working` so they do not
+  become downloaded output artifacts.
 
 Consumed approvals cannot be reused. A metadata-only fix requires a new package fingerprint and a
 new approval request before any live push.

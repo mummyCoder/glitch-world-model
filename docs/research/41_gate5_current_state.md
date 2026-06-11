@@ -17,6 +17,8 @@ local package. No downloaded Kaggle CUDA train/resume artifact set exists.
 - First kernel approval: consumed by the HTTP 409 push attempt.
 - Second kernel approval: consumed at `2026-06-11T03:48:07.773881+00:00`; Kaggle accepted
   `huynhdieuthanh/lewm-gate5-cuda-smoke-v2` version 1, then the run failed before training.
+- Third kernel approval: consumed at `2026-06-11T05:01:48.445275+00:00`; Kaggle accepted
+  `huynhdieuthanh/lewm-gate5-cuda-smoke-v3` version 1, then the run failed before training.
 - Confirmed 409 preflight cause: the consumed package used the same Kaggle slug for dataset and
   kernel, `huynhdieuthanh/lewm-tempglitch-gate5-smoke`.
 - Corrected v2 ignored package prepared after the 409 incident:
@@ -35,6 +37,15 @@ local package. No downloaded Kaggle CUDA train/resume artifact set exists.
   `47107246ea537fce9c435717301b12c0408f296b34567602f6408b77a5d856c9`.
 - New v3 approval request root:
   `outputs/gate5/approvals/tempglitch_kernel_v3`.
+- v3 failure cause: full `stable-worldmodel[env,train]` dependency installation pulled
+  `box2d-py`, which failed to build on Kaggle Python 3.12 before training started.
+- New v4 ignored package prepared after the v3 dependency failure:
+  `outputs/gate5/packages/tempglitch_kernel_v4`.
+- New v4 kernel slug: `huynhdieuthanh/lewm-gate5-cuda-smoke-v4`.
+- New v4 kernel fingerprint:
+  `e3a3ad6bcfd73c99ee295003041db7651e375a1d970b11bd3665a7393c87382a`.
+- New v4 approval request root:
+  `outputs/gate5/approvals/tempglitch_kernel_v4`.
 - Locked test: not packaged, materialized, or scored.
 
 ## 409 Diagnosis Matrix
@@ -60,18 +71,29 @@ local package. No downloaded Kaggle CUDA train/resume artifact set exists.
 | Missing packaged runtime file at Kaggle script path | CONFIRMED | Error log reports missing `/kaggle/src/lewm-runtime.txt` before any training artifact was written. |
 | CUDA/training/resume failure | NOT ESTABLISHED | The script failed before importing Torch or calling `train_lewm`. |
 
+## V3 Runtime Failure Matrix
+
+| Hypothesis | Status | Evidence |
+| --- | --- | --- |
+| Dataset not ready | RULED_OUT | `datasets status huynhdieuthanh/lewm-tempglitch-gate5-smoke` returned `ready` immediately before the v3 push. |
+| Approval missing or mismatched | RULED_OUT | Preflight returned `approval_status: valid` for fingerprint `47107246...56c9` before consumption. |
+| Duplicate submission retry | RULED_OUT | Exactly one v3 `kernels push` was executed after consuming the fresh approval. |
+| Missing packaged runtime file at Kaggle script path | RULED_OUT | v3 progressed to dependency installation from the cloned repository. |
+| Full LeWM environment dependency build failure | CONFIRMED | The v3 error log reports `box2d-py` failed to build during `stable-worldmodel[env,train]` installation. |
+| CUDA/training/resume failure | NOT ESTABLISHED | The script failed before importing Torch or calling `train_lewm`. |
+
 ## Artifact Contract Audit
 
 | Expected artifact | Produced by | Currently available from Kaggle run? | Blocker | Fix needed |
 | --- | --- | --- | --- | --- |
-| `run_config.json` | generated validation kernel | no | v2 failed before writing outputs | approve v3 fingerprint and run once |
-| `environment.json` | generated validation kernel | no | v2 failed before writing outputs | same |
+| `run_config.json` | generated validation kernel | no | v3 failed before writing outputs | approve v4 fingerprint and run once |
+| `environment.json` | generated validation kernel | no | v3 failed before writing outputs | same |
 | `dataset_metadata.json` | generated validation kernel after training | no | no completed Kaggle training | same |
 | `training_metadata.json` | `train_lewm` | no | no completed Kaggle training | same |
 | `loss_history.json` | `train_lewm` | no | no completed Kaggle training | same |
 | `collapse_diagnostics.json` | `train_lewm` | no | no completed Kaggle training | same |
 | `checkpoint.sha256` | `train_lewm` | no | no completed Kaggle training | same |
-| `protocol_audit.json` | generated validation kernel | no | v2 failed before writing outputs | same |
+| `protocol_audit.json` | generated validation kernel | no | v3 failed before writing outputs | same |
 | `resume_metadata.json` | generated validation kernel after resume | no | no completed Kaggle resume | same |
 
 Local CPU smoke directories contain training outputs, but they are not Kaggle CUDA evidence and
@@ -89,5 +111,5 @@ The strict validator now checks:
 - finite collapse diagnostics;
 - false locked-test flags in both protocol and training metadata.
 
-The package dry-run and focused validator fixtures pass locally. The v3 package/request are ready
+The package dry-run and focused validator fixtures pass locally. The v4 package/request are ready
 for a new human approval, but this is engineering evidence only; it does not upgrade Gate 5.

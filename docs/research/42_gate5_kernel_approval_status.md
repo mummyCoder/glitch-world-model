@@ -2,7 +2,7 @@
 
 Status date: 2026-06-11
 
-## Status: READY_FOR_V3_KERNEL_APPROVAL
+## Status: READY_FOR_V4_KERNEL_APPROVAL
 
 The one-time kernel approval matched fingerprint
 `8c918c264e3a840e47ab11b540de38c2ce0520ca0688bb280637fff49d68d0a4`,
@@ -48,10 +48,10 @@ kernel push was submitted. Kaggle accepted kernel version 1, then the run reache
 The error log shows the script failed before training because it tried to install from
 `/kaggle/src/lewm-runtime.txt`, which Kaggle did not place beside `/kaggle/src/script.py`.
 
-## New V3 Request
+## Consumed V3 Approval
 
 The generator now makes the validation kernel clone this repository and install from
-`requirements/lewm-runtime.txt`. A new ignored v3 package/request has been prepared:
+`requirements/lewm-runtime.txt`. A v3 package/request was prepared:
 
 - Dataset slug: `huynhdieuthanh/lewm-tempglitch-gate5-smoke`
 - v3 kernel slug: `huynhdieuthanh/lewm-gate5-cuda-smoke-v3`
@@ -62,5 +62,28 @@ The generator now makes the validation kernel clone this repository and install 
 - v3 kernel approval fingerprint:
   `47107246ea537fce9c435717301b12c0408f296b34567602f6408b77a5d856c9`
 
-The request records are in ignored storage at `outputs/gate5/approvals/tempglitch_kernel_v3`.
-They are not approvals. Live push remains blocked until the exact v3 fingerprint is approved.
+The v3 approval was created, preflight returned `approval_status: valid`, dataset status returned
+`ready`, and the approval was consumed at `2026-06-11T05:01:48.445275+00:00`. Exactly one v3
+kernel push was submitted. Kaggle accepted kernel version 1, then the run reached
+`KernelWorkerStatus.ERROR`.
+
+The v3 error log shows dependency installation failed before training because full
+`stable-worldmodel[env,train]` pulled `box2d-py`, which failed to build on Kaggle Python 3.12.
+
+## New V4 Request
+
+The generator now clones the repository to `/tmp/glitch-world-model`, keeping the clone out of
+Kaggle output artifacts, and installs only the minimal LeWM smoke dependencies. A new ignored v4
+package/request has been prepared:
+
+- Dataset slug: `huynhdieuthanh/lewm-tempglitch-gate5-smoke`
+- v4 kernel slug: `huynhdieuthanh/lewm-gate5-cuda-smoke-v4`
+- Dataset fingerprint: `897f4a8f310aa9891db5c45cc5bc78285c7cb965a469e46d78346d28c1877f51`
+- Kernel inventory SHA-256: `22df50ee756e446ae6ccc37abbfebcc19a3be1b5880b8afc317aeb9452c0d8dd`
+- Kernel metadata SHA-256: `96884642a9fa9ca19fd87b7f08b47f9eff8cc6a18000e2c66b153e49f754eb45`
+- Kernel script SHA-256: `dee3fbfdf930aef32bb68831133bd7920d99bc71f235cb7cebe9a298bfc02ab6`
+- v4 kernel approval fingerprint:
+  `e3a3ad6bcfd73c99ee295003041db7651e375a1d970b11bd3665a7393c87382a`
+
+The request records are in ignored storage at `outputs/gate5/approvals/tempglitch_kernel_v4`.
+They are not approvals. Live push remains blocked until the exact v4 fingerprint is approved.

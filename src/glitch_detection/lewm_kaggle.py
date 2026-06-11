@@ -105,7 +105,7 @@ from pathlib import Path
 CONFIG = json.loads({payload!r})
 OUTPUT = Path("/kaggle/working")
 DATASET = Path("/kaggle/input") / CONFIG["dataset_slug"].split("/")[-1]
-REPO = OUTPUT / "glitch-world-model"
+REPO = Path("/tmp/glitch-world-model")
 
 if not CONFIG["validation_only"]:
     raise RuntimeError("Locked-test execution is forbidden in this kernel.")
@@ -115,7 +115,10 @@ subprocess.check_call([
     "https://github.com/thanhdicode/glitch-world-model.git", str(REPO)
 ])
 subprocess.check_call([
-    sys.executable, "-m", "pip", "install", "-r", str(REPO / "requirements" / "lewm-runtime.txt")
+    sys.executable, "-m", "pip", "install", "--no-cache-dir",
+    "stable-worldmodel==0.1.1",
+    "stable-pretraining==0.1.7",
+    "transformers==4.57.6",
 ])
 sys.path.insert(0, str(REPO / "src"))
 
