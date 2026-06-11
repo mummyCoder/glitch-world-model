@@ -12,6 +12,13 @@ def test_infer_tempglitch_pair_id_matches_buggy_and_normal_suffixes():
     assert (
         infer_tempglitch_pair_id("Godot_Frozen_Animation_Platformer_Normal_103") == "pair-index:103"
     )
+    assert (
+        infer_tempglitch_pair_id("Godot_Stuck_In_Place_TPS_Buggy_3")
+        == "pair-environment:TPS:index:3"
+    )
+    assert (
+        infer_tempglitch_pair_id("Godot_Animation_TPS_Normal_3") == "pair-environment:TPS:index:3"
+    )
 
 
 def test_infer_tempglitch_pair_id_falls_back_to_source_without_numeric_suffix():

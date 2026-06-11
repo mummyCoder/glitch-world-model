@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import io
 import json
+import re
+import tarfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -10,6 +13,8 @@ from PIL import Image
 
 from .manifest import ClipRecord
 from .preprocess import IMAGE_EXTENSIONS
+
+WOB_STEP_PATTERN = re.compile(r"^(?P<index>\d{8})\.npz$")
 
 
 class LeWMDataUnavailableError(RuntimeError):
@@ -101,6 +106,121 @@ def episode_from_clip(
         split=split,
         pair_id=pair_id,
         action_mode=action_mode,
+    )
+
+
+def episode_from_wob_tar(
+    path: Path,
+    *,
+    dataset_id: str,
+    source: str,
+    episode_id: str,
+    category: str,
+    label: str,
+    split: str,
+    pair_id: str,
+    action_dim: int = 4,
+    max_steps: int | None = None,
+) -> LeWMEpisode:
+    """Convert numeric WOB tar members without loading the optional pickled info field."""
+    pixels: list[np.ndarray] = []
+    actions: list[np.ndarray] = []
+    with tarfile.open(path, "r") as archive:
+        indexed_members = []
+        for member in archive.getmembers():
+            match = WOB_STEP_PATTERN.match(Path(member.name).name)
+            if member.isfile() and match:
+                indexed_members.append((int(match.group("index")), member))
+        indexed_members.sort(key=lambda item: item[0])
+        if max_steps is not None:
+            indexed_members = indexed_members[:max_steps]
+        indices = [index for index, _ in indexed_members]
+        expected_indices = list(range(indices[0], indices[0] + len(indices))) if indices else []
+        if indices != expected_indices:
+            raise ValueError(f"WOB episode {path} step indices are not contiguous.")
+        for _, member in indexed_members:
+            extracted = archive.extractfile(member)
+            if extracted is None:
+                raise ValueError(f"Could not read WOB tar member {member.name}.")
+            with np.load(io.BytesIO(extracted.read()), allow_pickle=False) as sample:
+                state = sample["state"]
+                action = int(sample["action"])
+                if state.shape[0] != 3 or state.ndim != 3:
+                    raise ValueError(f"WOB member {member.name} state must be CHW RGB.")
+                if not 0 <= action < action_dim:
+                    raise ValueError(
+                        f"WOB member {member.name} action {action} exceeds action_dim={action_dim}."
+                    )
+                rgb = np.moveaxis(state, 0, -1)
+                pixels.append(np.clip(np.rint(rgb * 255.0), 0, 255).astype(np.uint8))
+                one_hot = np.zeros(action_dim, dtype=np.float32)
+                one_hot[action] = 1.0
+                actions.append(one_hot)
+    return LeWMEpisode(
+        dataset_id=dataset_id,
+        source=source,
+        episode_id=episode_id,
+        pixels=pixels,
+        action=np.stack(actions),
+        label=label,
+        category=category,
+        split=split,
+        pair_id=pair_id,
+        action_mode="real",
+    )
+
+
+def episode_from_video(
+    path: Path,
+    *,
+    dataset_id: str,
+    source: str,
+    episode_id: str,
+    category: str,
+    label: str,
+    split: str,
+    pair_id: str,
+    frame_stride: int = 1,
+    image_size: int | None = None,
+    max_steps: int | None = None,
+) -> LeWMEpisode:
+    try:
+        import cv2
+    except ImportError as exc:
+        raise LeWMDataUnavailableError("Video conversion requires opencv-python.") from exc
+    if frame_stride < 1:
+        raise ValueError("frame_stride must be positive.")
+    capture = cv2.VideoCapture(str(path))
+    if not capture.isOpened():
+        raise ValueError(f"Could not open video: {path}")
+    pixels: list[np.ndarray] = []
+    frame_index = 0
+    try:
+        while True:
+            ok, frame = capture.read()
+            if not ok:
+                break
+            if frame_index % frame_stride == 0:
+                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                if image_size is not None:
+                    rgb = cv2.resize(rgb, (image_size, image_size), interpolation=cv2.INTER_AREA)
+                pixels.append(np.asarray(rgb, dtype=np.uint8))
+                if max_steps is not None and len(pixels) >= max_steps:
+                    break
+            frame_index += 1
+    finally:
+        capture.release()
+    return LeWMEpisode(
+        dataset_id=dataset_id,
+        source=source,
+        episode_id=episode_id,
+        pixels=pixels,
+        action=np.zeros((len(pixels), 1), dtype=np.float32),
+        label=label,
+        category=category,
+        split=split,
+        pair_id=pair_id,
+        action_mode="zero_action",
     )
 
 

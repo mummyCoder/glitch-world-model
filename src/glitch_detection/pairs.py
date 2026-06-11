@@ -19,6 +19,9 @@ def infer_tempglitch_pair_id(source: str) -> str:
     stem = Path(source).stem
     match = PAIR_INDEX_PATTERN.search(stem)
     if match:
+        if stem.startswith(("Godot_Stuck_In_Place_", "Godot_Animation_")):
+            environment = "TPS" if "_TPS_" in stem else "Platformer"
+            return f"pair-environment:{environment}:index:{int(match.group(1))}"
         return f"pair-index:{int(match.group(1))}"
     return f"source:{stem}"
 

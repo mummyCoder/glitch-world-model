@@ -114,6 +114,48 @@ def fetch_tempglitch_rows(offset: int, length: int) -> dict[str, Any]:
     return _load_json(ROWS_URL.format(offset=offset, length=length))
 
 
+def fetch_all_tempglitch_metadata(page_size: int = 100) -> list[TempGlitchSample]:
+    """Fetch all public row metadata without downloading video payloads."""
+    samples: list[TempGlitchSample] = []
+    offset = 0
+    while True:
+        page = fetch_tempglitch_rows(offset=offset, length=page_size)
+        rows = page.get("rows", [])
+        features = page.get("features", [])
+        if not rows:
+            break
+        label_names = features[1]["type"]["names"] if len(features) > 1 else None
+        for item in rows:
+            row = item["row"]
+            parsed = parse_tempglitch_video_url(row["video"]["src"])
+            public_label_raw = (
+                label_names[row["label"]] if label_names is not None else parsed.public_label_raw
+            )
+            public_label = normalize_tempglitch_label(public_label_raw)
+            relative_path = _relative_video_path(
+                parsed.category,
+                public_label,
+                parsed.file_name,
+            )
+            samples.append(
+                TempGlitchSample(
+                    row_idx=int(item["row_idx"]),
+                    category=parsed.category,
+                    public_label_raw=public_label_raw,
+                    public_label=public_label,
+                    is_glitch=public_label == BUGGY_LABEL,
+                    source_name=parsed.source_name,
+                    file_name=parsed.file_name,
+                    video_url=row["video"]["src"],
+                    dataset_revision=parsed.dataset_revision,
+                    local_video_path=str(relative_path).replace("\\", "/"),
+                    sample_mode="metadata-only",
+                )
+            )
+        offset += len(rows)
+    return sorted(samples, key=lambda sample: sample.row_idx)
+
+
 def tempglitch_category_counts(dataset_info: dict[str, Any]) -> dict[tuple[str, str], int]:
     counts: Counter[tuple[str, str]] = Counter()
     for sibling in dataset_info.get("siblings", []):
@@ -200,6 +242,10 @@ def _write_metadata_csv(output_dir: Path, samples: list[TempGlitchSample]) -> Pa
                 }
             )
     return metadata_path
+
+
+def write_tempglitch_metadata(output_dir: Path, samples: list[TempGlitchSample]) -> Path:
+    return _write_metadata_csv(output_dir, samples)
 
 
 def select_tempglitch_samples(
