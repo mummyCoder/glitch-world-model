@@ -1,7 +1,7 @@
 # LAST_HANDOFF.md
 
-Last completed task: Kaggle standing authorization and Gate 6 repair design
-Commit: design commit recorded in Git history
+Last completed task: Kaggle standing authorization and Gate 6 implementation plan
+Commit: plan commit recorded in Git history
 Date: 2026-06-12
 
 ## What Changed
@@ -20,6 +20,8 @@ Date: 2026-06-12
   separate direct user command.
 - Wrote the approved design to
   `docs/superpowers/specs/2026-06-12-kaggle-standing-authorization-gate6-repair-design.md`.
+- Wrote the task-by-task implementation plan to
+  `docs/superpowers/plans/2026-06-12-kaggle-standing-authorization-gate6-repair.md`.
 
 ## Checks Passed
 - Static design self-review found no placeholders, contradictory authorization rules, or
@@ -46,13 +48,14 @@ Date: 2026-06-12
 - Gate 7 requires a strictly validated Gate 6 checkpoint.
 
 ## Next Recommended Task
-- Review and approve the written design spec.
-- Invoke the Superpowers writing-plans workflow, then implement governance, automation policy,
-  Gate 6 regressions, single-file packaging, and one automatic remote run.
+- Execute the implementation plan with Superpowers subagent-driven development or executing-plans.
+- Implement governance, automation policy, Gate 6 regressions, single-file packaging, and one
+  automatic remote run in the documented order.
 - Open Gate 7 only if downloaded Gate 6 artifacts pass the strict validator.
 
 ## Files Likely Relevant Next
 - `docs/superpowers/specs/2026-06-12-kaggle-standing-authorization-gate6-repair-design.md`
+- `docs/superpowers/plans/2026-06-12-kaggle-standing-authorization-gate6-repair.md`
 - `RULES.md`
 - `AGENTS.md`
 - `PLAYBOOK.md`
