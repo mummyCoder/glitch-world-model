@@ -19,6 +19,10 @@ Date: 2026-06-11
 - Hardened package inventories to include each file's content SHA-256.
 - Added Gate 7 LeWM L2-surprise scorer, CLI, manifest builder, evaluation wrapper, plotting, and
   tests. No Gate 7 experiment ran because Gate 6 did not produce a checkpoint.
+- Revalidated v5 on commit `74aa85b`, confirmed the expected fingerprint and package structure,
+  approved it, consumed it, and submitted exactly one kernel push.
+- Kaggle CLI returned `Expecting value: line 1 column 1 (char 0)` after submission, and no remote
+  `lewm-gate6-pilot-v5` kernel appeared in `kernels list --mine` or `kernels status`.
 
 ## Checks Passed
 - Focused Gate 6 and Gate 7 tests passed.
@@ -30,20 +34,21 @@ Date: 2026-06-11
 - Locked test was not materialized or scored.
 - No output, data, Lance dataset, checkpoint, Kaggle artifact, or credential is intended for Git.
 - Gate 10 remains closed.
+- No same-fingerprint retry was used for v5.
 
 ## Gate Status After Task
 - Gates 1-5 passed.
-- Gate 6 partial after a pre-training infrastructure failure.
+- Gate 6 partial after a pre-training import failure and a submission-stage v5 failure.
 - Gate 7 infrastructure only; Gates 8-10 not run.
 - Locked test closed.
 
 ## Open Blockers
-- Gate 6 v5 requires a fresh exact approval and one live run.
+- Gate 6 needs a fresh package/fingerprint because v5 was already consumed.
 - Gate 7 requires a strictly validated Gate 6 checkpoint.
 
 ## Next Recommended Task
-- Revalidate and explicitly approve v5 fingerprint, push exactly one kernel, download artifacts,
-  and run `scripts/validate_lewm_gate6_artifacts.py`.
+- Diagnose why Kaggle consumed the v5 submission without creating a remote kernel, then prepare a
+  fresh package/fingerprint before any new push.
 - Run Gate 7 validation scoring only if that strict validator passes.
 
 ## Files Likely Relevant Next

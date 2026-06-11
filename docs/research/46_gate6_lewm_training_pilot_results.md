@@ -24,7 +24,10 @@ This is an infrastructure failure, not a training or model result.
 The corrected v5 package stores the source tree as `glitch_detection_src.zip` beside the entry
 script and unpacks it before import. Its content-based kernel fingerprint is
 `ae0aae43793adb94f8498f8d07c292426e69a0657ba545dbecbfda8682e03504`.
-An approval request exists in ignored storage, but v5 is unapproved and unpushed.
+That exact approval was created, validated, consumed, and submitted exactly once. Kaggle CLI then
+returned `Expecting value: line 1 column 1 (char 0)` and no remote `lewm-gate6-pilot-v5` kernel
+appeared in `kernels list --mine` or `kernels status`. This is preserved as a submission-stage
+failure with no same-fingerprint retry.
 
 No Gate 6 checkpoint, loss, encoding result, or gameplay performance metric exists.
 
