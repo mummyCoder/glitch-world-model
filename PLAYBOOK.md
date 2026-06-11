@@ -13,6 +13,7 @@ before a major code change, experiment, Kaggle operation, paper edit, or release
 
 - `RULES.md` is the non-negotiable safety layer.
 - `AGENTS.md` is the compact agent entry point.
+- `docs/context/BOOT.md` is the default fast-start context for routine agent work.
 - `PLAYBOOK.md` explains the project, evidence, gates, roles, commands, risks, and next actions.
 - `docs/research/` stores detailed evidence, protocols, results, and historical decisions.
 - `docs/workflows/` stores focused operational procedures.
@@ -29,6 +30,15 @@ this order:
 
 If this playbook conflicts with a newer checked artifact, update the playbook in the same task.
 Do not silently choose the more exciting interpretation.
+
+### Context Efficiency Layer
+
+Routine tasks should start from `RULES.md`, `AGENTS.md`, and `docs/context/BOOT.md`, then use
+`PROJECT_STATE.md`, `NEXT_ACTION.md`, `TASK_ROUTER.md`, and `REPO_MAP.md` to choose the smallest
+relevant file set. Open this playbook when a task touches roadmap status, claims, paper scope,
+gate decisions, or ambiguous safety policy. After each task, update `LAST_HANDOFF.md`, refresh
+the context cache, and run `scripts/validate_context_cache.py`. The target is a boot context
+under 200 lines without hiding safety rules.
 
 ### When In Doubt
 

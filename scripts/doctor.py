@@ -6,6 +6,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+try:
+    from update_context_cache import context_validation_errors
+except ModuleNotFoundError:  # pragma: no cover - exercised by package imports in tests.
+    from scripts.update_context_cache import context_validation_errors
+
 CORE_IMPORTS = {
     "numpy": "numpy",
     "PIL": "Pillow",
@@ -25,6 +30,7 @@ REQUIRED_PATHS = [
     ".github/copilot-instructions.md",
     ".codex/skills",
     "pyproject.toml",
+    "docs/context",
     "docs/research",
 ]
 GITIGNORE_PROBES = [
@@ -62,6 +68,7 @@ def collect_report(repo_root: Path) -> dict[str, object]:
     optional_imports = {name: module_available(name) for name in OPTIONAL_IMPORTS}
     required_paths = {path: (repo_root / path).exists() for path in REQUIRED_PATHS}
     gitignore_checks = {path: check_gitignored(repo_root, path) for path in GITIGNORE_PROBES}
+    context_errors = context_validation_errors(repo_root)
     return {
         "python": sys.version.split()[0],
         "platform": platform.platform(),
@@ -70,6 +77,7 @@ def collect_report(repo_root: Path) -> dict[str, object]:
         "optional_imports": optional_imports,
         "required_paths": required_paths,
         "gitignore_checks": gitignore_checks,
+        "context_cache_errors": context_errors,
     }
 
 
@@ -93,6 +101,15 @@ def print_report(report: dict[str, object]) -> None:
     for path, ok in dict(report["required_paths"]).items():
         print(f"- {path}: {'OK' if ok else 'MISSING'}")
 
+    print("\nContext cache:")
+    context_errors = list(report["context_cache_errors"])
+    if context_errors:
+        print("- status: FAIL")
+        for error in context_errors:
+            print(f"  - {error}")
+    else:
+        print("- status: OK")
+
     print("\nGitignore probes:")
     for path, ok in dict(report["gitignore_checks"]).items():
         if ok is None:
@@ -103,8 +120,10 @@ def print_report(report: dict[str, object]) -> None:
 
 
 def core_requirements_satisfied(report: dict[str, object]) -> bool:
-    return all(dict(report["core_imports"]).values()) and all(
-        dict(report["required_paths"]).values()
+    return (
+        all(dict(report["core_imports"]).values())
+        and all(dict(report["required_paths"]).values())
+        and not list(report["context_cache_errors"])
     )
 
 

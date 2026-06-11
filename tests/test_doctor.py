@@ -16,6 +16,8 @@ def test_doctor_core_requirements_are_available():
     assert report["required_paths"]["CONVENTIONS.md"]
     assert report["required_paths"][".github/copilot-instructions.md"]
     assert report["required_paths"][".codex/skills"]
+    assert report["required_paths"]["docs/context"]
+    assert report["context_cache_errors"] == []
     assert report["gitignore_checks"]["_external_references/probe.file"]
     assert report["gitignore_checks"]["probe.lance/data.bin"]
     assert report["gitignore_checks"]["kaggle.json"]

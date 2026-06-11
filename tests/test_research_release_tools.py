@@ -1,4 +1,5 @@
 import importlib.util
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -18,6 +19,7 @@ def load_script(name: str):
 
 def test_release_validator_accepts_required_files_and_safe_tracked_paths(tmp_path: Path):
     validator = load_script("validate_research_release")
+    context = load_script("update_context_cache")
     for relative in validator.REQUIRED_PATHS:
         path = tmp_path / relative
         if Path(relative).suffix:
@@ -30,6 +32,8 @@ def test_release_validator_accepts_required_files_and_safe_tracked_paths(tmp_pat
             path.write_text(content, encoding="utf-8")
         else:
             path.mkdir(parents=True, exist_ok=True)
+    shutil.rmtree(tmp_path / "docs/context")
+    context.update_context_cache(tmp_path, refresh_boot=True)
 
     errors = validator.validate_release(
         tmp_path,
@@ -59,6 +63,14 @@ def test_release_validator_requires_agent_governance_files(tmp_path: Path):
         "docs/workflows/paper_claim_rules.md",
         "docs/workflows/runtime_management.md",
         "docs/workflows/security_checks.md",
+        "docs/context/BOOT.md",
+        "docs/context/PROJECT_STATE.md",
+        "docs/context/NEXT_ACTION.md",
+        "docs/context/LAST_HANDOFF.md",
+        "docs/context/REPO_MAP.md",
+        "docs/context/TASK_ROUTER.md",
+        "docs/context/CONTEXT_POLICY.md",
+        "docs/context/README.md",
     }
 
     assert expected <= set(validator.REQUIRED_PATHS)

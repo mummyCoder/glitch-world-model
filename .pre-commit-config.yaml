@@ -29,6 +29,12 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: context-cache-validator
+        name: context cache validator
+        entry: python scripts/validate_context_cache.py
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: claim-registry-validator
         name: claim registry validator
         entry: python scripts/check_claim_registry.py

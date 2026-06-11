@@ -22,6 +22,8 @@ Current LeWM gate status:
 Research planning docs:
 
 - [Project Playbook](PLAYBOOK.md)
+- [Fast agent boot context](docs/context/BOOT.md)
+- [Context cache policy](docs/context/CONTEXT_POLICY.md)
 - [Mandatory real-LeWM master roadmap](docs/roadmap/MASTER_ROADMAP_LeWM_Glitch_v2.md)
 - [Real LeWM integration audit](docs/research/36_lewm_integration_audit.md)
 - [Literature matrix](docs/research/02_literature_matrix.md)
@@ -109,6 +111,13 @@ python -m ruff check .
 python -m ruff format --check .
 python scripts\validate_research_release.py --ci
 python scripts\check_claim_registry.py
+python scripts\validate_context_cache.py
+```
+
+Refresh the fast context cache after each task handoff:
+
+```powershell
+python scripts\update_context_cache.py --refresh-boot
 ```
 
 Generate paper tables and compile the cautious paper scaffold when `latexmk` is available:

@@ -5,8 +5,9 @@
 This repository studies LeWM/JEPA-style latent-surprise methods for video game glitch
 detection.
 
-For full project context, roadmap, evidence policy, skills, and next actions, read
-`PLAYBOOK.md`.
+For routine tasks, use the fast context cache before opening the long playbook. For full project
+context, roadmap, evidence policy, skills, and next actions, read `PLAYBOOK.md` when the task
+requires deep context.
 
 Current verified status:
 
@@ -29,6 +30,21 @@ superiority, state of the art, temporal localization, or a neural locked-test re
 - Preserve unrelated user changes and report skipped checks honestly.
 - Never convert scaffolding, fixture output, or smoke evidence into an experiment claim.
 - Follow the non-negotiable rules in `RULES.md`.
+
+## Fast Context Policy
+
+Default read order for routine tasks:
+
+1. `RULES.md`
+2. `AGENTS.md`
+3. `docs/context/BOOT.md`
+4. `docs/context/PROJECT_STATE.md`
+5. `docs/context/NEXT_ACTION.md`
+6. `docs/context/TASK_ROUTER.md`
+
+Open `PLAYBOOK.md` only for roadmap, paper, claim, gate-status, or ambiguous tasks. Use
+`docs/context/REPO_MAP.md` before grepping the entire repo. Update
+`docs/context/LAST_HANDOFF.md` and rerun context validators before completion.
 
 ## Repository Map
 
@@ -74,6 +90,7 @@ python -m ruff format --check .
 python scripts/validate_research_release.py --ci
 python scripts/check_claim_registry.py
 python scripts/doctor.py
+python scripts/validate_context_cache.py
 ```
 
 When pre-commit is available:

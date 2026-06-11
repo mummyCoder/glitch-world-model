@@ -4,6 +4,11 @@ import argparse
 import subprocess
 from pathlib import Path
 
+try:
+    from update_context_cache import context_validation_errors
+except ModuleNotFoundError:  # pragma: no cover - exercised by package imports in tests.
+    from scripts.update_context_cache import context_validation_errors
+
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_PATHS = (
     "README.md",
@@ -25,9 +30,20 @@ REQUIRED_PATHS = (
     "docs/workflows/security_checks.md",
     "docs/research/16_claim_registry.md",
     "docs/research/31_phase6e_kaggle_validation_results.md",
+    "docs/context/BOOT.md",
+    "docs/context/PROJECT_STATE.md",
+    "docs/context/NEXT_ACTION.md",
+    "docs/context/LAST_HANDOFF.md",
+    "docs/context/REPO_MAP.md",
+    "docs/context/TASK_ROUTER.md",
+    "docs/context/CONTEXT_POLICY.md",
+    "docs/context/README.md",
     "paper/main.tex",
     "paper/references.bib",
     "pyproject.toml",
+    "scripts/update_context_cache.py",
+    "scripts/validate_context_cache.py",
+    "tests/test_context_cache.py",
     "tests",
 )
 PROHIBITED_SUFFIXES = {".pt", ".pth", ".ckpt"}
@@ -96,6 +112,7 @@ def validate_release(root: Path, tracked_files: list[str] | None = None) -> list
         *validate_required_paths(root),
         *validate_playbook_structure(root / "PLAYBOOK.md"),
         *validate_tracked_files(tracked),
+        *context_validation_errors(root),
     ]
 
 
