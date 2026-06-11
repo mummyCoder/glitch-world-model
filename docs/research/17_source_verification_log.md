@@ -43,7 +43,7 @@ Verifier: Codex
 
 | ID | Source | URL | Type | Status | Verified facts | Relevance | Risk / notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| S-001 | EAI FISAT 2026 official page | https://daihoc.fpt.edu.vn/hcm/fisat/ | conference page | official page verified | dates, page limits, language, format, review model, alt-text requirement, tracks, submission system | Venue targeting and paper planning | Official page is live and current |
+| S-001 | EAI FISAT 2026 official page | https://fisat.eai-conferences.org/2026/ | conference page | official page verified | dates, page limits, language, LNICST format, anonymization, alt-text requirement, tracks, submission system | Venue targeting and paper planning | Rechecked on 2026-06-11; supersedes the older FPT summary page for current submission rules |
 | S-002 | LeWorldModel | https://arxiv.org/abs/2603.19312 ; https://github.com/lucas-maes/le-wm | paper + code + data links | paper-verified; code-available; data-available | end-to-end JEPA from pixels, code repo, HF checkpoints/data, surprise evaluation | Future `lewm_latent` target | Not a gameplay-glitch benchmark |
 | S-003 | TempGlitch | https://arxiv.org/abs/2605.21443 | paper | paper-verified; paper-only; pending-web-verification | 5 temporal glitch types, 1,500 total videos, paired clean clips, binary metrics | Best thematic benchmark target | Project website URL not recovered from primary sources |
 | S-004 | VideoGlitchBench / GliDe | https://arxiv.org/abs/2604.07818 | paper | paper-verified; paper-only; pending-web-verification | 5,238 videos, 120 games, descriptions plus temporal spans, joint semantic + temporal protocol | Rich full-paper benchmark candidate | Public code/data release not verified |
@@ -67,8 +67,8 @@ title: EAI FISAT 2026 official conference page
 authors: TBD / verify  
 year: 2026  
 venue/status: Official conference page  
-URL: https://daihoc.fpt.edu.vn/hcm/fisat/  
-access_date: 2026-06-08  
+URL: https://fisat.eai-conferences.org/2026/
+access_date: 2026-06-11
 artifact_type: conference page  
 availability_status:
 - paper-verified
@@ -79,15 +79,15 @@ key_verified_facts:
 - Paper submission deadline: July 20, 2026.
 - Acceptance notification: September 15, 2026.
 - Camera-ready deadline: October 15, 2026.
-- Full / regular papers: 12-20 pages, excluding appendices, references, and acknowledgements.
+- Full / regular papers: 12-15 pages, excluding appendices, references, and acknowledgements.
 - Short papers: 6-11 pages, excluding appendices, references, and acknowledgements.
 - Required language: English.
-- Format: Springer Authors' Kit / LNCS-style proceedings templates via the conference page.
+- Format: Springer LNICST proceedings templates.
 - Submission system: Confy+.
-- Review model: Single-blind review.
+- Anonymization: author names and affiliations must be removed from the submitted PDF.
 - Accessibility: figures, illustrations, tables, and images should include descriptive text / alt text.
 - Relevant tracks: Track 1 AI & Data Science, especially Machine Learning and Foundation Models, Computer Vision, and Reinforcement Learning and Optimization.
-- Publication / indexing: EAI / Springer Innovations in Communication and Computing, indexed in Scopus (Q4 / Scimago on the official page).
+- Publication / indexing: EAI/Springer LNICST proceedings, subject to the venue's publication process.
 
 relevance_to_project:
 - Sets the paper-length target and review constraints.

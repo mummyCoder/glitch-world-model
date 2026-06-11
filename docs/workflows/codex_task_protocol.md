@@ -1,6 +1,7 @@
 # Codex Task Protocol
 
-1. Read `AGENTS.md`, the request, relevant roadmap, and current Git state.
+1. Read `AGENTS.md`, `RULES.md`, `PLAYBOOK.md`, the request, relevant roadmap, and current Git
+   state.
 2. State prohibited actions and scientific gates before experimental work.
 3. Inspect existing patterns before editing.
 4. Use test-first development for behavioral code.

@@ -21,6 +21,7 @@ Current LeWM gate status:
 
 Research planning docs:
 
+- [Project Playbook](PLAYBOOK.md)
 - [Mandatory real-LeWM master roadmap](docs/roadmap/MASTER_ROADMAP_LeWM_Glitch_v2.md)
 - [Real LeWM integration audit](docs/research/36_lewm_integration_audit.md)
 - [Literature matrix](docs/research/02_literature_matrix.md)

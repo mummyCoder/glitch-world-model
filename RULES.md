@@ -1,5 +1,8 @@
 # RULES.md - Research Engineering Operating Rules
 
+`PLAYBOOK.md` is the long-form operating bible; `RULES.md` remains the non-negotiable safety
+layer.
+
 ## 1. Non-Negotiable Safety Rules
 
 - Do not run Kaggle live actions, GPU training, or locked-test scoring without explicit approval.

@@ -21,7 +21,7 @@ State the concrete deliverable and whether the task is code, documentation, expe
 ## Execution
 
 1. Record branch, SHA, Python version, and clean/dirty state.
-2. Read `AGENTS.md`, `RULES.md`, and the relevant workflow.
+2. Read `AGENTS.md`, `RULES.md`, `PLAYBOOK.md`, and the relevant workflow.
 3. Add focused tests before behavioral changes.
 4. Make the smallest compatible change.
 5. Update documentation and claim registry when claim scope changes.

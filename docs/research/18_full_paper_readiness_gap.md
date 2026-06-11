@@ -6,12 +6,12 @@
 - Submission deadline: 2026-07-20.
 - Acceptance notification: 2026-09-15.
 - Camera-ready deadline: 2026-10-15.
-- Full / regular paper length: 12-20 pages excluding appendices, references, and acknowledgements.
+- Full / regular paper length: 12-15 pages excluding appendices, references, and acknowledgements.
 - Short paper length: 6-11 pages excluding appendices, references, and acknowledgements.
 - Language: English.
-- Format: Springer Authors' Kit / LNCS-style proceedings templates.
+- Format: Springer LNICST proceedings templates.
 - Submission system: Confy+.
-- Review model: Single-blind.
+- Submission PDF: anonymized.
 - Accessibility constraint: descriptive text / alt text is required for figures, tables, illustrations, and images.
 
 ## 2. Current repo status

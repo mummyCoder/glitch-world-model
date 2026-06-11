@@ -5,6 +5,9 @@
 This repository studies LeWM/JEPA-style latent-surprise methods for video game glitch
 detection.
 
+For full project context, roadmap, evidence policy, skills, and next actions, read
+`PLAYBOOK.md`.
+
 Current verified status:
 
 - Gates 1-4 passed at the engineering and smoke level.

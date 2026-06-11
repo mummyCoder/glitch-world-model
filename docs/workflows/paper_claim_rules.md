@@ -13,6 +13,6 @@
 - Keep negative results, heuristic grouping, binary-label limits, and prior exposure visible.
 - Use primary sources and record source/access details.
 
-The current paper uses an IEEEtran scaffold. If the target venue requires Springer/LNCS, migrate
+The current paper uses an IEEEtran scaffold. FISAT 2026 requires Springer LNICST, so migrate
 the manuscript and accessibility requirements before submission; the scaffold is not format
 evidence.

@@ -22,7 +22,12 @@ def test_release_validator_accepts_required_files_and_safe_tracked_paths(tmp_pat
         path = tmp_path / relative
         if Path(relative).suffix:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("present\n", encoding="utf-8")
+            content = (
+                "\n".join(f"## {index}. Section {index}" for index in range(31)) + "\n"
+                if relative == "PLAYBOOK.md"
+                else "present\n"
+            )
+            path.write_text(content, encoding="utf-8")
         else:
             path.mkdir(parents=True, exist_ok=True)
 
@@ -39,6 +44,7 @@ def test_release_validator_requires_agent_governance_files(tmp_path: Path):
 
     expected = {
         "AGENTS.md",
+        "PLAYBOOK.md",
         "RULES.md",
         "CLAUDE.md",
         "CONVENTIONS.md",
@@ -56,6 +62,32 @@ def test_release_validator_requires_agent_governance_files(tmp_path: Path):
     }
 
     assert expected <= set(validator.REQUIRED_PATHS)
+
+
+def test_release_validator_requires_complete_playbook_structure(tmp_path: Path):
+    validator = load_script("validate_research_release")
+    playbook = tmp_path / "PLAYBOOK.md"
+    playbook.write_text(
+        "\n".join(f"## {index}. Section {index}" for index in range(31)) + "\n",
+        encoding="utf-8",
+    )
+
+    errors = validator.validate_playbook_structure(playbook)
+
+    assert errors == []
+
+
+def test_release_validator_rejects_missing_playbook_section(tmp_path: Path):
+    validator = load_script("validate_research_release")
+    playbook = tmp_path / "PLAYBOOK.md"
+    playbook.write_text(
+        "\n".join(f"## {index}. Section {index}" for index in range(30)) + "\n",
+        encoding="utf-8",
+    )
+
+    errors = validator.validate_playbook_structure(playbook)
+
+    assert errors == ["PLAYBOOK.md missing required section: 30"]
 
 
 @pytest.mark.parametrize(

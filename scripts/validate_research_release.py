@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_PATHS = (
     "README.md",
     "AGENTS.md",
+    "PLAYBOOK.md",
     "RULES.md",
     "CLAUDE.md",
     "CONVENTIONS.md",
@@ -33,6 +34,7 @@ PROHIBITED_SUFFIXES = {".pt", ".pth", ".ckpt"}
 PROHIBITED_PREFIXES = ("outputs/", "data/raw/", "data/processed/")
 PROHIBITED_NAMES = {"kaggle.json", ".env"}
 PROHIBITED_FRAGMENTS = ("access_token", "private_key", "id_rsa", "id_ed25519")
+PLAYBOOK_SECTION_COUNT = 31
 
 
 def git_tracked_files(root: Path) -> list[str]:
@@ -73,9 +75,28 @@ def validate_required_paths(root: Path) -> list[str]:
     ]
 
 
+def validate_playbook_structure(path: Path) -> list[str]:
+    if not path.is_file():
+        return []
+    headings = {
+        line.split(".", 1)[0].removeprefix("## ").strip()
+        for line in path.read_text(encoding="utf-8-sig").splitlines()
+        if line.startswith("## ") and "." in line
+    }
+    return [
+        f"PLAYBOOK.md missing required section: {section}"
+        for section in range(PLAYBOOK_SECTION_COUNT)
+        if str(section) not in headings
+    ]
+
+
 def validate_release(root: Path, tracked_files: list[str] | None = None) -> list[str]:
     tracked = tracked_files if tracked_files is not None else git_tracked_files(root)
-    return [*validate_required_paths(root), *validate_tracked_files(tracked)]
+    return [
+        *validate_required_paths(root),
+        *validate_playbook_structure(root / "PLAYBOOK.md"),
+        *validate_tracked_files(tracked),
+    ]
 
 
 def working_tree_errors(root: Path) -> list[str]:

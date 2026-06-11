@@ -18,6 +18,7 @@ OPTIONAL_IMPORTS = {
 REQUIRED_PATHS = [
     "README.md",
     "AGENTS.md",
+    "PLAYBOOK.md",
     "RULES.md",
     "CLAUDE.md",
     "CONVENTIONS.md",

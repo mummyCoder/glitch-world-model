@@ -1,6 +1,7 @@
 # Repository Instructions
 
-Read and follow `AGENTS.md`, `RULES.md`, and `CONVENTIONS.md`.
+Read and follow `AGENTS.md`, `RULES.md`, and `CONVENTIONS.md`. Consult `PLAYBOOK.md` for the
+full roadmap, evidence map, role playbooks, and current next actions.
 
 - Preserve the CSV/JSON interfaces and keep heavy ML dependencies optional.
 - Use tests first for behavioral changes and make narrowly scoped edits.
