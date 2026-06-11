@@ -104,16 +104,20 @@ from pathlib import Path
 
 CONFIG = json.loads({payload!r})
 OUTPUT = Path("/kaggle/working")
-ROOT = Path(__file__).resolve().parent
 DATASET = Path("/kaggle/input") / CONFIG["dataset_slug"].split("/")[-1]
+REPO = OUTPUT / "glitch-world-model"
 
 if not CONFIG["validation_only"]:
     raise RuntimeError("Locked-test execution is forbidden in this kernel.")
 
 subprocess.check_call([
-    sys.executable, "-m", "pip", "install", "-r", str(ROOT / "lewm-runtime.txt")
+    "git", "clone", "--depth", "1", "--branch", "main",
+    "https://github.com/thanhdicode/glitch-world-model.git", str(REPO)
 ])
-sys.path.insert(0, str(ROOT / "src"))
+subprocess.check_call([
+    sys.executable, "-m", "pip", "install", "-r", str(REPO / "requirements" / "lewm-runtime.txt")
+])
+sys.path.insert(0, str(REPO / "src"))
 
 import torch
 from glitch_detection.lewm_training import LeWMTrainConfig, train_lewm

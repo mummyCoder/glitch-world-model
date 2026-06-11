@@ -50,6 +50,9 @@ def test_kaggle_package_dry_run_is_validation_only(tmp_path: Path):
     assert not (tmp_path / "output").exists()
     kernel = render_validation_kernel(_config())
     assert "Locked-test execution is forbidden" in kernel
+    assert 'git", "clone"' in kernel
+    assert 'requirements" / "lewm-runtime.txt' in kernel
+    assert "/kaggle/src/lewm-runtime.txt" not in kernel
     assert "train_lewm(" in kernel
     assert "resume=True" in kernel
     assert "Gate 5 LeWM smoke requires CUDA" in kernel

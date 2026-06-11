@@ -1,7 +1,7 @@
 # NEXT_ACTION.md
 
-Last updated: 2026-06-11T03:26:01+00:00
-Commit: `d50e3c7f0072219abdfd83eeec9622cf648a3351`
+Last updated: 2026-06-11T03:56:19+00:00
+Commit: `b7150d232127fd8abf8f97b00fc03d730cdd9697`
 
 ## Current Priority
 Complete or unblock Gate 5 Kaggle CUDA smoke/resume artifact.
@@ -27,8 +27,9 @@ Execute exactly the approved kernel push/smoke, download artifacts, validate, up
 playbook/cache, commit and push.
 
 ## Current Known Blocker
-The 2026-06-11 TempGlitch kernel push returned HTTP 409 before execution and consumed its
-one-time approval. The local cause was a kernel slug equal to the dataset slug. A corrected
-package/request exists with kernel slug `huynhdieuthanh/lewm-gate5-cuda-smoke-v2`; obtain fresh
-approval for fingerprint `4d1108f7e9b5f62ba969961f2bee56f9bd226d794ab350386ce510006f91e3f8`
+The 2026-06-11 TempGlitch path consumed two kernel approvals: the first push returned HTTP 409
+before execution because the package reused the dataset slug, and the second v2 push was accepted
+but failed before training because the generated script looked for `/kaggle/src/lewm-runtime.txt`.
+A v3 package/request exists with kernel slug `huynhdieuthanh/lewm-gate5-cuda-smoke-v3`; obtain
+fresh approval for fingerprint `47107246ea537fce9c435717301b12c0408f296b34567602f6408b77a5d856c9`
 before any live push.

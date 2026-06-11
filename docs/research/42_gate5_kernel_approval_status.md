@@ -2,7 +2,7 @@
 
 Status date: 2026-06-11
 
-## Status: READY_FOR_NEW_KERNEL_APPROVAL
+## Status: READY_FOR_V3_KERNEL_APPROVAL
 
 The one-time kernel approval matched fingerprint
 `8c918c264e3a840e47ab11b540de38c2ce0520ca0688bb280637fff49d68d0a4`,
@@ -26,19 +26,41 @@ No retry is authorized. The next live attempt requires:
 Changing the kernel identity, metadata, script, dependencies, or packaged source invalidates the
 old fingerprint.
 
-## Corrected Request
+## Consumed V2 Approval
 
-A corrected validation-only package was prepared locally under ignored storage without any live
-Kaggle action:
+After the HTTP 409 diagnosis, a corrected validation-only package was prepared locally under
+ignored storage:
 
 - Dataset slug: `huynhdieuthanh/lewm-tempglitch-gate5-smoke`
-- New kernel slug: `huynhdieuthanh/lewm-gate5-cuda-smoke-v2`
+- v2 kernel slug: `huynhdieuthanh/lewm-gate5-cuda-smoke-v2`
 - Dataset fingerprint: `897f4a8f310aa9891db5c45cc5bc78285c7cb965a469e46d78346d28c1877f51`
 - Kernel inventory SHA-256: `8f6474331d4873971d42757ccee96494cd306f455399443b97e860dc40906e4c`
 - Kernel metadata SHA-256: `c3749bcf9c41b009f853577eb75fc94338e38312625a1ea372bea66da328abf1`
 - Kernel script SHA-256: `0d484a956d29b15c866f60e37efe1c1979b53b1c39bd70762036d4abcea59fca`
-- New kernel approval fingerprint:
+- v2 kernel approval fingerprint:
   `4d1108f7e9b5f62ba969961f2bee56f9bd226d794ab350386ce510006f91e3f8`
 
-The request records are in ignored storage at `outputs/gate5/approvals/tempglitch_kernel_v2`.
-They are not approvals. Live push remains blocked until the exact new fingerprint is approved.
+The v2 approval was created, preflight returned `approval_status: valid`, dataset status returned
+`ready`, and the approval was consumed at `2026-06-11T03:48:07.773881+00:00`. Exactly one v2
+kernel push was submitted. Kaggle accepted kernel version 1, then the run reached
+`KernelWorkerStatus.ERROR`.
+
+The error log shows the script failed before training because it tried to install from
+`/kaggle/src/lewm-runtime.txt`, which Kaggle did not place beside `/kaggle/src/script.py`.
+
+## New V3 Request
+
+The generator now makes the validation kernel clone this repository and install from
+`requirements/lewm-runtime.txt`. A new ignored v3 package/request has been prepared:
+
+- Dataset slug: `huynhdieuthanh/lewm-tempglitch-gate5-smoke`
+- v3 kernel slug: `huynhdieuthanh/lewm-gate5-cuda-smoke-v3`
+- Dataset fingerprint: `897f4a8f310aa9891db5c45cc5bc78285c7cb965a469e46d78346d28c1877f51`
+- Kernel inventory SHA-256: `5487df7e1f185b10d4a54844af7d7d8bd09428b6823cc4ac080ca56ee5fdb570`
+- Kernel metadata SHA-256: `8d105564299a05e4025c9d6836e41e2f382eac0970b442c6130dcc97ae392a35`
+- Kernel script SHA-256: `106e3da88790b112e91808ee1dde954b46d566ec18858b0e22d856db38c88a66`
+- v3 kernel approval fingerprint:
+  `47107246ea537fce9c435717301b12c0408f296b34567602f6408b77a5d856c9`
+
+The request records are in ignored storage at `outputs/gate5/approvals/tempglitch_kernel_v3`.
+They are not approvals. Live push remains blocked until the exact v3 fingerprint is approved.

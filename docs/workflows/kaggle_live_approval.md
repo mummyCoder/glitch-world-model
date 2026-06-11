@@ -29,6 +29,9 @@ Before requesting or consuming a kernel approval, the package must pass local pr
 - `dataset_sources` exactly matches the approved remote dataset slug;
 - kernel metadata hash, kernel code hash, kernel inventory hash, dataset slug, and kernel slug are
   included in the approval fingerprint.
+- generated kernels must not assume auxiliary package files are available beside
+  `/kaggle/src/script.py`; dependencies and repo code must be resolved from an explicit Kaggle
+  input or a documented repository clone path.
 
 Consumed approvals cannot be reused. A metadata-only fix requires a new package fingerprint and a
 new approval request before any live push.

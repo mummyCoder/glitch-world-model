@@ -1,21 +1,25 @@
 # LAST_HANDOFF.md
 
-Last completed task: Gate 5 409 conflict preflight hardening
+Last completed task: Gate 5 approved v2 Kaggle push failure diagnosis and v3 request
 Commit: pending commit after final verification
 Date: 2026-06-11
 
 ## What Changed
-- Diagnosed the Gate 5 HTTP 409 as locally caused by the consumed package using the same Kaggle
-  slug for dataset and kernel.
-- Added local preflight guards for Kaggle slug format, placeholder owners, kernel/dataset slug
-  equality, required kernel metadata fields, missing code file, dataset-source mismatch, and
-  consumed approval reuse.
-- Prepared corrected ignored package/request using kernel slug
-  `huynhdieuthanh/lewm-gate5-cuda-smoke-v2`.
-- New kernel approval fingerprint:
+- Created the requested fresh v2 approval for fingerprint
   `4d1108f7e9b5f62ba969961f2bee56f9bd226d794ab350386ce510006f91e3f8`.
-- Updated Gate 5 incident docs, workflow docs, README, PLAYBOOK, claim registry, and context
-  cache.
+- Verified `approval_status: valid`, confirmed the dataset was `ready`, consumed the approval,
+  and performed exactly one Kaggle kernel push.
+- Kaggle accepted `huynhdieuthanh/lewm-gate5-cuda-smoke-v2` version 1, then the run reached
+  `KernelWorkerStatus.ERROR`.
+- Downloaded the error log to ignored output storage; the script failed before training because
+  `/kaggle/src/lewm-runtime.txt` was not present.
+- Updated the generated kernel to clone the repo and install from `requirements/lewm-runtime.txt`.
+- Prepared a new ignored v3 package/request with kernel slug
+  `huynhdieuthanh/lewm-gate5-cuda-smoke-v3`.
+- New v3 kernel approval fingerprint:
+  `47107246ea537fce9c435717301b12c0408f296b34567602f6408b77a5d856c9`.
+- Updated Gate 5 reports, workflow docs, README, PLAYBOOK, roadmap, claim registry, tests, and
+  context cache.
 
 ## Checks Passed
 - `python -m pytest` (200 passed).
@@ -26,12 +30,14 @@ Date: 2026-06-11
 - `python scripts/doctor.py`.
 - `python scripts/validate_context_cache.py`.
 - `pre-commit run --all-files`.
+- Strict Gate 5 validator was intentionally run on the v2 error-output directory and failed
+  because required artifacts were missing; Gate 5 remains partial.
 
 ## Safety Status
-- No Kaggle live action.
+- Exactly one approved v2 Kaggle kernel push was performed.
 - No kernel push retry.
 - No dataset upload.
-- No model training.
+- No verified model training; the run failed before training.
 - No locked-test access.
 - No data/output/checkpoint/credential commit intended.
 
@@ -43,12 +49,12 @@ Date: 2026-06-11
 
 ## Open Blockers
 - Gate 5 Kaggle CUDA/resume artifact set is still missing.
-- Fresh approval is required for fingerprint
-  `4d1108f7e9b5f62ba969961f2bee56f9bd226d794ab350386ce510006f91e3f8`.
+- Fresh approval is required for v3 fingerprint
+  `47107246ea537fce9c435717301b12c0408f296b34567602f6408b77a5d856c9`.
 
 ## Next Recommended Task
-- After human approval is created for the corrected package, perform exactly one approved kernel
-  push and validate downloaded artifacts.
+- After human approval is created for the v3 package, perform exactly one approved kernel push and
+  validate downloaded artifacts.
 
 ## Files Likely Relevant Next
 - `docs/context/NEXT_ACTION.md`

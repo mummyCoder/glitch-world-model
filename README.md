@@ -133,11 +133,12 @@ Kaggle CUDA train/resume artifact and no gameplay-scale glitch metric. Gate 7 th
 closed for LeWM-based paper claims. Do not touch locked test without a frozen validation decision,
 the documented release gate, and explicit authorization.
 
-The June 11, 2026 Gate 5 TempGlitch dataset upload is ready, but the single approved kernel push
-returned HTTP `409 Conflict` before a run was established. That one-time approval is consumed;
-the local cause was a kernel slug that matched the dataset slug. A corrected package now uses
-`huynhdieuthanh/lewm-gate5-cuda-smoke-v2` and has a fresh request fingerprint, but another live
-attempt still requires explicit approval.
+The June 11, 2026 Gate 5 TempGlitch dataset upload is ready. The first approved kernel push
+returned HTTP `409 Conflict` before a run was established; the local cause was a kernel slug that
+matched the dataset slug. A second approved v2 push was accepted by Kaggle, then failed before
+training because the generated script looked for `/kaggle/src/lewm-runtime.txt`. A v3 package now
+uses `huynhdieuthanh/lewm-gate5-cuda-smoke-v3` and has a fresh request fingerprint, but another
+live attempt still requires explicit approval.
 
 The reusable split-safe core is implemented in
 `src/glitch_detection/experiment_protocol.py`. It validates grouped splits, fits
@@ -246,7 +247,7 @@ isolated LeWM environment and compatible checkpoint/data contracts:
 python -m glitch_detection.lewm_latent --manifest data/processed/my_experiment/manifest.csv --labels data/raw/my_labels.csv --output outputs/my_experiment_lewm_scores.csv --checkpoint path/to/lewm.ckpt
 ```
 
-The next evidence step is to approve the corrected Gate 5 kernel fingerprint, then complete one
+The next evidence step is to approve the v3 Gate 5 kernel fingerprint, then complete one
 CUDA train/resume smoke with locally validated artifacts. Gameplay-scale scoring and validation
 metrics remain later gates.
 

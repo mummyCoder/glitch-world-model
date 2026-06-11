@@ -18,18 +18,27 @@ Kaggle CUDA train/resume artifact exists. An approval record, upload, or kernel 
 does not prove successful training.
 
 On 2026-06-11, the approved TempGlitch dataset upload was confirmed ready and matched the local
-Lance package inventory by file name and size. One exact fingerprint-approved kernel push was
-attempted, but Kaggle returned HTTP `409 Conflict`; the approval is now consumed and no run or
-downloaded artifacts exist. See
+Lance package inventory by file name and size. One exact fingerprint-approved kernel push first
+returned HTTP `409 Conflict`; the approval was consumed and no run or downloaded artifacts
+existed. See
 [the current-state audit](41_gate5_current_state.md),
 [approval status](42_gate5_kernel_approval_status.md), and
-[execution record](43_gate5_kaggle_cuda_smoke_results.md). A fresh exact approval is required
-before any retry.
+[execution record](43_gate5_kaggle_cuda_smoke_results.md).
 
 The local 409 diagnosis found that the consumed package reused the dataset slug as the kernel
 slug. Current package preflight rejects placeholder owners, kernel/dataset slug equality, missing
-kernel code files, dataset-source mismatches, and consumed approval reuse. The corrected ignored
-package uses kernel slug `huynhdieuthanh/lewm-gate5-cuda-smoke-v2` and waits for fresh approval.
+kernel code files, dataset-source mismatches, and consumed approval reuse.
+
+A second exact approval for fingerprint `4d1108...e3f8` was created and consumed for one v2
+kernel push. Kaggle accepted version 1, then the run failed before training because the generated
+script looked for `/kaggle/src/lewm-runtime.txt`, which Kaggle did not place beside
+`/kaggle/src/script.py`. The strict artifact validator failed because the required Gate 5
+artifacts were missing.
+
+The generator now makes the kernel clone the repository and install from
+`requirements/lewm-runtime.txt`. A new ignored package/request uses kernel slug
+`huynhdieuthanh/lewm-gate5-cuda-smoke-v3` and waits for fresh approval of fingerprint
+`47107246ea537fce9c435717301b12c0408f296b34567602f6408b77a5d856c9`.
 
 The reusable runner `scripts/run_kaggle_lewm.py` was first verified locally on synthetic data.
 On 2026-06-11, reduced real-gameplay CPU smokes also completed forward/backward and hash-matching

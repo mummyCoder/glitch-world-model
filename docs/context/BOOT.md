@@ -1,7 +1,7 @@
 # BOOT.md - Fast Start Context For Agents
 
-Generated: 2026-06-11T03:26:01+00:00
-Commit: `d50e3c7f0072219abdfd83eeec9622cf648a3351`
+Generated: 2026-06-11T03:56:19+00:00
+Commit: `b7150d232127fd8abf8f97b00fc03d730cdd9697`
 
 ## Read Order
 1. `RULES.md`
@@ -25,8 +25,8 @@ context cache is stale. Use `docs/context/REPO_MAP.md` before broad repo searche
 
 ## Immediate Next Task
 - Complete or unblock Gate 5 Kaggle CUDA smoke/resume artifact.
-- Current known blocker: fresh approval is required for corrected kernel fingerprint
-  `4d1108f7e9b5f62ba969961f2bee56f9bd226d794ab350386ce510006f91e3f8`.
+- Current known blocker: fresh approval is required for v3 kernel fingerprint
+  `47107246ea537fce9c435717301b12c0408f296b34567602f6408b77a5d856c9`.
 
 ## Safety
 - No Kaggle live action without a current fingerprint-bound approval.

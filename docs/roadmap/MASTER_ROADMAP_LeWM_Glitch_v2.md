@@ -11,9 +11,10 @@ Status: implementation roadmap; all unexecuted experiments remain `experiment-pe
 - Gate 3: passed for frozen real WOB and TempGlitch grouped protocol artifacts.
 - Gate 4: passed for synthetic and reduced real-data Lance loader-contract evidence.
 - Gate 5: partial. Synthetic and reduced real-gameplay CPU forward/backward/resume smokes passed;
-  the private TempGlitch dataset is ready, but the single approved kernel push returned HTTP 409
-  before execution. Kaggle CUDA train/resume proof remains missing and requires a corrected final
-  package plus fresh fingerprint-bound approval.
+  the private TempGlitch dataset is ready. The first approved kernel push returned HTTP 409 before
+  execution. The second approved v2 push was accepted by Kaggle, then failed before training due
+  to a generated-script dependency path issue. Kaggle CUDA train/resume proof remains missing and
+  requires the v3 package plus fresh fingerprint-bound approval.
 - Gates 6-10: not run. Locked test remains closed.
 
 ## 1. Executive Decision
@@ -452,10 +453,10 @@ The project may call the method **LeWM-based** only when all are true:
 
 ## 12. Immediate Next Gate
 
-Gate 5 now requires resolution of the 2026-06-11 Kaggle HTTP 409 submission conflict, one newly
-approved Kaggle CUDA train/resume smoke, and strict local artifact validation. The prior
-kernel-push approval was consumed and does not authorize a retry. Dataset upload and kernel push
-remain separate fingerprint-bound approvals. No live action is authorized by this roadmap update.
+Gate 5 now requires one newly approved v3 Kaggle CUDA train/resume smoke and strict local
+artifact validation. The prior kernel-push approvals were consumed by the HTTP 409 attempt and
+the v2 runtime failure, and do not authorize a retry. Dataset upload and kernel push remain
+separate fingerprint-bound approvals. No live action is authorized by this roadmap update.
 
 After Gate 5, Gate 6 may open for normal-only gameplay training. Gate 7 remains the first point at
 which gameplay-scale LeWM surprise scores and validation metrics can support a LeWM method claim.
