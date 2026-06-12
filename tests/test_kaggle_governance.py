@@ -1,5 +1,6 @@
-from pathlib import Path
+from __future__ import annotations
 
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -8,9 +9,7 @@ def test_kaggle_governance_uses_standing_authorization_and_keeps_locked_test_sep
     rules = (ROOT / "RULES.md").read_text(encoding="utf-8")
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     playbook = (ROOT / "PLAYBOOK.md").read_text(encoding="utf-8")
-    workflow = (ROOT / "docs/workflows/kaggle_automation_policy.md").read_text(
-        encoding="utf-8"
-    )
+    workflow = (ROOT / "docs/workflows/kaggle_automation_policy.md").read_text(encoding="utf-8")
     combined = "\n".join([rules, agents, playbook, workflow]).lower()
 
     assert "standing authorization" in combined
@@ -29,3 +28,16 @@ def test_context_generator_emits_standing_authorization_policy():
     assert "standing Kaggle authorization" in generator
     assert "fingerprint-bound approval" not in generator
     assert "kaggle_automation_policy.md" in generator
+
+
+def test_gate6_v7_is_public_standing_authorized_and_locked_test_closed():
+    config = (ROOT / "configs/lewm_gate6_pilot.yaml").read_text(encoding="utf-8")
+
+    assert "huynhdieuthanh/lewm-tempglitch-gate6-public-v7" in config
+    assert "huynhdieuthanh/lewm-gate6-pilot-v7" in config
+    assert "dataset_visibility: public" in config
+    assert "kernel_visibility: public" in config
+    assert "dataset_license: MIT" in config
+    assert "redistribution_allowed: true" in config
+    assert "standing_authorization: true" in config
+    assert "locked_test_enabled: false" in config

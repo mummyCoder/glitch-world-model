@@ -2,17 +2,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
-from glitch_detection.kaggle_automation import KaggleOrchestrator
-from glitch_detection.lewm_gate6_automation import (
-    GATE6_AUTOMATION_STEPS,
-    GATE6_LIVE_ACTION_FINGERPRINTS,
-    Gate6AutomationConfig,
-    Gate6AutomationHandlers,
-)
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -61,6 +55,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
+    from glitch_detection.kaggle_automation import KaggleOrchestrator
+    from glitch_detection.lewm_gate6_automation import (
+        GATE6_AUTOMATION_STEPS,
+        GATE6_LIVE_ACTION_FINGERPRINTS,
+        Gate6AutomationConfig,
+        Gate6AutomationHandlers,
+    )
+
     args = build_parser().parse_args(argv)
     config = Gate6AutomationConfig(
         repo_root=ROOT,

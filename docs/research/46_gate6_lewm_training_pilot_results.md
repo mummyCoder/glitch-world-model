@@ -1,7 +1,7 @@
 # Gate 6 LeWM Training Pilot Results
 
-Status date: 2026-06-11
-Result: `partial`
+Status date: 2026-06-12
+Result: `experiment-pending_after_v6_packaging_failure`
 
 Gate 6 is open for preparation because Gate 5 passed strict CUDA/resume validation. The pilot
 configuration and acceptance criteria are frozen in `configs/lewm_gate6_pilot.yaml` and report
@@ -31,13 +31,17 @@ failure with no same-fingerprint retry.
 
 A secret-safe diagnostic confirmed Kaggle CLI 2.2.1 on Python 3.14.4, authenticated read access,
 dataset status `ready`, valid v5 metadata, an existing entry script, and a 447,813-byte package.
-One private CPU-only, dataset-free canary was then pushed through the absolute Kaggle executable.
-It returned the same JSON parse error and did not appear remotely after exact-slug list/status
-checks. The canary was not retried.
+An initial private CPU-only, dataset-free canary through the direct executable returned the same
+JSON parse error and was not retried.
 
-This isolates the current blocker to the Kaggle kernel write path rather than Gate 6 source,
-dataset attachment, package size, or GPU allocation. Per protocol, no v6 package or live Gate 6
-attempt was made after the failed canary.
+The later Canary A completed, proving the Python-module Kaggle write path worked. Gate 6 v6 was
+accepted as remote version 1 and failed at runtime before dependency installation:
+`shutil.ReadError: /kaggle/src/glitch_detection_src.zip is not a zip file`.
+The local ZIP was valid, but Kaggle did not place that auxiliary file beside
+`/kaggle/src/script.py`. This narrows v6 to a packaging-contract failure, not training evidence.
+
+The planned v7 package embeds the source archive in the generated Python script and contains no
+auxiliary kernel file. Its automatic public execution remains pending pre-live validation.
 
 No Gate 6 checkpoint, loss, encoding result, or gameplay performance metric exists.
 

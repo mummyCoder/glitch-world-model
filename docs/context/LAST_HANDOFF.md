@@ -1,7 +1,7 @@
 # LAST_HANDOFF.md
 
-Last completed task: Kaggle standing authorization and Gate 6 implementation plan
-Commit: plan commit recorded in Git history
+Last completed task: Gate 6 v7 automation implementation before pre-live validation
+Commit: `29b02e0`
 Date: 2026-06-12
 
 ## What Changed
@@ -22,11 +22,15 @@ Date: 2026-06-12
   `docs/superpowers/specs/2026-06-12-kaggle-standing-authorization-gate6-repair-design.md`.
 - Wrote the task-by-task implementation plan to
   `docs/superpowers/plans/2026-06-12-kaggle-standing-authorization-gate6-repair.md`.
+- Replaced approval artifacts with standing-authorization policy and audit manifests.
+- Embedded the deterministic `glitch_detection` source archive in the single Gate 6 kernel file.
+- Added public-release guards, bootstrap validation, resumable Kaggle lifecycle automation,
+  exact-slug push reconciliation, evidence download, and strict artifact validation.
 
 ## Checks Passed
-- Static design self-review found no placeholders, contradictory authorization rules, or
-  ambiguous Gate 6 pass criteria.
-- No Kaggle live action was performed during the design task.
+- Focused Gate 6 packaging/training tests passed: 13.
+- Focused Gate 6 lifecycle and generic orchestrator tests passed: 21.
+- No Kaggle live action was performed by the implementation commits.
 
 ## Safety Status
 - Gate 6 remains blocked because v6 failed before dependency installation or training.
@@ -42,15 +46,13 @@ Date: 2026-06-12
 - Locked test closed.
 
 ## Open Blockers
-- Governance and automation code still implement per-action approval artifacts and private-only
-  validation; they must be migrated to the approved standing-authorization policy.
-- Gate 6 needs a single-file embedded-source package plus offline bootstrap regressions.
+- Complete local pre-live verification and inspect the exact v7 package/audit.
+- Run one standing-authorized public Gate 6 v7 workflow.
 - Gate 7 requires a strictly validated Gate 6 checkpoint.
 
 ## Next Recommended Task
-- Execute the implementation plan with Superpowers subagent-driven development or executing-plans.
-- Implement governance, automation policy, Gate 6 regressions, single-file packaging, and one
-  automatic remote run in the documented order.
+- Run the complete pre-live checks and automation dry-run.
+- Execute one automatic public Gate 6 v7 run only after all pre-live checks pass.
 - Open Gate 7 only if downloaded Gate 6 artifacts pass the strict validator.
 
 ## Files Likely Relevant Next

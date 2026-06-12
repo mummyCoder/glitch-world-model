@@ -8,7 +8,6 @@ from glitch_detection.kaggle_automation import (
     FingerprintBuilder,
     KaggleAction,
     KaggleExecutionPolicy,
-    PublicReleaseSpec,
     SecurityGuard,
     SecurityViolation,
     StateStore,

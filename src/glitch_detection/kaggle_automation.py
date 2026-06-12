@@ -196,9 +196,7 @@ class SecurityGuard:
         r"\s*[:=]\s*[\"']?([^\s\"']+)"
     )
     SENSITIVE_ENV_NAME = re.compile(r"(?i)(KAGGLE|TOKEN|KEY|SECRET|PASSWORD)")
-    LOCKED_TEST_PATH_PATTERN = re.compile(
-        r"(?i)(^|[/_.-])locked([_-]?test)?([/_.-]|$)"
-    )
+    LOCKED_TEST_PATH_PATTERN = re.compile(r"(?i)(^|[/_.-])locked([_-]?test)?([/_.-]|$)")
 
     def __init__(self, environment: dict[str, str] | None = None) -> None:
         source = dict(os.environ) if environment is None else environment
@@ -690,8 +688,7 @@ class KaggleOrchestrator:
                 self.state_store.save(state)
                 return
             raise AutomationBlockedError(
-                "Kernel fingerprint already pushed and requires a changed package: "
-                f"{fingerprint}"
+                f"Kernel fingerprint already pushed and requires a changed package: {fingerprint}"
             )
         if step == "kernel_push_once":
             state.pushed_kernel_fingerprints.append(fingerprint)
@@ -721,9 +718,7 @@ class KaggleOrchestrator:
                 )
                 reset_index = self.steps.index(reset_step)
                 state.completed_steps = [
-                    step
-                    for step in state.completed_steps
-                    if self.steps.index(step) < reset_index
+                    step for step in state.completed_steps if self.steps.index(step) < reset_index
                 ]
                 if self.steps.index(state.current_step) >= reset_index:
                     state.current_step = reset_step

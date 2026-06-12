@@ -1,7 +1,18 @@
 phase: gate6_normal_only_training_pilot
-status: prepared_not_run
+status: v7_pre_live_validation_pending
 validation_only: true
 locked_test_enabled: false
+
+kaggle:
+  dataset_slug: huynhdieuthanh/lewm-tempglitch-gate6-public-v7
+  kernel_slug: huynhdieuthanh/lewm-gate6-pilot-v7
+  dataset_visibility: public
+  kernel_visibility: public
+  dataset_license: MIT
+  redistribution_allowed: true
+  standing_authorization: true
+  max_transient_attempts: 3
+  delete_remote_resources: false
 
 dataset:
   name: TempGlitch
