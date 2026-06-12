@@ -6,10 +6,11 @@ import math
 import re
 import shutil
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .kaggle_automation import ApprovalStore, FingerprintBuilder, SecurityGuard
+from .kaggle_automation import FingerprintBuilder, SecurityGuard
 
 REQUIRED_OUTPUTS = (
     "run_config.json",
@@ -358,70 +359,30 @@ def _kernel_fingerprint_payload(package_root: Path) -> dict[str, Any]:
     }
 
 
-def _write_request(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-
-
-def validate_kernel_push_preflight(
-    package_root: Path,
-    approvals_root: Path | None = None,
-) -> dict[str, Any]:
+def validate_kernel_push_preflight(package_root: Path) -> dict[str, Any]:
     kernel_payload = _kernel_fingerprint_payload(package_root)
-    kernel_fingerprint = _sha256_json(kernel_payload)
-    result = {
-        **kernel_payload,
-        "kernel_fingerprint": kernel_fingerprint,
-        "approval_status": "not_checked",
-    }
-    if approvals_root is None:
-        return result
-    approved_path = approvals_root / "kernel_push_approval.approved.json"
-    if not approved_path.is_file():
-        result["approval_status"] = "missing"
-        return result
-    approved = _read_json(approved_path)
-    if approved.get("fingerprint") != kernel_fingerprint:
-        result["approval_status"] = "fingerprint_mismatch"
-        return result
-    if approved.get("consumed_at") is not None:
-        raise ValueError("Kernel push approval for this fingerprint was already consumed.")
-    result["approval_status"] = "valid"
-    return result
-
-
-def request_package_approvals(package_root: Path, approvals_root: Path) -> dict[str, Any]:
-    validation = validate_lewm_kaggle_package(package_root)
-    dataset_fingerprint = validation["dataset_inventory_sha256"]
-    kernel_payload = _kernel_fingerprint_payload(package_root)
-    kernel_fingerprint = _sha256_json(kernel_payload)
-    store = ApprovalStore(approvals_root)
-    dataset_request = store.request("dataset_upload_approval", dataset_fingerprint)
-    kernel_request = store.request("kernel_push_approval", kernel_fingerprint)
-    dataset_request.update(
-        {
-            "dataset_slug": validation["dataset_slug"],
-            "dataset_inventory_sha256": dataset_fingerprint,
-        }
-    )
-    kernel_request.update(
-        {
-            **kernel_payload,
-            "old_approval_consumed": True,
-            "live_actions_performed": False,
-            "approval_note": (
-                "Prior Gate 5 kernel approval was consumed by the HTTP 409 attempt; "
-                "this request does not authorize a live retry."
-            ),
-        }
-    )
-    _write_request(approvals_root / "dataset_upload_approval.request.json", dataset_request)
-    _write_request(approvals_root / "kernel_push_approval.request.json", kernel_request)
     return {
-        "dataset_upload_approval": dataset_request,
-        "kernel_push_approval": kernel_request,
+        **kernel_payload,
+        "kernel_fingerprint": _sha256_json(kernel_payload),
+        "authorization": "standing",
+        "locked_test_materialized": False,
+        "locked_test_scored": False,
+    }
+
+
+def build_package_audit(package_root: Path, output_path: Path) -> dict[str, Any]:
+    validation = validate_lewm_kaggle_package(package_root)
+    preflight = validate_kernel_push_preflight(package_root)
+    payload = {
+        **validation,
+        **preflight,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "authorization": "standing",
         "live_actions_performed": False,
     }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return payload
 
 
 def _validate_finite_numbers(payload: Any, *, label: str) -> None:

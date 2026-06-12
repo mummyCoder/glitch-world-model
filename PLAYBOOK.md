@@ -744,15 +744,10 @@ python scripts/prepare_lewm_kaggle_package.py `
   --dry-run
 ```
 
-### Gate 5 Approval Request Creation
+### Gate 5 Package Audit
 
-This creates request records only. It does not authorize or perform a live action.
-
-```powershell
-python scripts/request_lewm_kaggle_approvals.py `
-  --package-root <ignored-package-root> `
-  --approvals-root <ignored-approval-root>
-```
+Package validation and push preflight produce audit records under the repository standing
+authorization. These checks do not materialize or score the locked test.
 
 ### Strict Downloaded Artifact Validation
 
@@ -762,8 +757,8 @@ python scripts/validate_lewm_kaggle_artifacts.py `
   --output <ignored-validation-report.json>
 ```
 
-No live upload or kernel-push command belongs in an ordinary execution checklist. Follow
-`docs/workflows/kaggle_live_approval.md` only after explicit approval.
+Live uploads and kernel pushes follow `docs/workflows/kaggle_automation_policy.md`. Public
+publishing additionally requires the policy's license, redistribution, and locked-test guards.
 
 ## 24. Paper And Defense Strategy
 

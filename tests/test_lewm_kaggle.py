@@ -6,10 +6,10 @@ import pytest
 from glitch_detection.lewm_kaggle import (
     REQUIRED_OUTPUTS,
     LeWMKaggleConfig,
+    build_package_audit,
     prepare_lewm_kaggle_package,
     quota_allocation,
     render_validation_kernel,
-    request_package_approvals,
     validate_kernel_push_preflight,
     validate_lewm_kaggle_package,
     validate_lewm_smoke_artifacts,
@@ -79,7 +79,9 @@ def test_kaggle_package_dry_run_is_validation_only(tmp_path: Path):
     assert "Gate 5 LeWM smoke requires CUDA" in kernel
 
 
-def test_kaggle_package_creates_separate_fingerprint_bound_requests(tmp_path: Path):
+def test_kaggle_package_builds_dataset_and_kernel_audit_without_approval_files(
+    tmp_path: Path,
+):
     source = tmp_path / "source"
     source.mkdir()
     (source / "train.lance").mkdir()
@@ -87,17 +89,16 @@ def test_kaggle_package_creates_separate_fingerprint_bound_requests(tmp_path: Pa
     package = tmp_path / "package"
     prepare_lewm_kaggle_package(source, package, _config(), dry_run=False)
 
-    requests = request_package_approvals(package, tmp_path / "approvals")
+    audit = build_package_audit(package, tmp_path / "audit.json")
 
-    dataset = requests["dataset_upload_approval"]
-    kernel = requests["kernel_push_approval"]
-    assert dataset["fingerprint"] != kernel["fingerprint"]
-    assert dataset["dataset_slug"] == "huynhdieuthanh/lewm-tempglitch-gate5-smoke"
-    assert kernel["dataset_slug"] == "huynhdieuthanh/lewm-tempglitch-gate5-smoke"
-    assert kernel["kernel_slug"] == "huynhdieuthanh/lewm-gate5-cuda-smoke-v2"
-    assert dataset["one_time_use"] is True
-    assert kernel["one_time_use"] is True
-    assert requests["live_actions_performed"] is False
+    assert audit["authorization"] == "standing"
+    assert audit["dataset_inventory_sha256"]
+    assert audit["kernel_fingerprint"]
+    assert audit["locked_test_materialized"] is False
+    assert audit["locked_test_scored"] is False
+    assert (tmp_path / "audit.json").is_file()
+    assert not list(tmp_path.rglob("*.approved.json"))
+    assert not list(tmp_path.rglob("*.request.json"))
     assert (package / "kernel" / "src" / "glitch_detection" / "lewm_training.py").is_file()
 
 
@@ -154,24 +155,18 @@ def test_kaggle_package_rejects_dataset_source_mismatch(tmp_path: Path):
         validate_lewm_kaggle_package(package)
 
 
-def test_kernel_push_preflight_rejects_consumed_approval(tmp_path: Path):
+def test_kernel_push_preflight_has_no_approval_status(tmp_path: Path):
     source = tmp_path / "source"
     source.mkdir()
     (source / "train.lance").mkdir()
     (source / "validation.lance").mkdir()
     package = tmp_path / "package"
-    approvals = tmp_path / "approvals"
     prepare_lewm_kaggle_package(source, package, _config(), dry_run=False)
-    requests = request_package_approvals(package, approvals)
 
-    from glitch_detection.kaggle_automation import ApprovalStore
+    result = validate_kernel_push_preflight(package)
 
-    store = ApprovalStore(approvals)
-    store.approve("kernel_push_approval", requests["kernel_push_approval"]["fingerprint"])
-    store.consume("kernel_push_approval", requests["kernel_push_approval"]["fingerprint"])
-
-    with pytest.raises(ValueError, match="already consumed"):
-        validate_kernel_push_preflight(package, approvals)
+    assert result["authorization"] == "standing"
+    assert "approval_status" not in result
 
 
 def test_kaggle_package_accepts_corrected_kernel_slug(tmp_path: Path):
