@@ -78,6 +78,7 @@ venv.bak/
 .idea/
 .qodo/
 _external_references/
+.codegraph/
 
 # Project data and generated outputs
 data/*

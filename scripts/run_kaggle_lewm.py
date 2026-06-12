@@ -16,6 +16,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--image-size", type=int, default=112)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--epochs", type=int, default=1)
+    parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--predictor-depth", type=int, default=6)
     parser.add_argument("--sigreg-projections", type=int, default=128)
     parser.add_argument("--max-train-steps", type=int, default=None)
@@ -42,6 +43,7 @@ def main(argv: list[str] | None = None) -> None:
         image_size=args.image_size,
         batch_size=args.batch_size,
         epochs=args.epochs,
+        seed=args.seed,
         predictor_depth=args.predictor_depth,
         sigreg_projections=args.sigreg_projections,
         max_train_steps=args.max_train_steps,

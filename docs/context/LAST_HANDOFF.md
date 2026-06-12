@@ -1,38 +1,48 @@
 # LAST_HANDOFF.md
 
-Last completed task: LeWM research MVP source and runtime preparation
-Commit: `2d21aa6`
-Date: 2026-06-12
+Last completed task: Kaggle LeWM runner seed wiring and CodeGraph setup
+Commit: pending
+Date: 2026-06-13
 
 ## What Changed
 
-- Audited every locally available TempGlitch video against the frozen split.
-- Materialized 36 train-normal, 14 validation-normal, and 22 validation-buggy episodes into
-  ignored Lance datasets spanning all five categories.
-- Added research runtime controls: AMP, workers, pinned memory, gradient clipping, early stopping,
-  and explicit unvalidated research-run status.
-- Added the research protocol, configuration, source audit report, and claim registry entry.
+- Added a `--seed` argument to the validation-only Kaggle LeWM runner.
+- Wired the parsed seed into `LeWMTrainConfig.seed`.
+- Added focused runner tests that stub training and inspect the constructed config.
+- Installed and initialized CodeGraph for fast agent code navigation.
+- Added `.codegraph/` to `.gitignore`; the local index remains untracked.
+- Enabled the full CodeGraph MCP tool set in the user's global Codex configuration.
+- No training semantics changed beyond seed wiring.
+- No Kaggle, GPU, locked-test, or paper-claim action was performed.
 
 ## Checks Passed
 
-- Research source audit passed with zero source/pair overlap and false locked-test flags.
-- Lance inspection found 34,844 train-normal, 12,825 validation-normal, and 17,724
-  validation-buggy four-step windows.
-- A two-update CPU contract check completed with matching dataset fingerprints.
-- Focused tests passed; full release verification is pending.
+- `python -m pytest tests/test_run_kaggle_lewm.py` passed.
+- `python -m pytest tests/test_lewm_training.py` passed.
+- `python -m pytest` passed with 277 tests.
+- `python -m ruff check .` passed.
+- `python -m ruff format --check .` passed.
+- `python scripts/validate_research_release.py --ci` passed.
+- `python scripts/check_claim_registry.py` passed with 58 claim IDs and no errors.
+- `python scripts/doctor.py` and `python scripts/validate_context_cache.py` passed.
+- `pre-commit run --all-files` passed.
+- CodeGraph `explore`, `node`, `impact`, and `affected` queries passed.
 
 ## Safety Status
 
-- Locked test was not materialized or scored.
-- No live Kaggle action was performed in this preparation task.
-- Lance datasets, checkpoints, outputs, and credentials remain ignored.
-- No new model-performance claim was made.
+- Locked test remains closed, unmaterialized, and unscored.
+- No live Kaggle action was performed.
+- No long GPU job was run.
+- No secret material was printed or committed.
+- CodeGraph telemetry is disabled.
+- CodeGraph index/cache files remain ignored and untracked.
+- No performance or paper-facing claim was added.
 
 ## Gate Status After Task
 
 - Gates 1-8 remain passed.
-- Gate 9 remains a limited one-buggy-episode pilot.
-- Research MVP source preparation is complete.
+- Gate 9 remains only the limited non-locked one-buggy-episode validation pilot.
+- Research MVP source readiness remains unchanged.
 - Gate 10 and locked test remain closed.
 
 ## Open Blockers
@@ -43,14 +53,12 @@ Date: 2026-06-12
 
 ## Next Recommended Task
 
-- Commit the verified preparation changes, then run the predeclared 500-update non-locked Kaggle
-  GPU profile from the clean Git SHA.
+- Use the new seed CLI to prepare separate non-locked profile/main-run invocations for seeds
+  42, 43, and 44, starting with the predeclared 500-update GPU profile only.
 
 ## Files Likely Relevant Next
 
+- `scripts/run_kaggle_lewm.py`
 - `configs/lewm_research_mvp.yaml`
 - `docs/plans/2026-06-12-lewm-research-grade-experiment.md`
-- `docs/research/65_lewm_research_mvp_source_audit.md`
 - `src/glitch_detection/lewm_training.py`
-- `src/glitch_detection/lewm_research.py`
-- `scripts/run_kaggle_lewm.py`
