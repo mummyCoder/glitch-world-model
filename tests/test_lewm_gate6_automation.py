@@ -57,6 +57,26 @@ def test_public_dataset_create_uses_public_flag(tmp_path: Path):
     assert updates["dataset_uploaded_fingerprint"] == "dataset-fp"
 
 
+def test_forbidden_status_for_new_dataset_falls_back_to_create(tmp_path: Path):
+    class MissingDatasetRunner(FakeRunner):
+        def run(self, step: str, command: list[str], log_path: Path) -> CommandResult:
+            self.commands.append(command)
+            if "status" in command:
+                raise AutomationCommandError(
+                    "Command failed",
+                    stderr="403 Client Error: Forbidden",
+                )
+            return CommandResult(returncode=0, stdout="created", stderr="", attempts=1)
+
+    runner = MissingDatasetRunner([])
+    handlers = Gate6AutomationHandlers(_config(tmp_path), command_runner=runner)
+
+    handlers.dataset_create_or_version(AutomationState(dataset_fingerprint="dataset-fp"))
+
+    assert "create" in runner.commands[-1]
+    assert "--public" in runner.commands[-1]
+
+
 def test_kernel_push_uses_python_module_invocation_and_public_metadata(tmp_path: Path):
     runner = FakeRunner([CommandResult(returncode=0, stdout="pushed", stderr="", attempts=1)])
     config = _config(tmp_path)

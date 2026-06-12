@@ -149,7 +149,7 @@ class Gate6AutomationHandlers:
     @staticmethod
     def _status(text: str) -> str:
         lowered = text.lower()
-        if "not found" in lowered or "404" in lowered:
+        if "not found" in lowered or "404" in lowered or "403 client error: forbidden" in lowered:
             return "missing"
         if "error" in lowered or "failed" in lowered:
             return "error"
