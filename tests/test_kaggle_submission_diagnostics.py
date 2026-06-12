@@ -1,10 +1,18 @@
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 from scripts.diagnose_kaggle_submission import (
     collect_package_diagnostics,
     parse_kaggle_username,
     run_redacted_command,
+)
+from scripts.repair_kaggle_kernel_write_path import (
+    build_submission_variants,
+    create_canary_package,
+    discover_kaggle_executables,
+    safe_file_status,
 )
 
 
@@ -67,3 +75,77 @@ def test_parse_kaggle_username_uses_config_without_returning_token(tmp_path: Pat
     )
 
     assert parse_kaggle_username(config) == "safe-user"
+
+
+def test_discover_kaggle_executables_deduplicates_resolved_paths(tmp_path: Path):
+    first = tmp_path / "one" / "kaggle.exe"
+    second = tmp_path / "two" / "kaggle.exe"
+    first.parent.mkdir()
+    second.parent.mkdir()
+    first.write_bytes(b"one")
+    second.write_bytes(b"two")
+
+    result = discover_kaggle_executables([first, first, second])
+
+    assert result == [str(first.resolve()), str(second.resolve())]
+
+
+def test_safe_file_status_reports_permissions_without_content(tmp_path: Path):
+    config = tmp_path / "kaggle.json"
+    config.write_text('{"username":"safe","key":"do-not-return"}', encoding="utf-8")
+
+    result = safe_file_status(config)
+
+    assert result["exists"] is True
+    assert result["size_bytes"] > 0
+    assert result["readable"] is True
+    assert "content" not in result
+    assert "do-not-return" not in json.dumps(result)
+
+
+def test_create_canary_package_is_private_cpu_only_and_dataset_free(tmp_path: Path):
+    root = create_canary_package(tmp_path, "owner/canary-one")
+    metadata = json.loads((root / "kernel-metadata.json").read_text(encoding="utf-8"))
+
+    assert metadata["id"] == "owner/canary-one"
+    assert metadata["is_private"] is True
+    assert metadata["enable_gpu"] is False
+    assert metadata["enable_internet"] is False
+    assert metadata["dataset_sources"] == []
+    assert "heartbeat.json" in (root / "canary.py").read_text(encoding="utf-8")
+
+
+def test_build_submission_variants_uses_absolute_unique_package_paths(tmp_path: Path):
+    packages = [tmp_path / f"variant-{name}" for name in "abcd"]
+    for package in packages:
+        package.mkdir()
+    variants = build_submission_variants(
+        python_executable=Path("C:/Python/python.exe"),
+        kaggle_executable=Path("C:/Tools/kaggle.exe"),
+        clean_python=Path("C:/Clean/python.exe"),
+        package_roots=packages,
+    )
+
+    assert [variant["name"] for variant in variants] == ["A", "B", "C", "D"]
+    assert len({variant["package_root"] for variant in variants}) == 4
+    assert all(Path(variant["package_root"]).is_absolute() for variant in variants)
+    assert variants[0]["command"][:3] == [
+        "C:\\Python\\python.exe",
+        "-c",
+        "from kaggle.cli import main; main()",
+    ]
+    assert variants[1]["command"][1:3] == ["-m", "kaggle"]
+    assert variants[2]["command"][0] == "C:\\Tools\\kaggle.exe"
+    assert variants[3]["command"][0] == "C:\\Clean\\python.exe"
+
+
+def test_repair_script_runs_as_direct_cli():
+    completed = subprocess.run(
+        [sys.executable, "scripts/repair_kaggle_kernel_write_path.py", "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "--variant" in completed.stdout

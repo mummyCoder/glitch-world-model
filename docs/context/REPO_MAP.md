@@ -1,7 +1,7 @@
 # REPO_MAP.md
 
-Generated: 2026-06-12T04:48:25+00:00
-Commit: `362cdf1ae3a04a1fb1346fb828ba252914c4f8e4`
+Generated: 2026-06-12T04:51:50+00:00
+Commit: `230e8d138ad391521a771dcaf46e8f480b1dc0e5`
 Generator: `scripts/update_context_cache.py`
 
 ## Top-Level Map
@@ -55,6 +55,7 @@ Generator: `scripts/update_context_cache.py`
 | `scripts/prepare_lewm_gate6_package.py` | build_parser, main | Python module. |
 | `scripts/prepare_lewm_kaggle_package.py` | build_parser, main | Python module. |
 | `scripts/prepare_phase6e_kaggle_dataset.py` | _require_file, _estimate_directory, _upload_readme, prepare_phase6e_kaggle_dataset, build_parser, main | Python module. |
+| `scripts/repair_kaggle_kernel_write_path.py` | discover_kaggle_executables, safe_file_status, create_canary_package, build_submission_variants, _run, _diagnostics, _canary_slug, _check_remote, _run_variant, build_parser, main | Python module. |
 | `scripts/run_dynamics_experiments.py` | main | Python module. |
 | `scripts/run_gate7_lewm_evaluation.py` | main | Python module. |
 | `scripts/run_glitchbench_subset_experiments.py` | main | Python module. |
@@ -144,6 +145,7 @@ Generator: `scripts/update_context_cache.py`
 | `scripts/prepare_lewm_gate6_package.py` | CLI/helper script. | Gate 5 |
 | `scripts/prepare_lewm_kaggle_package.py` | CLI/helper script. | Gate 5 |
 | `scripts/prepare_phase6e_kaggle_dataset.py` | CLI/helper script. | Gate 5 |
+| `scripts/repair_kaggle_kernel_write_path.py` | CLI/helper script. | Gate 5 |
 | `scripts/run_dynamics_experiments.py` | CLI/helper script. | general |
 | `scripts/run_gate7_lewm_evaluation.py` | CLI/helper script. | Gate 5 |
 | `scripts/run_glitchbench_subset_experiments.py` | CLI/helper script. | general |
