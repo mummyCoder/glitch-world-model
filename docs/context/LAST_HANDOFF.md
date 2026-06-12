@@ -1,7 +1,7 @@
 # LAST_HANDOFF.md
 
 Last completed task: LeWM research MVP source and runtime preparation
-Commit: pending
+Commit: `2d21aa6`
 Date: 2026-06-12
 
 ## What Changed

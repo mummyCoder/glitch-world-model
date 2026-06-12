@@ -1,7 +1,7 @@
 # NEXT_ACTION.md
 
-Last updated: 2026-06-12T07:25:09+00:00
-Commit: `c5e7ca997e6355e002afb1c3356d3789deb3efe0`
+Last updated: 2026-06-12T07:25:53+00:00
+Commit: `2d21aa6e9e35f9f9c5b65250e1e1e24df15a7f88`
 
 ## Current Priority
 Run the research MVP GPU profile, then freeze a feasible multi-seed training schedule.

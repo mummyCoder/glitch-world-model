@@ -1,7 +1,7 @@
 # REPO_MAP.md
 
-Generated: 2026-06-12T07:25:09+00:00
-Commit: `c5e7ca997e6355e002afb1c3356d3789deb3efe0`
+Generated: 2026-06-12T07:25:53+00:00
+Commit: `2d21aa6e9e35f9f9c5b65250e1e1e24df15a7f88`
 Generator: `scripts/update_context_cache.py`
 
 ## Top-Level Map
@@ -31,6 +31,7 @@ Generator: `scripts/update_context_cache.py`
 | File | Symbols | Purpose |
 |---|---|---|
 | `scripts/audit_gate6_tempglitch_source.py` | build_parser, main | Python module. |
+| `scripts/audit_lewm_research_source.py` | build_parser, main | Python module. |
 | `scripts/build_lewm_lance_dataset.py` | _read_split, build_lewm_lance_dataset, build_parser, main | Python module. |
 | `scripts/build_lewm_split.py` | _read_rows, _read_exposed, build_parser, main | Python module. |
 | `scripts/build_tempglitch_lewm_lance.py` | build_parser, main | Python module. |
@@ -102,6 +103,7 @@ Generator: `scripts/update_context_cache.py`
 | `src/glitch_detection/lewm_lance_eval.py` | runtime_provenance, select_calibration_episodes, canonical_rows_from_samples, validate_manifest_rows, validate_score_alignment, write_csv_rows, read_csv_rows, _lance_dataset, _metadata_samples, build_canonical_manifest, _score_dataset, run_gate7_scoring | Python module. |
 | `src/glitch_detection/lewm_latent.py` | LeWMUnavailableError, resolve_checkpoint, resolve_config, _require_torch, _list_frames, _load_pixels, score_record, score_manifest, build_parser, main | Python module. |
 | `src/glitch_detection/lewm_protocol.py` | LeWMSplitRecord, _hash_fraction, assign_hashed_group_splits, audit_lewm_splits, write_lewm_split | Python module. |
+| `src/glitch_detection/lewm_research.py` | LeWMResearchProtocol, _read_csv_by_source, _sha256_file, audit_local_research_source, write_research_audit | Python module. |
 | `src/glitch_detection/lewm_surprise.py` | aggregate_scores, score_direction_check, score_record_series, score_record, _resolve_device, score_manifest, registered_score_manifest | Python module. |
 | `src/glitch_detection/lewm_training.py` | LeWMTrainingError, LeWMTrainConfig, _require_runtime, _config_hash, build_model_config, _preprocess_pixels, _sigreg, _dataset, _run_epoch, train_lewm, score_lance_probe | Python module. |
 | `src/glitch_detection/manifest.py` | ClipRecord, LabelInterval, write_manifest, read_manifest, read_labels, clip_has_glitch | Python module. |
@@ -125,6 +127,7 @@ Generator: `scripts/update_context_cache.py`
 | Script | Purpose | Related gate |
 |---|---|---|
 | `scripts/audit_gate6_tempglitch_source.py` | CLI/helper script. | general |
+| `scripts/audit_lewm_research_source.py` | CLI/helper script. | Gate 5 |
 | `scripts/build_lewm_lance_dataset.py` | CLI/helper script. | Gate 5 |
 | `scripts/build_lewm_split.py` | CLI/helper script. | Gate 5 |
 | `scripts/build_tempglitch_lewm_lance.py` | CLI/helper script. | Gate 5 |
@@ -214,6 +217,7 @@ Generator: `scripts/update_context_cache.py`
 | `tests/test_lewm_lance_eval.py` | lewm_lance_eval |
 | `tests/test_lewm_latent.py` | lewm_latent |
 | `tests/test_lewm_protocol.py` | lewm_protocol |
+| `tests/test_lewm_research.py` | lewm_research |
 | `tests/test_lewm_surprise.py` | lewm_surprise |
 | `tests/test_lewm_training.py` | lewm_training |
 | `tests/test_locked_test_gate.py` | locked_test_gate |
@@ -252,6 +256,7 @@ Generator: `scripts/update_context_cache.py`
 | `docs/context/REPO_MAP.md` | REPO MAP |
 | `docs/context/TASK_ROUTER.md` | TASK ROUTER |
 | `docs/plans/2026-06-12-gate7-to-gate9-lewm-evaluation.md` | 2026-06-12-gate7-to-gate9-lewm-evaluation |
+| `docs/plans/2026-06-12-lewm-research-grade-experiment.md` | 2026-06-12-lewm-research-grade-experiment |
 | `docs/research/00_research_overview.md` | 00 research overview |
 | `docs/research/01_problem_statement.md` | 01 problem statement |
 | `docs/research/02_literature_matrix.md` | 02 literature matrix |
@@ -307,6 +312,7 @@ Generator: `scripts/update_context_cache.py`
 | `docs/research/62_artifact_manifest.md` | 62 artifact manifest |
 | `docs/research/63_full_repo_audit_and_gate6_root_cause.md` | 63 full repo audit and gate6 root cause |
 | `docs/research/64_kaggle_kernel_write_path_repair.md` | 64 kaggle kernel write path repair |
+| `docs/research/65_lewm_research_mvp_source_audit.md` | 65 lewm research mvp source audit |
 | `docs/research/adr/ADR-001-topic-scope.md` | ADR-001-topic-scope |
 | `docs/research/adr/ADR-002-dataset-strategy.md` | ADR-002-dataset-strategy |
 | `docs/research/adr/ADR-003-lewm-integration-strategy.md` | ADR-003-lewm-integration-strategy |
@@ -321,5 +327,3 @@ Generator: `scripts/update_context_cache.py`
 | `docs/superpowers/plans/2026-06-10-research-grade-lab.md` | 2026-06-10-research-grade-lab |
 | `docs/superpowers/plans/2026-06-12-kaggle-standing-authorization-gate6-repair.md` | 2026-06-12-kaggle-standing-authorization-gate6-repair |
 | `docs/superpowers/specs/2026-06-09-phase6e-kaggle-automation-design.md` | 2026-06-09-phase6e-kaggle-automation-design |
-| `docs/superpowers/specs/2026-06-09-phase6e-kaggle-video-autoencoder-design.md` | 2026-06-09-phase6e-kaggle-video-autoencoder-design |
-| `docs/superpowers/specs/2026-06-12-kaggle-standing-authorization-gate6-repair-design.md` | 2026-06-12-kaggle-standing-authorization-gate6-repair-design |
