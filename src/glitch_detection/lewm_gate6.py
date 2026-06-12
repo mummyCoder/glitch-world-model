@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import base64
+import io
 import json
 import math
+import re
 import shutil
+import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from .kaggle_automation import FingerprintBuilder, SecurityGuard
+from .kaggle_automation import FingerprintBuilder, PublicReleaseSpec, SecurityGuard
 from .lewm_kaggle import validate_kaggle_slug
 
 GATE6_REQUIRED_OUTPUTS = (
@@ -44,6 +48,10 @@ class Gate6KaggleConfig:
     action_mode: str = "zero_action"
     accelerator: str = "NvidiaTeslaT4"
     validation_only: bool = True
+    dataset_visibility: str = "public"
+    kernel_visibility: str = "public"
+    dataset_license: str = "MIT"
+    redistribution_allowed: bool = True
 
     def __post_init__(self) -> None:
         validate_kaggle_slug(self.dataset_slug, label="dataset_slug")
@@ -54,22 +62,50 @@ class Gate6KaggleConfig:
             raise ValueError("Gate 6 pilot supports only zero_action.")
         if not self.validation_only:
             raise ValueError("Gate 6 must remain validation-only.")
+        if self.dataset_visibility not in {"private", "public"}:
+            raise ValueError("dataset_visibility must be private or public.")
+        if self.kernel_visibility not in {"private", "public"}:
+            raise ValueError("kernel_visibility must be private or public.")
+        if self.dataset_visibility == "public" and not self.redistribution_allowed:
+            raise ValueError("Public Gate 6 datasets require redistribution permission.")
+        if self.dataset_visibility == "public" and not self.dataset_license.strip():
+            raise ValueError("Public Gate 6 datasets require a license.")
 
 
-def render_gate6_kernel(config: Gate6KaggleConfig) -> str:
+def build_source_archive(source_root: Path) -> bytes:
+    package_root = source_root / "glitch_detection"
+    if not (package_root / "__init__.py").is_file():
+        raise FileNotFoundError(f"Missing glitch_detection package: {package_root}")
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
+        for path in sorted(package_root.rglob("*.py")):
+            relative = path.relative_to(source_root)
+            if "__pycache__" in relative.parts:
+                continue
+            info = zipfile.ZipInfo(relative.as_posix())
+            info.date_time = (1980, 1, 1, 0, 0, 0)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            bundle.writestr(info, path.read_bytes())
+    return buffer.getvalue()
+
+
+def render_gate6_kernel(config: Gate6KaggleConfig, source_archive_b64: str) -> str:
     payload = json.dumps(asdict(config), sort_keys=True)
     return f'''"""Generated normal-only Gate 6 LeWM Kaggle entrypoint."""
+import base64
 import json
+import os
 import platform
 import shutil
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 CONFIG = json.loads({payload!r})
 OUTPUT = Path("/kaggle/working")
 INPUT_ROOT = Path("/kaggle/input")
-PACKAGE_ROOT = Path(__file__).resolve().parent
+SOURCE_ARCHIVE_B64 = {source_archive_b64!r}
 
 if not CONFIG["validation_only"]:
     raise RuntimeError("Locked-test execution is forbidden in this kernel.")
@@ -91,8 +127,24 @@ def materialize_dataset(name, destination_root):
         raise RuntimeError(f"Archive did not produce expected Lance directory: {{destination}}")
     return destination
 
-code_root = Path("/tmp/gate6_code")
-shutil.unpack_archive(str(PACKAGE_ROOT / "glitch_detection_src.zip"), str(code_root))
+CODE_ROOT = Path(os.environ.get("GATE6_CODE_ROOT", "/tmp/gate6_code"))
+SOURCE_ZIP = CODE_ROOT.parent / "gate6_source.zip"
+CODE_ROOT.mkdir(parents=True, exist_ok=True)
+SOURCE_ZIP.write_bytes(base64.b64decode(SOURCE_ARCHIVE_B64, validate=True))
+if not zipfile.is_zipfile(SOURCE_ZIP):
+    raise RuntimeError("Embedded Gate 6 source archive is invalid.")
+with zipfile.ZipFile(SOURCE_ZIP) as bundle:
+    names = set(bundle.namelist())
+    if "glitch_detection/__init__.py" not in names:
+        raise RuntimeError("Embedded Gate 6 source archive lacks the package root.")
+    bundle.extractall(CODE_ROOT)
+sys.path.insert(0, str(CODE_ROOT))
+
+from glitch_detection.lewm_training import LeWMTrainConfig, score_lance_probe, train_lewm
+
+if os.environ.get("GATE6_BOOTSTRAP_ONLY") == "1":
+    print("GATE6_BOOTSTRAP_OK")
+    raise SystemExit(0)
 
 subprocess.check_call([
     sys.executable, "-m", "pip", "install", "--no-cache-dir",
@@ -100,10 +152,8 @@ subprocess.check_call([
     "stable-pretraining==0.1.7",
     "transformers==4.57.6",
 ])
-sys.path.insert(0, str(code_root))
 
 import torch
-from glitch_detection.lewm_training import LeWMTrainConfig, score_lance_probe, train_lewm
 
 if not torch.cuda.is_available():
     raise RuntimeError("Gate 6 LeWM pilot requires CUDA.")
@@ -217,8 +267,10 @@ def prepare_gate6_kaggle_package(
             {
                 "id": config.dataset_slug,
                 "title": config.dataset_id,
-                "licenses": [{"name": "other"}],
+                "licenses": [{"name": config.dataset_license}],
                 "package_version": config.package_version,
+                "visibility": config.dataset_visibility,
+                "redistribution_allowed": config.redistribution_allowed,
             },
             indent=2,
         )
@@ -226,13 +278,12 @@ def prepare_gate6_kaggle_package(
         encoding="utf-8",
     )
     kernel_script = kernel_root / "lewm_gate6_kernel.py"
-    kernel_script.write_text(render_gate6_kernel(config), encoding="utf-8")
     repo_root = Path(__file__).resolve().parents[2]
-    shutil.make_archive(
-        str(kernel_root / "glitch_detection_src"),
-        "zip",
-        root_dir=repo_root / "src",
-        base_dir="glitch_detection",
+    source_archive = build_source_archive(repo_root / "src")
+    source_archive_b64 = base64.b64encode(source_archive).decode("ascii")
+    kernel_script.write_text(
+        render_gate6_kernel(config, source_archive_b64),
+        encoding="utf-8",
     )
     (kernel_root / "kernel-metadata.json").write_text(
         json.dumps(
@@ -242,7 +293,7 @@ def prepare_gate6_kaggle_package(
                 "code_file": kernel_script.name,
                 "language": "python",
                 "kernel_type": "script",
-                "is_private": True,
+                "is_private": config.kernel_visibility == "private",
                 "enable_gpu": True,
                 "enable_internet": True,
                 "dataset_sources": [config.dataset_slug],
@@ -252,8 +303,25 @@ def prepare_gate6_kaggle_package(
         + "\n",
         encoding="utf-8",
     )
-    SecurityGuard().scan_package(dataset_root, "dataset")
-    SecurityGuard().scan_package(kernel_root, "kernel")
+    guard = SecurityGuard()
+    guard.scan_public_release(
+        dataset_root,
+        package_kind="dataset",
+        spec=PublicReleaseSpec(
+            visibility=config.dataset_visibility,
+            license_name=config.dataset_license,
+            redistribution_allowed=config.redistribution_allowed,
+        ),
+    )
+    guard.scan_public_release(
+        kernel_root,
+        package_kind="kernel",
+        spec=PublicReleaseSpec(
+            visibility=config.kernel_visibility,
+            license_name=config.dataset_license,
+            redistribution_allowed=config.redistribution_allowed,
+        ),
+    )
     summary["dataset_inventory_sha256"] = FingerprintBuilder.inventory_sha256(dataset_root)
     summary["kernel_script_sha256"] = FingerprintBuilder.sha256_file(kernel_script)
     return summary
@@ -280,6 +348,63 @@ def _finite_numbers(payload: Any) -> bool:
 
     collect(payload)
     return bool(values) and all(math.isfinite(value) for value in values)
+
+
+def validate_gate6_kaggle_package(package_root: Path) -> dict[str, Any]:
+    dataset_root = package_root / "dataset"
+    kernel_root = package_root / "kernel"
+    dataset_metadata = _load_json(dataset_root / "dataset-metadata.json")
+    kernel_metadata = _load_json(kernel_root / "kernel-metadata.json")
+    code_file = kernel_root / str(kernel_metadata.get("code_file", ""))
+    if not code_file.is_file():
+        raise FileNotFoundError(f"Missing Gate 6 kernel code file: {code_file}")
+    extra_kernel_files = sorted(
+        path.name
+        for path in kernel_root.iterdir()
+        if path.is_file() and path.name not in {"kernel-metadata.json", code_file.name}
+    )
+    if extra_kernel_files:
+        raise ValueError(f"Gate 6 kernel package contains auxiliary files: {extra_kernel_files}")
+    kernel_text = code_file.read_text(encoding="utf-8")
+    if "SOURCE_ARCHIVE_B64" not in kernel_text:
+        raise ValueError("Gate 6 kernel does not embed its source archive.")
+    if re.search(r"[A-Za-z]:\\+", kernel_text):
+        raise ValueError("Gate 6 kernel contains a Windows absolute path.")
+    if kernel_metadata.get("dataset_sources") != [dataset_metadata.get("id")]:
+        raise ValueError("Gate 6 kernel dataset_sources do not match dataset metadata.")
+    guard = SecurityGuard()
+    dataset_visibility = str(dataset_metadata.get("visibility", "private"))
+    kernel_visibility = "private" if kernel_metadata.get("is_private", True) else "public"
+    license_entries = dataset_metadata.get("licenses") or [{}]
+    license_name = str(license_entries[0].get("name", ""))
+    redistribution_allowed = bool(dataset_metadata.get("redistribution_allowed", False))
+    guard.scan_public_release(
+        dataset_root,
+        package_kind="dataset",
+        spec=PublicReleaseSpec(
+            visibility=dataset_visibility,
+            license_name=license_name,
+            redistribution_allowed=redistribution_allowed,
+        ),
+    )
+    guard.scan_public_release(
+        kernel_root,
+        package_kind="kernel",
+        spec=PublicReleaseSpec(
+            visibility=kernel_visibility,
+            license_name=license_name,
+            redistribution_allowed=redistribution_allowed,
+        ),
+    )
+    return {
+        "dataset_slug": dataset_metadata["id"],
+        "kernel_slug": kernel_metadata["id"],
+        "dataset_inventory_sha256": FingerprintBuilder.inventory_sha256(dataset_root),
+        "kernel_inventory_sha256": FingerprintBuilder.inventory_sha256(kernel_root),
+        "kernel_code_sha256": FingerprintBuilder.sha256_file(code_file),
+        "locked_test_materialized": False,
+        "locked_test_scored": False,
+    }
 
 
 def validate_gate6_artifacts(root: Path) -> dict[str, Any]:

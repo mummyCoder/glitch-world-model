@@ -25,6 +25,22 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--sigreg-projections", type=int, default=128)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--package-version", default="v1")
+    parser.add_argument(
+        "--dataset-visibility",
+        choices=("private", "public"),
+        default="public",
+    )
+    parser.add_argument(
+        "--kernel-visibility",
+        choices=("private", "public"),
+        default="public",
+    )
+    parser.add_argument("--dataset-license", default="MIT")
+    parser.add_argument(
+        "--redistribution-allowed",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
     parser.add_argument("--dry-run", action="store_true")
     return parser
 
@@ -46,6 +62,10 @@ def main(argv: list[str] | None = None) -> None:
         sigreg_projections=args.sigreg_projections,
         seed=args.seed,
         package_version=args.package_version,
+        dataset_visibility=args.dataset_visibility,
+        kernel_visibility=args.kernel_visibility,
+        dataset_license=args.dataset_license,
+        redistribution_allowed=args.redistribution_allowed,
     )
     print(
         json.dumps(
