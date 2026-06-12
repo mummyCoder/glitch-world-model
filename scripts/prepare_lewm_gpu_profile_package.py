@@ -9,12 +9,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from glitch_detection.lewm_gpu_profile_kaggle import (
-    LeWMGPUProfileKaggleConfig,
-    prepare_profile_kaggle_package,
-)
-
-
 def _git(root: Path, *args: str) -> str:
     return subprocess.run(
         ["git", *args], cwd=root, capture_output=True, text=True, check=True
@@ -22,6 +16,11 @@ def _git(root: Path, *args: str) -> str:
 
 
 def main() -> None:
+    from glitch_detection.lewm_gpu_profile_kaggle import (
+        LeWMGPUProfileKaggleConfig,
+        prepare_profile_kaggle_package,
+    )
+
     parser = argparse.ArgumentParser(description="Prepare private LeWM GPU profile package.")
     parser.add_argument("--repo-root", type=Path, default=ROOT)
     parser.add_argument("--source-root", required=True, type=Path)

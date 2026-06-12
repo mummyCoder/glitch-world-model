@@ -8,13 +8,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from glitch_detection.lewm_gpu_profile_automation import (
-    ProfileAutomationConfig,
-    run_profile_attempt_ladder,
-)
-
-
 def main() -> None:
+    from glitch_detection.lewm_gpu_profile_automation import (
+        ProfileAutomationConfig,
+        run_profile_attempt_ladder,
+    )
+
     parser = argparse.ArgumentParser(description="Run private LeWM GPU profile automation.")
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--dry-run", action="store_true")

@@ -8,10 +8,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from glitch_detection.lewm_gpu_profile import validate_lewm_gpu_profile_artifacts
-
-
 def main() -> None:
+    from glitch_detection.lewm_gpu_profile import validate_lewm_gpu_profile_artifacts
+
     parser = argparse.ArgumentParser(description="Strictly validate LeWM GPU profile artifacts.")
     parser.add_argument("--artifacts-root", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
