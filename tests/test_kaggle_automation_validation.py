@@ -164,7 +164,7 @@ def test_default_executor_enables_utf8_environment(monkeypatch: pytest.MonkeyPat
     assert os.environ.get("PYTHONUTF8") is None
 
 
-def test_dataset_package_requires_private_other_license_and_recursive_mode(tmp_path: Path):
+def test_dataset_package_supports_configured_visibility_and_recursive_mode(tmp_path: Path):
     root = tmp_path / "dataset"
     root.mkdir()
     (root / "tempglitch_phase3b").mkdir()
@@ -189,13 +189,13 @@ def test_dataset_package_requires_private_other_license_and_recursive_mode(tmp_p
 
     assert summary["is_private"] is True
     assert summary["license"] == "other"
-    with pytest.raises(ValueError, match="private"):
-        PackageValidator(SecurityGuard()).validate_dataset(
-            root,
-            expected_slug="thanhhuynhdieu/glitch-world-model-phase6e",
-            recursive_mode="zip",
-            is_private=False,
-        )
+    public = PackageValidator(SecurityGuard()).validate_dataset(
+        root,
+        expected_slug="thanhhuynhdieu/glitch-world-model-phase6e",
+        recursive_mode="zip",
+        is_private=False,
+    )
+    assert public["is_private"] is False
 
 
 def test_kernel_package_rejects_checkpoint_and_validates_private_metadata(tmp_path: Path):
@@ -223,6 +223,16 @@ def test_kernel_package_rejects_checkpoint_and_validates_private_metadata(tmp_pa
     )
 
     assert summary["is_private"] is True
+    metadata = json.loads((root / "kernel-metadata.json").read_text(encoding="utf-8"))
+    metadata["is_private"] = False
+    (root / "kernel-metadata.json").write_text(json.dumps(metadata), encoding="utf-8")
+    public = PackageValidator(SecurityGuard()).validate_kernel(
+        root,
+        expected_slug="thanhhuynhdieu/phase6e-video-autoencoder",
+        dataset_slug="thanhhuynhdieu/glitch-world-model-phase6e",
+        expected_visibility="public",
+    )
+    assert public["is_private"] is False
     (root / "checkpoint.pt").write_bytes(b"checkpoint")
     with pytest.raises(Exception, match="checkpoint"):
         PackageValidator(SecurityGuard()).validate_kernel(

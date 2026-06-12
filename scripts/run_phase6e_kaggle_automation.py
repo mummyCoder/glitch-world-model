@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 
 from glitch_detection.kaggle_automation import (
-    APPROVAL_STEPS,
     AutomationConfig,
     DefaultPhase6EHandlers,
     Phase6EKaggleOrchestrator,
@@ -22,14 +21,13 @@ def build_parser() -> argparse.ArgumentParser:
     mode.add_argument(
         "--dry-run",
         action="store_true",
-        help="Validate and create approval requests without live upload/kernel actions.",
+        help="Validate and package, then stop before the first Kaggle mutation.",
     )
     mode.add_argument(
         "--live",
         action="store_true",
-        help="Allow approved live Kaggle actions. Never use during implementation verification.",
+        help="Run the standing-authorized Kaggle workflow through artifact ingestion.",
     )
-    parser.add_argument("--approve-step", choices=sorted(APPROVAL_STEPS), default=None)
     parser.add_argument(
         "--automation-root",
         type=Path,
@@ -76,6 +74,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--branch", default="main")
     parser.add_argument("--accelerator", default="NvidiaTeslaT4")
     parser.add_argument("--recursive-mode", choices=["zip", "tar"], default="zip")
+    parser.add_argument(
+        "--dataset-visibility",
+        choices=["private", "public"],
+        default="private",
+    )
+    parser.add_argument(
+        "--kernel-visibility",
+        choices=["private", "public"],
+        default="private",
+    )
     return parser
 
 
@@ -94,6 +102,8 @@ def build_config(args: argparse.Namespace) -> AutomationConfig:
         branch=args.branch,
         accelerator=args.accelerator,
         recursive_mode=args.recursive_mode,
+        dataset_visibility=args.dataset_visibility,
+        kernel_visibility=args.kernel_visibility,
         dry_run=not args.live,
     )
 
@@ -107,17 +117,11 @@ def main(argv: list[str] | None = None) -> None:
         handlers=handlers.as_mapping(),
         dry_run=config.dry_run,
     )
-    if args.approve_step:
-        approval = orchestrator.approve_step(args.approve_step)
-        print(f"Approved step: {args.approve_step}")
-        print(f"Fingerprint: {approval['fingerprint']}")
-        print("Approval is one-time and will be consumed when the live action starts.")
-        return
-
     state = orchestrator.run()
+    print(f"Execution mode: {state.execution_mode}")
     print(f"Current step: {state.current_step}")
     print(f"Completed steps: {', '.join(state.completed_steps)}")
-    print(f"Requires approval: {state.requires_approval}")
+    print(f"Kernel status: {state.kernel_status}")
     print(f"Blocked reason: {state.blocked_reason}")
     print(f"State path: {config.automation_root / 'state.json'}")
     print(json.dumps({"artifact_paths": state.artifact_paths}, indent=2))

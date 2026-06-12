@@ -42,7 +42,7 @@ class AutomationState:
     kernel_fingerprint: str | None = None
     kernel_status: str | None = None
     artifact_paths: dict[str, str] = field(default_factory=dict)
-    gpu_push_fingerprints: list[str] = field(default_factory=list)
+    pushed_kernel_fingerprints: list[str] = field(default_factory=list)
     dataset_uploaded_fingerprint: str | None = None
     dataset_uploaded_inventory_sha256: str | None = None
     execution_mode: str | None = None
@@ -56,7 +56,13 @@ class StateStore:
     def load(self) -> AutomationState:
         if not self.path.is_file():
             return AutomationState()
-        return AutomationState(**json.loads(self.path.read_text(encoding="utf-8-sig")))
+        payload = json.loads(self.path.read_text(encoding="utf-8-sig"))
+        payload["pushed_kernel_fingerprints"] = payload.pop(
+            "gpu_push_fingerprints",
+            payload.get("pushed_kernel_fingerprints", []),
+        )
+        payload["requires_approval"] = None
+        return AutomationState(**payload)
 
     def save(self, state: AutomationState) -> None:
         if self.path.is_file():
@@ -450,8 +456,6 @@ class PackageValidator:
         is_private: bool,
     ) -> dict[str, Any]:
         self.security_guard.scan_package(root, package_kind="dataset")
-        if not is_private:
-            raise ValueError("Phase 6E Kaggle dataset must remain private.")
         if recursive_mode not in {"zip", "tar"}:
             raise ValueError("Dataset recursive mode must be zip or tar.")
         required = [
@@ -466,12 +470,12 @@ class PackageValidator:
         licenses = metadata.get("licenses", [])
         license_name = str(licenses[0].get("name", "")) if licenses else ""
         if metadata.get("id") != expected_slug:
-            raise ValueError("Dataset metadata id does not match expected private dataset slug.")
+            raise ValueError("Dataset metadata id does not match expected dataset slug.")
         if license_name != "other":
             raise ValueError("Dataset metadata license must be 'other'.")
         return {
             "dataset_slug": expected_slug,
-            "is_private": True,
+            "is_private": is_private,
             "license": license_name,
             "recursive_mode": recursive_mode,
         }
@@ -482,6 +486,7 @@ class PackageValidator:
         *,
         expected_slug: str,
         dataset_slug: str,
+        expected_visibility: KaggleVisibility = "private",
     ) -> dict[str, Any]:
         self.security_guard.scan_package(root, package_kind="kernel")
         metadata = self._read_json(root / "kernel-metadata.json")
@@ -490,16 +495,17 @@ class PackageValidator:
             raise FileNotFoundError(f"Missing kernel code file: {code_file}")
         if metadata.get("id") != expected_slug:
             raise ValueError("Kernel metadata id does not match expected slug.")
-        if metadata.get("is_private") is not True:
-            raise ValueError("Phase 6E Kaggle kernel must remain private.")
+        expected_private = expected_visibility == "private"
+        if metadata.get("is_private") is not expected_private:
+            raise ValueError("Kaggle kernel visibility does not match expected visibility.")
         if metadata.get("kernel_type") != "script" or metadata.get("language") != "python":
             raise ValueError("Phase 6E Kaggle kernel must be a Python script.")
         if dataset_slug not in metadata.get("dataset_sources", []):
-            raise ValueError("Kernel metadata does not attach the required private dataset.")
+            raise ValueError("Kernel metadata does not attach the required dataset.")
         return {
             "kernel_slug": expected_slug,
             "dataset_slug": dataset_slug,
-            "is_private": True,
+            "is_private": expected_private,
             "code_file": str(code_file),
         }
 
@@ -605,7 +611,7 @@ class ArtifactValidator:
         return summary
 
 
-AUTOMATION_STEPS = (
+PHASE6E_AUTOMATION_STEPS = (
     "preflight",
     "auth_check_or_request_login",
     "repo_and_security_scan",
@@ -613,11 +619,9 @@ AUTOMATION_STEPS = (
     "dataset_prepare",
     "dataset_validate_package",
     "dataset_fingerprint",
-    "dataset_upload_approval",
     "dataset_create_or_version",
     "kernel_package_generate",
     "kernel_validate_package",
-    "kernel_push_approval",
     "kernel_push_once",
     "kernel_poll",
     "artifact_download",
@@ -625,91 +629,52 @@ AUTOMATION_STEPS = (
     "artifact_ingest",
     "complete",
 )
-APPROVAL_STEPS = {
-    "dataset_upload_approval": ("dataset_fingerprint", "dataset_create_or_version"),
-    "kernel_push_approval": ("kernel_fingerprint", "kernel_push_once"),
-}
-LIVE_ACTION_APPROVALS = {
-    "dataset_create_or_version": ("dataset_upload_approval", "dataset_fingerprint"),
-    "kernel_push_once": ("kernel_push_approval", "kernel_fingerprint"),
+PHASE6E_LIVE_ACTION_FINGERPRINTS = {
+    "dataset_create_or_version": "dataset_fingerprint",
+    "kernel_push_once": "kernel_fingerprint",
 }
 
 
-class Phase6EKaggleOrchestrator:
+class KaggleOrchestrator:
     def __init__(
         self,
         *,
         root: Path,
         handlers: dict[str, Callable[[AutomationState], dict[str, Any]]],
+        steps: tuple[str, ...],
+        live_action_fingerprints: dict[str, str],
         dry_run: bool,
         security_guard: SecurityGuard | None = None,
     ) -> None:
+        if not steps or steps[-1] != "complete":
+            raise ValueError("Kaggle workflow steps must end with complete.")
         self.root = root
         self.handlers = handlers
+        self.steps = steps
+        self.live_action_fingerprints = live_action_fingerprints
         self.dry_run = dry_run
         self.security_guard = security_guard or SecurityGuard()
         self.state_store = StateStore(root / "state.json")
-        self.approval_store = ApprovalStore(root / "approvals")
 
-    @staticmethod
-    def _next_step(step: str) -> str:
-        index = AUTOMATION_STEPS.index(step)
-        return AUTOMATION_STEPS[min(index + 1, len(AUTOMATION_STEPS) - 1)]
+    def _next_step(self, step: str) -> str:
+        index = self.steps.index(step)
+        return self.steps[min(index + 1, len(self.steps) - 1)]
 
     @staticmethod
     def _fingerprint_for_step(state: AutomationState, fingerprint_field: str) -> str:
         fingerprint = getattr(state, fingerprint_field)
         if not fingerprint:
-            raise ValueError(f"Missing {fingerprint_field} before approval/live action.")
+            raise ValueError(f"Missing {fingerprint_field} before live action.")
         return str(fingerprint)
 
-    @staticmethod
-    def _complete_step(state: AutomationState, step: str) -> None:
+    def _complete_step(self, state: AutomationState, step: str) -> None:
         if step not in state.completed_steps:
             state.completed_steps.append(step)
-        state.current_step = Phase6EKaggleOrchestrator._next_step(step)
+        state.current_step = self._next_step(step)
         state.failed_step = None
         state.blocked_reason = None
         state.last_error_summary = None
         state.requires_approval = None
-
-    def approve_step(self, step: str) -> dict[str, Any]:
-        if step not in APPROVAL_STEPS:
-            raise ValueError(f"Unsupported approval step: {step}")
-        state = self.state_store.load()
-        expected_mode = "dry-run" if self.dry_run else "live"
-        if state.execution_mode != expected_mode:
-            raise ValueError(
-                f"State mode is {state.execution_mode or 'unset'}; run the orchestrator in "
-                f"{expected_mode} mode before approving."
-            )
-        validation_steps = ["repo_and_security_scan"]
-        validation_steps.append(
-            "dataset_validate_package"
-            if step == "dataset_upload_approval"
-            else "kernel_validate_package"
-        )
-        for validation_step in validation_steps:
-            handler = self.handlers.get(validation_step)
-            if handler is not None:
-                handler(state)
-        fingerprint_field, _action = APPROVAL_STEPS[step]
-        fingerprint = self._fingerprint_for_step(state, fingerprint_field)
-        return self.approval_store.approve(step, fingerprint)
-
-    def _handle_approval(self, state: AutomationState, step: str) -> bool:
-        fingerprint_field, _action = APPROVAL_STEPS[step]
-        fingerprint = self._fingerprint_for_step(state, fingerprint_field)
-        if self.approval_store.is_approved(step, fingerprint):
-            self._complete_step(state, step)
-            self.state_store.save(state)
-            return True
-        self.approval_store.request(step, fingerprint)
-        state.current_step = step
-        state.requires_approval = step
-        state.blocked_reason = f"approval required: {step}"
-        self.state_store.save(state)
-        return False
 
     def _before_live_action(self, state: AutomationState, step: str) -> None:
         if self.dry_run:
@@ -717,19 +682,19 @@ class Phase6EKaggleOrchestrator:
             state.blocked_reason = "dry-run: live action not executed"
             self.state_store.save(state)
             raise AutomationBlockedError(state.blocked_reason)
-        approval_step, fingerprint_field = LIVE_ACTION_APPROVALS[step]
+        fingerprint_field = self.live_action_fingerprints[step]
         fingerprint = self._fingerprint_for_step(state, fingerprint_field)
-        if step == "kernel_push_once" and fingerprint in state.gpu_push_fingerprints:
+        if step == "kernel_push_once" and fingerprint in state.pushed_kernel_fingerprints:
             if state.kernel_status in {"running", "success"}:
                 self._complete_step(state, step)
                 self.state_store.save(state)
                 return
             raise AutomationBlockedError(
-                f"GPU push already used for kernel fingerprint: {fingerprint}"
+                "Kernel fingerprint already pushed and requires a changed package: "
+                f"{fingerprint}"
             )
-        self.approval_store.consume(approval_step, fingerprint)
         if step == "kernel_push_once":
-            state.gpu_push_fingerprints.append(fingerprint)
+            state.pushed_kernel_fingerprints.append(fingerprint)
         self.state_store.save(state)
 
     def _apply_updates(self, state: AutomationState, updates: dict[str, Any]) -> None:
@@ -750,19 +715,19 @@ class Phase6EKaggleOrchestrator:
                 }
             ):
                 reset_step = (
-                    "dataset_upload_approval"
+                    "dataset_create_or_version"
                     if key == "dataset_fingerprint"
-                    else "kernel_push_approval"
+                    else "kernel_push_once"
                 )
-                reset_index = AUTOMATION_STEPS.index(reset_step)
+                reset_index = self.steps.index(reset_step)
                 state.completed_steps = [
                     step
                     for step in state.completed_steps
-                    if AUTOMATION_STEPS.index(step) < reset_index
+                    if self.steps.index(step) < reset_index
                 ]
-                if AUTOMATION_STEPS.index(state.current_step) >= reset_index:
+                if self.steps.index(state.current_step) >= reset_index:
                     state.current_step = reset_step
-                state.requires_approval = reset_step
+                state.requires_approval = None
 
     def _refresh_fingerprints(self, state: AutomationState) -> None:
         fingerprint_path = self.root / "dataset_fingerprint.json"
@@ -784,11 +749,16 @@ class Phase6EKaggleOrchestrator:
     def _reconcile_execution_mode(self, state: AutomationState) -> None:
         mode = "dry-run" if self.dry_run else "live"
         if state.execution_mode == "dry-run" and mode == "live":
-            reset_index = AUTOMATION_STEPS.index("auth_check_or_request_login")
+            reset_step = (
+                "auth_check_or_request_login"
+                if "auth_check_or_request_login" in self.steps
+                else self.steps[0]
+            )
+            reset_index = self.steps.index(reset_step)
             state.completed_steps = [
-                step for step in state.completed_steps if AUTOMATION_STEPS.index(step) < reset_index
+                step for step in state.completed_steps if self.steps.index(step) < reset_index
             ]
-            state.current_step = "auth_check_or_request_login"
+            state.current_step = reset_step
             state.requires_approval = None
             state.blocked_reason = None
         state.execution_mode = mode
@@ -796,6 +766,8 @@ class Phase6EKaggleOrchestrator:
 
     def run(self) -> AutomationState:
         state = self.state_store.load()
+        if state.current_step not in self.steps and not state.completed_steps:
+            state.current_step = self.steps[0]
         state.blocked_reason = None
         state.last_error_summary = None
         self._reconcile_execution_mode(state)
@@ -806,11 +778,7 @@ class Phase6EKaggleOrchestrator:
                 state.current_step = self._next_step(step)
                 self.state_store.save(state)
                 continue
-            if step in APPROVAL_STEPS:
-                if self._handle_approval(state, step):
-                    continue
-                return state
-            if step in LIVE_ACTION_APPROVALS:
+            if step in self.live_action_fingerprints:
                 try:
                     before_step = state.current_step
                     self._before_live_action(state, step)
@@ -845,6 +813,25 @@ class Phase6EKaggleOrchestrator:
                 raise
 
 
+class Phase6EKaggleOrchestrator(KaggleOrchestrator):
+    def __init__(
+        self,
+        *,
+        root: Path,
+        handlers: dict[str, Callable[[AutomationState], dict[str, Any]]],
+        dry_run: bool,
+        security_guard: SecurityGuard | None = None,
+    ) -> None:
+        super().__init__(
+            root=root,
+            handlers=handlers,
+            steps=PHASE6E_AUTOMATION_STEPS,
+            live_action_fingerprints=PHASE6E_LIVE_ACTION_FINGERPRINTS,
+            dry_run=dry_run,
+            security_guard=security_guard,
+        )
+
+
 @dataclass(frozen=True)
 class AutomationConfig:
     repo_root: Path
@@ -860,6 +847,8 @@ class AutomationConfig:
     branch: str = "main"
     accelerator: str = "NvidiaTeslaT4"
     recursive_mode: str = "zip"
+    dataset_visibility: KaggleVisibility = "private"
+    kernel_visibility: KaggleVisibility = "private"
     max_attempts: int = 3
     poll_timeout_seconds: int = 6 * 60 * 60
     expected_train_normal_clips: int = 1724
@@ -1125,7 +1114,7 @@ subprocess.run(common, check=True)
             self._dataset_root(),
             expected_slug=self.config.dataset_slug,
             recursive_mode=self.config.recursive_mode,
-            is_private=True,
+            is_private=self.config.dataset_visibility == "private",
         )
         return {}
 
@@ -1181,6 +1170,8 @@ subprocess.run(common, check=True)
                 "-r",
                 self.config.recursive_mode,
             )
+            if self.config.dataset_visibility == "public":
+                command.append("--public")
         self._run("dataset_create_or_version", command)
         return {
             "dataset_uploaded_fingerprint": state.dataset_fingerprint,
@@ -1208,7 +1199,7 @@ subprocess.run(common, check=True)
                 "code_file": script_path.name,
                 "language": "python",
                 "kernel_type": "script",
-                "is_private": True,
+                "is_private": self.config.kernel_visibility == "private",
                 "enable_gpu": True,
                 "enable_internet": True,
                 "dataset_sources": [self.config.dataset_slug],
@@ -1248,6 +1239,7 @@ subprocess.run(common, check=True)
             self.config.kernel_package_root,
             expected_slug=self.config.kernel_slug,
             dataset_slug=self.config.dataset_slug,
+            expected_visibility=self.config.kernel_visibility,
         )
         return {}
 

@@ -77,7 +77,7 @@ read-only dataset-list request and blocks instead of opening an interactive OAut
 ## Automated State-Machine Option
 
 The orchestrator defaults to dry-run, saves resumable state under
-`outputs/kaggle_phase6e_automation/`, and stops before each live side effect:
+`outputs/kaggle_phase6e_automation/`, and stops before the first live side effect:
 
 ```powershell
 python scripts\run_phase6e_kaggle_automation.py --dry-run
@@ -85,28 +85,23 @@ python scripts\run_phase6e_kaggle_automation.py --dry-run
 
 Expected first stop:
 
-- `current_step`: `dataset_upload_approval`
-- `requires_approval`: `dataset_upload_approval`
+- `current_step`: `dataset_create_or_version`
+- `requires_approval`: `None`
 - no dataset upload
 - no kernel push
 
-Approvals are one-time and bound to the current fingerprint:
+Non-locked-test live actions use standing authorization after validation:
 
 ```powershell
 python scripts\run_phase6e_kaggle_automation.py --live
-python scripts\run_phase6e_kaggle_automation.py --live --approve-step dataset_upload_approval
-python scripts\run_phase6e_kaggle_automation.py --live
-python scripts\run_phase6e_kaggle_automation.py --live --approve-step kernel_push_approval
-python scripts\run_phase6e_kaggle_automation.py --live
 ```
 
-An approval is consumed immediately when its live action starts. If dataset, kernel, config,
-branch, or commit fingerprints change, prior approval is invalidated. Logs are redacted before
-being saved under `outputs/kaggle_phase6e_automation/logs/`.
+Fingerprints are audit and idempotency records. Logs are redacted before being saved under
+`outputs/kaggle_phase6e_automation/logs/`.
 
 The first `--live` invocation resets any lightweight dry-run package state, prepares and
-fingerprints the real upload package, then requests a new live approval. `--live` is
-intentionally explicit. Do not use it during implementation verification.
+fingerprints the real upload package. `--live` is intentionally explicit. Do not use it during
+implementation verification.
 
 ## 2. Create The Kaggle Notebook
 

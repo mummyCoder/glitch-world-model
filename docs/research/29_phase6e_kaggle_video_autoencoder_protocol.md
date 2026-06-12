@@ -138,21 +138,20 @@ The local upload-package dry-run measured `5,572` manifest clips, `179,199` file
 ## State-Machine Automation
 
 `scripts/run_phase6e_kaggle_automation.py` coordinates the Phase 6E launch flow with atomic state,
-state backup, retry classification, security scans, fingerprint-bound one-time approvals, and
-artifact validation before ingestion.
+state backup, retry classification, security scans, standing authorization, and artifact
+validation before ingestion.
 
 Verified dry-run behavior:
 
 - completes safe local steps through `dataset_fingerprint`
 - writes state and `state.prev.json` under `outputs/kaggle_phase6e_automation/`
 - writes redacted logs under `outputs/kaggle_phase6e_automation/logs/`
-- creates `dataset_upload_approval.request.json`
-- stops at `dataset_upload_approval`
+- creates no request, approved, or consumed approval artifact
+- stops at `dataset_create_or_version`
 - does not upload a dataset or push a GPU kernel
 
-The June 10, 2026 live run used separate approved records bound to the private-dataset and kernel
-fingerprints. The automation completed kernel polling; downloaded artifacts were then validated
-and ingested locally.
+The June 10, 2026 live run used the former approval workflow. Those historical records remain
+part of the provenance. New non-locked-test runs use standing authorization.
 
 ## Acceptance Gate Before Any Result Claim
 
