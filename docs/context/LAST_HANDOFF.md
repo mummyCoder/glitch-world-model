@@ -1,51 +1,47 @@
 # LAST_HANDOFF.md
 
-Last completed task: Gate 6 v7 dataset readiness reconciliation and live evidence capture
+Last completed task: Gate 6 v8 strict pass and context synchronization
 Commit: current task commit recorded in Git history
 Date: 2026-06-12
 
 ## What Changed
-- Changed `dataset_ready` so Kaggle `datasets status` 403 is non-terminal and readiness falls
-  back through required files, metadata, and owned-dataset list checks.
-- Added a focused regression proving status 403 plus all three required ZIP names returns
-  `dataset_ready_source=files`.
-- Preserved the uploaded dataset state, reran dry-run, and stopped before kernel mutation.
-- Pushed public Gate 6 kernel v7 version 1 exactly once. It reached `ERROR`; no retry occurred.
-- Read the downloaded UTF-8 log. Dependency installation completed, then the first runtime error
-  reported two same-name directory candidates for each Lance mount level.
+- Verified `origin/main` at `b0eedbf` and Kaggle kernel
+  `huynhdieuthanh/lewm-gate6-pilot-v8` at `COMPLETE`.
+- Verified strict validator status `gate6_passed`, device `cuda`, completed epoch `1`, and
+  checkpoint SHA-256
+  `300cefe9622ab43acd79bc2202ac90a214cbc4ae9921ed3434573fc9198ff252`.
+- Verified finite normal and non-locked buggy validation encoding.
+- Verified normal-only training/validation and false locked-test materialization/scoring flags.
+- Registered the narrow Gate 6 training-engineering claim and kept performance claims closed.
 
 ## Checks Passed
-- Focused readiness automation tests passed: 6.
-- Gate 6 package tests passed: 10.
-- Generic orchestrator tests passed: 7.
-- Dry-run reconciled readiness and stopped at `kernel_push_once`.
+- Strict Gate 6 artifact revalidation returned `gate6_passed`.
+- `python -m pytest -x -q`: 252 passed.
+- Ruff check and format check passed.
+- Research release, claim registry, doctor, context cache, and all pre-commit hooks passed.
 
 ## Safety Status
-- Gate 6 remains blocked because v7 failed before training on duplicate nested Lance discovery.
+- Gate 6 passed as bounded normal-only gameplay training engineering.
 - Gate 7 experiments were not run.
 - Locked test was not materialized or scored.
 - No output, data, Lance dataset, checkpoint, Kaggle artifact, or credential was added to Git.
 - Gate 10 remains closed.
 
 ## Gate Status After Task
-- Gates 1-5 passed.
-- Gate 6 blocked after verified v7 duplicate nested Lance mount discovery.
-- Gate 7 infrastructure only; Gates 8-10 not run.
+- Gates 1-6 passed.
+- Gate 7 ready but not run; Gates 8-10 not run.
 - Locked test closed.
 
 ## Open Blockers
-- Correct only the verified duplicate-directory selection in `materialize_dataset`.
-- Use a changed package/kernel fingerprint; never retry the existing v7 fingerprint.
-- Gate 7 requires a strictly validated Gate 6 checkpoint.
+- Gate 7 needs frozen-checkpoint validation scores and metrics.
 
 ## Next Recommended Task
-- Add a focused nested-Lance discovery regression before changing the kernel.
-- Run one changed fingerprint only after all local checks pass.
-- Open Gate 7 only if downloaded Gate 6 artifacts pass the strict validator.
+- Freeze v8 checkpoint/config provenance and run Gate 7 validation-only scoring.
+- Keep Gate 7 validation-only and preserve the locked-test boundary.
 
 ## Files Likely Relevant Next
-- `src/glitch_detection/lewm_gate6.py`
-- `tests/test_lewm_gate6.py`
-- `src/glitch_detection/lewm_gate6_automation.py`
-- `docs/research/46_gate6_lewm_training_pilot_results.md`
-- `scripts/validate_lewm_gate6_artifacts.py`
+- `docs/research/47_gate7_lewm_surprise_scoring_results.md`
+- `src/glitch_detection/lewm_surprise.py`
+- `scripts/score_lewm_validation.py`
+- `scripts/build_gate7_validation_manifest.py`
+- `scripts/evaluate_lewm_validation.py`

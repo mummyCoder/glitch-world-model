@@ -8,16 +8,16 @@ This repo is currently a baseline research MVP for the topic "Latent World Model
 
 `mini_latent` remains the lightweight latent-dynamics proxy. LeWM integration engineering now
 includes strict checkpoint loading, finite non-gameplay CPU inference, real-data conversion,
-reduced CPU smokes, and a strictly validated Kaggle CUDA train/resume smoke. This is not
-gameplay-scale LeWM evaluation.
+reduced CPU smokes, a strictly validated Kaggle CUDA train/resume smoke, and a strictly validated
+normal-only TempGlitch training pilot. This is not glitch-detection performance evidence.
 
 Current LeWM gate status:
 
-- Gates 1-5 passed at their documented engineering/smoke level.
+- Gates 1-6 passed at their documented engineering/training level.
 - Gate 5 passed strict Kaggle CUDA train/resume artifact validation.
-- Gate 6 data passed audit and materialization; v6 was accepted remotely and failed because an
-  auxiliary source ZIP was unavailable beside the Kaggle script.
-- Gates 7-10 have not run.
+- Gate 6 v8 completed normal-only CUDA training, checkpoint reload, and finite normal/non-locked
+  buggy validation encoding; strict validation returned `gate6_passed`.
+- Gate 7 infrastructure is ready but scoring and metrics have not run; Gates 8-10 have not run.
 - Locked test remains closed.
 - No LeWM glitch-detection performance, superiority, or neural locked-test claim is supported.
 
@@ -134,11 +134,12 @@ latexmk -pdf -cd paper/main.tex
 
 Current status: Phase 6E is complete as a validation-only Conv3D engineering result. The separate
 LeWM path has passed Gates 1-5, including strict validation of a Kaggle CUDA train/resume smoke.
-Gate 6 now has audited normal-only gameplay data, but v6 failed before training because Kaggle did
-not provide the auxiliary source ZIP assumed by the generated script. A single-file repair is
-pending; no gameplay checkpoint or glitch metric exists. Gate 7 infrastructure exists but
-experiments remain closed. Do not touch locked test without a frozen validation decision, the
-documented release gate, and a separate direct user command.
+Gate 6 v8 completed the bounded normal-only gameplay pilot on a Tesla T4 and passed strict
+artifact validation. The verified checkpoint SHA-256 is
+`300cefe9622ab43acd79bc2202ac90a214cbc4ae9921ed3434573fc9198ff252`. Gate 7
+validation scoring may now proceed, but no LeWM glitch metric exists yet. Do not touch locked test
+without a frozen validation decision, the documented release gate, and a separate direct user
+command.
 
 The June 11, 2026 Gate 5 TempGlitch dataset upload is ready. The first approved kernel push
 returned HTTP `409 Conflict` before a run was established; the local cause was a kernel slug that
@@ -258,9 +259,9 @@ isolated LeWM environment and compatible checkpoint/data contracts:
 python -m glitch_detection.lewm_latent --manifest data/processed/my_experiment/manifest.csv --labels data/raw/my_labels.csv --output outputs/my_experiment_lewm_scores.csv --checkpoint path/to/lewm.ckpt
 ```
 
-The next evidence step is to generate a single-file Gate 6 package, pass offline bootstrap and
-public-release validation, then submit one fresh fingerprint. Gate 7 scoring and validation
-metrics remain blocked until strict Gate 6 artifacts pass.
+The next evidence step is Gate 7 validation-only scoring from the frozen Gate 6 v8 checkpoint.
+Gate 7 must emit provenance-bound finite scores and metrics before any detection-performance
+claim or baseline comparison.
 
 Audit the Phase 6E neural training partition without loading PyTorch or touching test:
 

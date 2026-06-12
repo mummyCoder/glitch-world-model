@@ -1,10 +1,10 @@
 # NEXT_ACTION.md
 
-Last updated: 2026-06-12T05:30:06+00:00
-Commit: `89a573b22a80b01702ff202e5ae1c51065b050b6`
+Last updated: 2026-06-12T05:58:16+00:00
+Commit: `4136018352ccde09a642d1f188cdb7b47c3e4195`
 
 ## Current Priority
-Repair Gate 6 duplicate nested Lance mount discovery and run one changed kernel fingerprint.
+Freeze Gate 6 v8 provenance and run Gate 7 validation-only surprise scoring.
 
 ## Success Criteria
 - Frozen TempGlitch source/pair-disjoint split audit.
@@ -15,7 +15,6 @@ Repair Gate 6 duplicate nested Lance mount discovery and run one changed kernel 
 - Checkpoint reload plus normal and non-locked glitch validation encoding.
 
 ## Current Known Blocker
-Gate 6 v7 readiness reconciliation passed and kernel version 1 was pushed exactly once. It failed
-after dependency installation because each Lance input was discovered at both the dataset root
-and a nested same-name directory. Do not run Gate 7 before changed-fingerprint Gate 6 artifacts
-pass strict validation.
+Gate 6 v8 passed strict CUDA validation with normal-only training, checkpoint reload, finite
+normal/non-locked buggy validation encoding, and false locked-test flags. Gate 7 may now run on
+validation only. No LeWM detection metric exists yet.

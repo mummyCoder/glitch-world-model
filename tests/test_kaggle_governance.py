@@ -30,11 +30,13 @@ def test_context_generator_emits_standing_authorization_policy():
     assert "kaggle_automation_policy.md" in generator
 
 
-def test_gate6_v7_is_public_standing_authorized_and_locked_test_closed():
+def test_gate6_v8_is_passed_public_standing_authorized_and_locked_test_closed():
     config = (ROOT / "configs/lewm_gate6_pilot.yaml").read_text(encoding="utf-8")
 
     assert "huynhdieuthanh/lewm-tempglitch-gate6-public-v7" in config
-    assert "huynhdieuthanh/lewm-gate6-pilot-v7" in config
+    assert "huynhdieuthanh/lewm-gate6-pilot-v8" in config
+    assert "status: gate6_passed_v8" in config
+    assert "validator_status: gate6_passed" in config
     assert "dataset_visibility: public" in config
     assert "kernel_visibility: public" in config
     assert "dataset_license: MIT" in config

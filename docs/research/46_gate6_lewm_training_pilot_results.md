@@ -1,7 +1,7 @@
 # Gate 6 LeWM Training Pilot Results
 
 Status date: 2026-06-12
-Result: `experiment-pending_after_v6_packaging_failure`
+Result: `gate6_passed_v8`
 
 Gate 6 is open for preparation because Gate 5 passed strict CUDA/resume validation. The pilot
 configuration and acceptance criteria are frozen in `configs/lewm_gate6_pilot.yaml` and report
@@ -40,9 +40,24 @@ accepted as remote version 1 and failed at runtime before dependency installatio
 The local ZIP was valid, but Kaggle did not place that auxiliary file beside
 `/kaggle/src/script.py`. This narrows v6 to a packaging-contract failure, not training evidence.
 
-The planned v7 package embeds the source archive in the generated Python script and contains no
-auxiliary kernel file. Its automatic public execution remains pending pre-live validation.
+V7 embedded the source archive and reached runtime, then failed because Kaggle exposed each Lance
+input at both a shallow mount point and a nested same-name directory. V8 changed candidate
+selection to discard ancestor mount points and copy the deepest leaf into `/tmp/gate6_input`.
 
-No Gate 6 checkpoint, loss, encoding result, or gameplay performance metric exists.
+Public kernel `huynhdieuthanh/lewm-gate6-pilot-v8` completed on a Tesla T4. The strict validator
+returned:
+
+- status `gate6_passed`;
+- device `cuda`, completed epoch `1`;
+- checkpoint SHA-256
+  `300cefe9622ab43acd79bc2202ac90a214cbc4ae9921ed3434573fc9198ff252`;
+- verified checkpoint reload and finite collapse diagnostics;
+- finite encoding for 8,993 normal-validation windows and 1,088 non-locked buggy-probe windows;
+- `normal_only_training=true` and `normal_only_validation=true`;
+- `locked_test_materialized=false` and `locked_test_scored=false`.
+
+This establishes bounded normal-only gameplay training engineering. Gate 6 did not fit a
+detection threshold or compute AUROC, F1, temporal localization, superiority, or locked-test
+performance.
 
 Locked test remains unmaterialized and unscored.

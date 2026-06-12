@@ -1,7 +1,7 @@
 # BOOT.md - Fast Start Context For Agents
 
-Generated: 2026-06-12T05:30:06+00:00
-Commit: `89a573b22a80b01702ff202e5ae1c51065b050b6`
+Generated: 2026-06-12T05:58:16+00:00
+Commit: `4136018352ccde09a642d1f188cdb7b47c3e4195`
 
 ## Read Order
 1. `RULES.md`
@@ -18,17 +18,17 @@ context cache is stale. Use `docs/context/REPO_MAP.md` before broad repo searche
 ## Current Status
 - Gates 1-4 passed at engineering/smoke level.
 - Gate 5 passed strict Kaggle CUDA/resume artifact validation.
-- Gate 6 data passed audit/materialization; v7 dataset readiness now reconciles status/files/
-  metadata/list, and kernel v7 version 1 failed on duplicate nested Lance mount directories.
-- Gate 7 infrastructure exists but experiments have not run; Gates 8-10 have not run.
+- Gate 6 v8 completed normal-only CUDA training and passed strict checkpoint/reload/encoding
+  validation with locked-test flags false.
+- Gate 7 infrastructure exists and may now score validation; experiments have not run.
+- Gates 8-10 have not run.
 - Locked test is closed.
 - LeWM integration engineering exists.
 - LeWM gameplay evaluation is not established.
 
 ## Immediate Next Task
-- Repair Gate 6 Lance mount discovery for the verified duplicate nested-directory layout and
-  validate the next changed kernel fingerprint strictly.
-- Do not run Gate 7 experiments until Gate 6 strictly passes.
+- Freeze Gate 6 v8 checkpoint/config provenance and run Gate 7 validation-only scoring.
+- Keep locked test closed until the later frozen-decision release gate.
 
 ## Safety
 - Non-locked-test Kaggle actions use standing Kaggle authorization after security, license,

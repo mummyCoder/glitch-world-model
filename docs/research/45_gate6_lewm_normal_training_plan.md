@@ -1,7 +1,7 @@
 # Gate 6 LeWM Normal-Only Training Plan
 
 Status date: 2026-06-12
-Status: `v7_pre_live_validation_pending`
+Status: `passed_v8`
 
 Gate 5 passed strict CUDA/resume validation, so Gate 6 may open. The first Gate 6 action is a
 bounded TempGlitch normal-only pilot described by `configs/lewm_gate6_pilot.yaml`.
@@ -41,7 +41,8 @@ bundled Python package was not available on Kaggle's script path. A later Canary
 Python-module submission path, but Gate 6 v6 failed before dependency installation because Kaggle
 did not place its auxiliary source ZIP beside the generated script.
 
-Gate 6 v7 embeds a deterministic source archive directly in the single Python code file. Its
-public dataset and kernel slugs, MIT license, redistribution permission, standing authorization,
-and no-delete policy are frozen in `configs/lewm_gate6_pilot.yaml`. Gate 6 remains pending until
-downloaded CUDA artifacts pass the strict validator.
+Gate 6 v7 embedded a deterministic source archive but exposed Kaggle's duplicate nested Lance
+mount layout. V8 selected the deepest same-name Lance leaf, materialized all inputs under
+`/tmp/gate6_input`, completed the bounded CUDA pilot, and passed strict validation. The frozen
+checkpoint SHA-256 is
+`300cefe9622ab43acd79bc2202ac90a214cbc4ae9921ed3434573fc9198ff252`.

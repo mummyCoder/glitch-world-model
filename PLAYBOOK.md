@@ -62,7 +62,7 @@ under 200 lines without hiding safety rules.
 | Current venue format | Springer LNICST, anonymized English PDF |
 | Regular paper length | 12-15 pages, excluding appendices, references, acknowledgements |
 | Main research method | LeWM/JEPA latent prediction surprise |
-| Current gate state | Gates 1-5 passed; Gate 6 partial after a pre-training package failure; Gates 7-10 not run |
+| Current gate state | Gates 1-6 passed; Gate 7 infrastructure ready but not run; Gates 8-10 not run |
 | Locked test | Closed, unmaterialized, unscored for the LeWM path |
 
 LeWM integration engineering exists. The repo has strict checkpoint loading, finite
@@ -94,17 +94,15 @@ trains with prediction loss plus SIGReg. The repository has already verified:
 
 The repository has not verified:
 
-- gameplay-scale LeWM training;
 - gameplay validation `scores.csv` and metrics from a LeWM checkpoint;
 - LeWM superiority, SIGReg benefit, temporal localization, or state of the art;
 - a neural locked-test result.
 
-Gate 5 passed strict CUDA/resume artifact validation. Gate 6 data audit/materialization passed.
-The v3 pilot failed before epoch 1 because the bundled package was not importable. A later Canary
-A restored the Python-module Kaggle write path. Gate 6 v6 was accepted remotely, then failed
-because `/kaggle/src/glitch_detection_src.zip` was unavailable beside the configured script.
-The immediate task is a single-file Gate 6 kernel and strict remote artifact validation. Positive
-LeWM language remains limited to integration and CUDA engineering.
+Gate 5 passed strict CUDA/resume artifact validation. Gate 6 v8 then completed the bounded
+normal-only TempGlitch pilot on CUDA, verified checkpoint reload and finite validation encoding,
+and passed the strict validator with locked-test flags false. The immediate task is Gate 7
+validation scoring from the frozen v8 checkpoint. Positive LeWM language remains limited to
+training engineering until scoring and metrics exist.
 
 ## 3. Why This Project Exists
 
@@ -205,7 +203,7 @@ described as components of the audited method, but their gameplay detection bene
 | Checkpoint-level LeWM integration | paper-safe, limited | strict load report and finite smoke | "We verify checkpoint-level LeWM integration feasibility." |
 | Real-data conversion | paper-safe, limited | frozen protocols and upstream Lance loader proof | "We convert reduced TempGlitch and WOB episodes to the audited data contract." |
 | CPU forward/backward/resume smoke | paper-safe, engineering | local metadata and hash-matching resume | "Reduced CPU engineering smokes complete." |
-| Gates 1-5 passed | paper-safe, governance | gate reports and validators | State the exact engineering scope. |
+| Gates 1-6 passed | paper-safe, governance | gate reports and validators | State the exact engineering scope. |
 | Gate 5 CUDA/resume smoke | paper-safe, engineering | strict v6 artifact validation | State that this is bounded engineering evidence. |
 | LeWM glitch-detection performance | paper-unsafe | Gate 7 scores and metrics | Do not say. |
 | LeWM beats baselines | paper-unsafe | Gate 8 comparison on identical splits | Do not say. |
@@ -489,7 +487,7 @@ metrics.
 | VideoMAE + Mahalanobis | frozen video representation baseline | future-work | normal feature statistics | no claim yet |
 | TimeSformer + Mahalanobis | frozen/supervised reference | future-work | protocol-dependent | no claim yet |
 | Qwen/LLaVA-style VLM | semantic fallback | future-work | prompt/runtime dependent | no temporal claim without spans |
-| LeWM surprise | mandatory main method | Gates 2-5 engineering; Gate 6 prepared | train-normal | no performance claim before Gate 7 |
+| LeWM surprise | mandatory main method | Gate 6 normal-only CUDA pilot passed | train-normal | no performance claim before Gate 7 |
 
 All comparisons must use identical split records. Advanced baselines should wait until Gate 7
 unless a task explicitly scopes them as independent engineering work.
@@ -890,13 +888,13 @@ granularity, negative results, and lessons for reproducible game-QA anomaly rese
 | --- | --- | --- | --- | --- | --- |
 | 1, complete | owner | Merge/push governance foundation | `main` at `0ceef40` | governance files are on `origin/main` | none |
 | 2, complete | Kaggle GPU Operator | Complete Gate 5 CUDA smoke/resume | reports 41-44 | strict validator passes | none |
-| 3 | Dataset protocol engineer | Audit Gate 6 normal-only pilot source | reports 40 and 45, frozen split | normal-only source/pair-disjoint Lance inventories | leakage or missing videos |
-| 4 | LeWM Integration + ML Research Engineers | Run standing-authorized Gate 6 pilot | config and reports 45-46 | gameplay checkpoint, reload, finite diagnostics, validation encoding | collapse/domain mismatch |
-| 5 | ML Research Engineers | Open Gate 7 validation scoring | scoring modules and protocol | finite validation scores and metrics | scorer mismatch |
+| 3, complete | Dataset protocol engineer | Audit Gate 6 normal-only pilot source | reports 40 and 45, frozen split | normal-only source/pair-disjoint Lance inventories | none |
+| 4, complete | LeWM Integration + ML Research Engineers | Run standing-authorized Gate 6 pilot | config and reports 45-46 | gameplay checkpoint, reload, finite diagnostics, validation encoding | none |
+| 5 | ML Research Engineers | Run Gate 7 validation scoring | scoring modules and protocol | finite validation scores and metrics | scorer mismatch |
 | 6 | Locked Test Release Officer | Keep locked test closed | release workflow | no materialization/scoring before frozen decision | schedule pressure |
 
-Current recommended task: embed Gate 6 source in a single-file kernel, pass offline bootstrap and
-public-release checks, then run one fresh fingerprint through strict remote artifact validation.
+Current recommended task: freeze the Gate 6 v8 checkpoint/config provenance and run Gate 7
+validation-only surprise scoring. Keep locked test closed.
 
 ## 29. Maintenance Rules For This Playbook
 

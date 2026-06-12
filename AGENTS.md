@@ -11,16 +11,15 @@ requires deep context.
 
 Current verified status:
 
-- Gates 1-5 passed; Gate 5 includes strict Kaggle CUDA train/resume artifact validation.
-- Gate 6 normal-only data is materialized; v6 was accepted remotely and failed at runtime because
-  its auxiliary source ZIP was unavailable beside the Kaggle script.
-- Gates 7-10 have not run.
+- Gates 1-6 passed; Gate 6 includes strict Kaggle CUDA normal-only training, checkpoint reload,
+  and validation encoding artifact validation.
+- Gate 7 infrastructure is ready but scoring and metrics have not run; Gates 8-10 have not run.
 - Locked test is closed.
 - LeWM integration engineering exists; LeWM gameplay evaluation is not yet established.
 
-Safe claims are limited to checkpoint-level LeWM integration, real-data conversion, and local
-CPU forward/backward/resume smoke evidence. Do not claim LeWM glitch-detection performance,
-superiority, state of the art, temporal localization, or a neural locked-test result.
+Safe claims include bounded normal-only gameplay training engineering on CUDA. Do not claim LeWM
+glitch-detection performance, superiority, state of the art, temporal localization, or a neural
+locked-test result before later gates pass.
 
 ## Agent Operating Mode
 
