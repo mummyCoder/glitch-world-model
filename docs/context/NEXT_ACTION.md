@@ -1,21 +1,20 @@
 # NEXT_ACTION.md
 
-Last updated: 2026-06-13T07:29:53+00:00
-Commit: `6fd89289199352a780b2adb331ffe50203183a29`
+Last updated: 2026-06-13T09:45:00+00:00
+Commit: `ff372c9ec50edbd517024e92ef058cafadfd4abc`
 
 ## Current Priority
-Implement and validate Roadmap v3 Stages R0-R1: the exact 500-update research MVP GPU profile.
+Advance Roadmap v3 after R1: freeze the main non-locked training configuration and prepare
+multi-seed episode-level validation evaluation.
 
 ## Success Criteria
 - Preserve the Gate 7-9 pilot and the new 36/14/22 research source fingerprints.
-- Make the profile package idempotent and validate all required metadata, logs, reload state,
-  retry evidence, and artifact hashes.
-- Measure throughput and VRAM for 500 updates without treating the profile as performance evidence.
-- Freeze normal-only checkpoint selection, three seeds, and episode-level evaluation.
+- Preserve the validated 500-update GPU profile evidence and use it only for engineering resource
+  planning.
+- Freeze normal-only checkpoint selection, three seeds, evaluation interval, and wall-clock budget.
+- Run only non-locked training/validation until a separate locked-test decision is explicitly made.
 - Keep locked-test materialization/scoring false.
 
 ## Current Known Blocker
-The broader non-locked source is ready, but GPU throughput, memory, and convergence behavior have
-not been measured. The exact update-based profile harness and its strict artifacts must pass before
-freezing the main-run batch size, evaluation interval, and wall-clock budget. This does not justify
-opening locked test.
+The 500-update GPU profile is complete, but the paper-grade non-locked multi-seed training and
+episode-level validation evaluation have not run. This does not justify opening locked test.
