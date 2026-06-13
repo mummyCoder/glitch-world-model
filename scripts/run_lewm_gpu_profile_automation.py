@@ -23,6 +23,7 @@ def main() -> None:
     parser.add_argument("--lance-root", required=True, type=Path)
     parser.add_argument("--source-audit", required=True, type=Path)
     parser.add_argument("--run-root", required=True, type=Path)
+    parser.add_argument("--parity-receipt", type=Path)
     parser.add_argument("--dataset-slug", required=True)
     parser.add_argument("--amp", action="store_true")
     parser.add_argument("--accelerator", default="NvidiaTeslaT4")
@@ -36,6 +37,7 @@ def main() -> None:
             source_audit=args.source_audit,
             run_root=args.run_root,
             dataset_slug=args.dataset_slug,
+            parity_receipt=args.parity_receipt,
             live=args.live,
             amp=args.amp,
             accelerator=args.accelerator,

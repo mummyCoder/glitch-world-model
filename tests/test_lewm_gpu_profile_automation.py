@@ -1,9 +1,14 @@
 import json
+import subprocess
+from dataclasses import replace
 from pathlib import Path
+
+import pytest
 
 from glitch_detection.lewm_gpu_profile_automation import (
     ProfileAutomationConfig,
     run_profile_attempt_ladder,
+    validate_live_launch_contract,
 )
 
 
@@ -65,3 +70,51 @@ def test_non_oom_failure_does_not_advance_ladder(tmp_path: Path):
     failure = result["attempts"][0]["failure"]
     assert failure["bucket"] == "dataloader_spawn"
     assert failure["allowed_action"] == "stop_and_fix"
+
+
+def _git_repo(tmp_path: Path) -> tuple[Path, str]:
+    repo = tmp_path / "repo"
+    (repo / "src").mkdir(parents=True)
+    (repo / "src" / "profile.py").write_text("READY = True\n", encoding="utf-8")
+    subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=repo, check=True)
+    subprocess.run(["git", "add", "."], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-m", "init"], cwd=repo, check=True, capture_output=True)
+    sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, check=True, capture_output=True, text=True
+    ).stdout.strip()
+    return repo, sha
+
+
+def _live_config(tmp_path: Path) -> ProfileAutomationConfig:
+    repo, sha = _git_repo(tmp_path)
+    receipt = tmp_path / "parity_receipt.json"
+    receipt.write_text(json.dumps({"pass": True, "git_sha": sha}), encoding="utf-8")
+    return replace(_config(tmp_path), repo_root=repo, live=True, parity_receipt=receipt)
+
+
+def test_live_contract_accepts_clean_matching_parity_receipt(tmp_path: Path):
+    assert validate_live_launch_contract(_live_config(tmp_path))["required"] is True
+
+
+def test_live_contract_blocks_missing_or_mismatched_parity_receipt(tmp_path: Path):
+    config = _live_config(tmp_path)
+    with pytest.raises(FileNotFoundError, match="parity receipt"):
+        validate_live_launch_contract(replace(config, parity_receipt=tmp_path / "missing.json"))
+    config.parity_receipt.write_text(
+        json.dumps({"pass": True, "git_sha": "other"}), encoding="utf-8"
+    )
+    with pytest.raises(RuntimeError, match="does not match HEAD"):
+        validate_live_launch_contract(config)
+
+
+def test_live_contract_blocks_dirty_profile_source_and_existing_run_root(tmp_path: Path):
+    config = _live_config(tmp_path)
+    (config.repo_root / "src" / "profile.py").write_text("READY = False\n", encoding="utf-8")
+    with pytest.raises(RuntimeError, match="clean profile implementation"):
+        validate_live_launch_contract(config)
+    subprocess.run(["git", "checkout", "--", "src/profile.py"], cwd=config.repo_root, check=True)
+    config.run_root.mkdir()
+    with pytest.raises(FileExistsError, match="run-root already exists"):
+        validate_live_launch_contract(config)

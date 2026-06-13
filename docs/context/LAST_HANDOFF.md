@@ -1,35 +1,34 @@
 # LAST_HANDOFF.md
 
-Last completed task: F2 offline Kaggle parity gate
+Last completed task: F3 live launch contract
 Commit: pending
 Date: 2026-06-13
 
 ## What Changed
-- Added an offline parity CLI that renders and bootstraps the exact live kernel.
-- Added guarded multiprocessing-spawn and UTF-8 decode probes.
-- Added a fail-closed parity receipt tied to Git SHA and local research MVP Lance inputs.
+- Added live-launch contract validation before any profile live action.
+- Required a clean profile implementation tree, a matching parity receipt, and a new run-root.
+- Preserved OOM-only ladder behavior through failure triage buckets.
 
 ## Checks Passed
-- Focused parity tests passed; full required validators pending before commit.
-- Local parity receipt passed with `training_performed=false`.
+- Focused live-contract and failure-triage tests passed; full required validators pending before commit.
 
 ## Safety Status
 - Infrastructure-only milestone; no training or live Kaggle launch performed.
 - Locked test remains closed, unmaterialized, and unscored.
-- Validation-buggy was not used.
+- No data, output, checkpoint, or credential is tracked.
 
 ## Gate Status After Task
-- F1 and F2 implementation complete pending F2 full validation.
+- F1-F3 implementation complete pending F3 full validation.
 - Research gates and scientific claim status are unchanged.
 
 ## Open Blockers
-- F3-F5 infrastructure hardening remains.
+- F4-F5 infrastructure hardening remains.
 
 ## Next Recommended Task
-- Enforce the live launch contract using a matching parity receipt.
+- Add Linux-like development/runtime parity documentation and pinned optional Kaggle runtime.
 
 ## Files Likely Relevant Next
-- `scripts/run_kaggle_parity_check.py`
-- `scripts/run_lewm_gpu_profile_automation.py`
-- `src/glitch_detection/lewm_gpu_profile_automation.py`
-- `tests/test_lewm_gpu_profile_automation.py`
+- `.devcontainer/devcontainer.json`
+- `requirements/kaggle_runtime.txt`
+- `docs/workflows/00_environment_audit.md`
+- `tests/test_doctor.py`

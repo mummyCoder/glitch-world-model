@@ -57,12 +57,48 @@ class ProfileAutomationConfig:
     source_audit: Path
     run_root: Path
     dataset_slug: str
+    parity_receipt: Path | None = None
     live: bool = False
     amp: bool = False
     accelerator: str = "NvidiaTeslaT4"
     poll_interval_seconds: int = 60
     poll_timeout_seconds: int = 6 * 60 * 60
     python_executable: Path = Path(sys.executable)
+
+
+def validate_live_launch_contract(config: ProfileAutomationConfig) -> dict[str, Any]:
+    if not config.live:
+        return {"required": False}
+    if config.run_root.exists():
+        raise FileExistsError("Live run-root already exists; use a new immutable run-root.")
+    if config.parity_receipt is None or not config.parity_receipt.is_file():
+        raise FileNotFoundError("Live launch requires a parity receipt.")
+    receipt = json.loads(config.parity_receipt.read_text(encoding="utf-8-sig"))
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=config.repo_root,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=True,
+    ).stdout.strip()
+    dirty = subprocess.run(
+        ["git", "status", "--porcelain", "--", "src", "scripts/run_lewm_gpu_profile_automation.py"],
+        cwd=config.repo_root,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=True,
+    ).stdout.strip()
+    if dirty:
+        raise RuntimeError("Live launch requires a clean profile implementation working tree.")
+    if receipt.get("pass") is not True or receipt.get("git_sha") != head:
+        raise RuntimeError(
+            "Live launch parity receipt is missing pass=true or does not match HEAD."
+        )
+    return {"required": True, "git_sha": head, "parity_receipt": str(config.parity_receipt)}
 
 
 class ProfileAttemptRunner:
@@ -341,6 +377,7 @@ def run_profile_attempt_ladder(
     *,
     attempt_runner: Callable[[int], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
+    validate_live_launch_contract(config)
     runner = attempt_runner or ProfileAttemptRunner(config).run_attempt
     attempts = []
     for batch_size in APPROVED_BATCH_LADDER:
