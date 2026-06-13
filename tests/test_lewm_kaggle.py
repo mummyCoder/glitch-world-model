@@ -10,6 +10,7 @@ from glitch_detection.lewm_kaggle import (
     prepare_lewm_kaggle_package,
     quota_allocation,
     render_validation_kernel,
+    supports_cuda_compute_capability,
     validate_kernel_push_preflight,
     validate_lewm_kaggle_package,
     validate_lewm_smoke_artifacts,
@@ -35,6 +36,11 @@ def test_quota_allocation_matches_locked_plan():
         "lewm_ablations": 4.5,
         "open_vlm": 3,
     }
+
+
+def test_cuda_compute_capability_guard_rejects_p100_and_accepts_t4():
+    assert supports_cuda_compute_capability(6, 0) is False
+    assert supports_cuda_compute_capability(7, 5) is True
 
 
 def test_inventory_fingerprint_changes_when_same_size_content_changes(tmp_path: Path):
@@ -77,6 +83,8 @@ def test_kaggle_package_dry_run_is_validation_only(tmp_path: Path):
     assert "train_lewm(" in kernel
     assert "resume=True" in kernel
     assert "Gate 5 LeWM smoke requires CUDA" in kernel
+    assert "cuda_runtime_guard.json" in kernel
+    assert "Unsupported GPU for current PyTorch build" in kernel
 
 
 def test_kaggle_kernel_can_render_update_based_research_run():

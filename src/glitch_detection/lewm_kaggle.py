@@ -117,6 +117,13 @@ def quota_allocation(total_hours: float) -> dict[str, float]:
     }
 
 
+def supports_cuda_compute_capability(
+    major: int, minor: int = 0, *, minimum_major: int = 7
+) -> bool:
+    del minor
+    return major >= minimum_major
+
+
 def render_validation_kernel(config: LeWMKaggleConfig) -> str:
     payload = json.dumps(asdict(config), sort_keys=True)
     return f'''"""Generated validation-only LeWM Kaggle entrypoint."""
@@ -167,10 +174,46 @@ subprocess.check_call([
 sys.path.insert(0, str(REPO / "src"))
 
 import torch
-from glitch_detection.lewm_training import LeWMTrainConfig, train_lewm
 
-if not torch.cuda.is_available():
+def _cuda_runtime_guard():
+    cuda_available = torch.cuda.is_available()
+    gpu_name = None
+    compute_capability = None
+    supported = False
+    if cuda_available:
+        gpu_name = torch.cuda.get_device_name(0)
+        compute_capability = torch.cuda.get_device_capability(0)
+        supported = compute_capability[0] >= 7
+    payload = {{
+        "torch": torch.__version__,
+        "cuda_available": cuda_available,
+        "gpu_name": gpu_name,
+        "compute_capability": compute_capability,
+        "minimum_compute_capability": [7, 0],
+        "supported": supported,
+    }}
+    print("torch version:", payload["torch"])
+    print("cuda available:", payload["cuda_available"])
+    print("gpu name:", payload["gpu_name"])
+    print("compute capability:", payload["compute_capability"])
+    (OUTPUT / "cuda_runtime_guard.json").write_text(
+        json.dumps(payload, indent=2) + "\\n",
+        encoding="utf-8",
+    )
+    return payload
+
+cuda_guard = _cuda_runtime_guard()
+if not cuda_guard["cuda_available"]:
     raise RuntimeError("Gate 5 LeWM smoke requires CUDA.")
+if not cuda_guard["supported"]:
+    capability = cuda_guard["compute_capability"] or ["unknown", "unknown"]
+    gpu_name = cuda_guard["gpu_name"] or "unknown GPU"
+    raise RuntimeError(
+        "Unsupported GPU for current PyTorch build: "
+        f"requires sm_70+, got sm_{{capability[0]}}{{capability[1]}}/{{gpu_name}}"
+    )
+
+from glitch_detection.lewm_training import LeWMTrainConfig, train_lewm
 
 (OUTPUT / "run_config.json").write_text(json.dumps(CONFIG, indent=2) + "\\n")
 (OUTPUT / "environment.json").write_text(json.dumps({{
@@ -178,6 +221,8 @@ if not torch.cuda.is_available():
     "platform": platform.platform(),
     "torch": torch.__version__,
     "cuda_available": torch.cuda.is_available(),
+    "gpu_name": cuda_guard["gpu_name"],
+    "compute_capability": cuda_guard["compute_capability"],
 }}, indent=2) + "\\n")
 
 train_config = LeWMTrainConfig(

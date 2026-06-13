@@ -1,49 +1,56 @@
 # LAST_HANDOFF.md
 
-Last completed task: R1 non-locked 500-update LeWM GPU profile
-Commit: `ff372c9ec50edbd517024e92ef058cafadfd4abc`
+Last completed task: R3 seed 42 P100 failure archived and fail-fast guard added
+Commit: pending
 Date: 2026-06-13
 
 ## What Changed
-- Stopped the two stale running Kaggle profile kernels that were occupying GPU slots.
-- Added `validator_report.json` to the required GPU profile artifact contract.
-- Added stale-source protections to the rendered Kaggle kernel by clearing `/tmp` code/input roots,
-  disabling bytecode writes, and self-checking the project snapshot before import.
-- Completed the final non-locked exact 500-update CUDA profile at batch size 8 with AMP and
-  complete strict artifacts; the detailed ignored artifact path is recorded in the research report.
-- Recorded the new artifact-contract failure mode and the final engineering profile result.
+
+- Archived the failed R3 seed 42 Kaggle output/log in the ignored local outputs area.
+- Recorded the failed live kernel `huynhdieuthanh/lewm-r3-seed42-eb395860` as an
+  infrastructure/runtime incompatibility, not a training result.
+- Added a Kaggle CUDA runtime guard that records `cuda_runtime_guard.json`, prints torch/CUDA/GPU
+  details, and fails before training when compute capability is below `sm_70`.
+- Updated the Kaggle GPU protocol to require compute capability `sm_70` or newer for R3 seed runs.
+- Registered the P100 failure as claim C-061 with strict no-performance boundaries.
 
 ## Checks Passed
-- `python -m pytest` passed with 316 tests before the final live profile launch.
-- `python -m ruff check .` passed.
-- `python -m ruff format --check .` passed.
-- `python scripts/validate_research_release.py --ci` passed.
-- `python scripts/check_claim_registry.py` passed.
-- `python scripts/doctor.py` passed.
-- `python scripts/validate_context_cache.py` passed.
+
+- Pending focused checks before commit:
+  - `python -m pytest tests/test_lewm_kaggle.py tests/test_lewm_training.py tests/test_run_kaggle_lewm.py tests/test_lewm_research_mvp_config.py -q`
+  - `python -m ruff check src scripts tests`
+  - `python scripts/validate_research_release.py --ci`
 
 ## Safety Status
-- Live Kaggle profile was non-locked and engineering-profile-only.
-- The 8 validation-normal batches were used only for pipeline verification.
+
+- The failed R3 live run was non-locked and validation-only.
+- No successful R3 seed 42 training result was produced.
 - Locked test remains closed, unmaterialized, and unscored.
+- Seed 43/44 were not launched.
 - No data, output, checkpoint, or credential is tracked.
 
 ## Gate Status After Task
-- Roadmap v3 R1 engineering GPU profile is complete.
-- No detection-performance, superiority, temporal-localization, SIGReg, paper-result, or
-  locked-test claim is supported by this profile.
+
+- Roadmap v3 R1 engineering GPU profile remains complete.
+- R2 main-run schedule exists, but R3 seed 42 is not passed.
+- The active R3 blocker is compatible Kaggle GPU assignment: T4 or newer is required for the
+  current PyTorch build; P100 is unsupported.
 
 ## Open Blockers
-- Paper-grade non-locked multi-seed training and episode-level validation evaluation have not run.
-- Locked test remains closed until a frozen validation decision and separate direct user command.
+
+- Relaunch R3 seed 42 only after the guard/failure record commit is on `main` and a compatible
+  accelerator is selected or obtained.
+- Seed 43/44 remain blocked until seed 42 produces valid non-locked R3 artifacts.
 
 ## Next Recommended Task
-- Freeze the main non-locked training configuration from the validated profile and launch the
-  Roadmap v3 multi-seed validation-only training/evaluation stage.
+
+- Rebuild and relaunch R3 seed 42 only on a compatible T4-or-newer Kaggle GPU after this guard
+  commit is on `main`; do not launch seed 43/44 first.
 
 ## Files Likely Relevant Next
-- `docs/research/66_lewm_gpu_profile_results.md`
-- `docs/roadmap/MASTER_ROADMAP_LeWM_Glitch_v3.md`
-- `scripts/run_lewm_gpu_profile_automation.py`
-- `src/glitch_detection/lewm_gpu_profile.py`
-- `src/glitch_detection/lewm_gpu_profile_kaggle.py`
+
+- `src/glitch_detection/lewm_kaggle.py`
+- `scripts/prepare_lewm_kaggle_package.py`
+- `tests/test_lewm_kaggle.py`
+- `docs/research/52_r3_seed42_failed_p100_cuda_incompatibility.md`
+- `docs/workflows/kaggle_gpu_protocol.md`
