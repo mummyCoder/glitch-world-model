@@ -34,6 +34,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--early-stopping-patience", type=int, default=None)
     parser.add_argument("--early-stopping-min-delta", type=float, default=0.0)
     parser.add_argument("--gradient-clip-norm", type=float, default=None)
+    parser.add_argument("--target-optimizer-updates", type=int, default=None)
+    parser.add_argument("--evaluation-interval-updates", type=int, default=None)
+    parser.add_argument("--checkpoint-interval-updates", type=int, default=None)
     return parser
 
 
@@ -56,6 +59,9 @@ def main(argv: list[str] | None = None) -> None:
         early_stopping_patience=args.early_stopping_patience,
         early_stopping_min_delta=args.early_stopping_min_delta,
         gradient_clip_norm=args.gradient_clip_norm,
+        target_optimizer_updates=args.target_optimizer_updates,
+        evaluation_interval_updates=args.evaluation_interval_updates,
+        checkpoint_interval_updates=args.checkpoint_interval_updates,
     )
     result = train_lewm(
         args.train_dataset,

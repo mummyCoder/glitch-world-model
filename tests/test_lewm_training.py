@@ -41,3 +41,21 @@ def test_research_training_config_exposes_runtime_controls():
 def test_training_config_rejects_invalid_early_stopping():
     with pytest.raises(ValueError, match="patience"):
         LeWMTrainConfig(early_stopping_patience=0)
+
+
+def test_update_based_training_requires_intervals():
+    with pytest.raises(ValueError, match="requires evaluation and checkpoint intervals"):
+        LeWMTrainConfig(target_optimizer_updates=15000)
+
+
+def test_research_training_config_exposes_update_controls():
+    config = LeWMTrainConfig(
+        run_kind="research",
+        target_optimizer_updates=15000,
+        evaluation_interval_updates=500,
+        checkpoint_interval_updates=500,
+    )
+
+    assert config.target_optimizer_updates == 15000
+    assert config.evaluation_interval_updates == 500
+    assert config.checkpoint_interval_updates == 500

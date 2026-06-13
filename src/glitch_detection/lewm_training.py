@@ -3,7 +3,9 @@ from __future__ import annotations
 import hashlib
 import json
 import random
+import time
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +45,9 @@ class LeWMTrainConfig:
     early_stopping_patience: int | None = None
     early_stopping_min_delta: float = 0.0
     gradient_clip_norm: float | None = None
+    target_optimizer_updates: int | None = None
+    evaluation_interval_updates: int | None = None
+    checkpoint_interval_updates: int | None = None
 
     def __post_init__(self) -> None:
         if self.image_size < 28 or self.image_size % 14:
@@ -61,6 +66,20 @@ class LeWMTrainConfig:
             raise ValueError("LeWM early_stopping_min_delta cannot be negative.")
         if self.gradient_clip_norm is not None and self.gradient_clip_norm <= 0:
             raise ValueError("LeWM gradient_clip_norm must be positive when set.")
+        if self.target_optimizer_updates is not None and self.target_optimizer_updates < 1:
+            raise ValueError("LeWM target_optimizer_updates must be positive when set.")
+        for name, value in (
+            ("evaluation_interval_updates", self.evaluation_interval_updates),
+            ("checkpoint_interval_updates", self.checkpoint_interval_updates),
+        ):
+            if value is not None and value < 1:
+                raise ValueError(f"LeWM {name} must be positive when set.")
+        if self.target_optimizer_updates is not None and (
+            self.evaluation_interval_updates is None or self.checkpoint_interval_updates is None
+        ):
+            raise ValueError(
+                "LeWM update-based training requires evaluation and checkpoint intervals."
+            )
 
 
 def _require_runtime() -> tuple[Any, Any]:
@@ -232,6 +251,315 @@ def _run_epoch(
     return history, last_embeddings
 
 
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _train_update_step(
+    *,
+    torch: Any,
+    model: Any,
+    optimizer: Any,
+    scaler: Any,
+    batch: Any,
+    config: LeWMTrainConfig,
+    device: Any,
+) -> dict[str, float]:
+    model.train(True)
+    pixels = _preprocess_pixels(torch, batch["pixels"], config.image_size, device)
+    actions = torch.nan_to_num(batch["action"].to(device), 0.0)
+    use_amp = config.mixed_precision and device.type == "cuda"
+    optimizer.zero_grad(set_to_none=True)
+    with torch.autocast(device_type=device.type, enabled=use_amp):
+        output = model.encode({"pixels": pixels, "action": actions})
+        embeddings = output["emb"]
+        predicted = model.predict(
+            embeddings[:, : config.history_size],
+            output["act_emb"][:, : config.history_size],
+        )
+        target = embeddings[:, 1 : config.history_size + 1]
+        prediction_loss = (predicted - target).pow(2).mean()
+        sigreg_loss = _sigreg(torch, embeddings, config.sigreg_projections)
+        loss = prediction_loss + config.sigreg_weight * sigreg_loss
+    if scaler.is_enabled():
+        scaler.scale(loss).backward()
+        if config.gradient_clip_norm is not None:
+            scaler.unscale_(optimizer)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), config.gradient_clip_norm)
+        scaler.step(optimizer)
+        scaler.update()
+    else:
+        loss.backward()
+        if config.gradient_clip_norm is not None:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), config.gradient_clip_norm)
+        optimizer.step()
+    return {
+        "loss": float(loss.detach().cpu()),
+        "prediction_loss": float(prediction_loss.detach().cpu()),
+        "sigreg_loss": float(sigreg_loss.detach().cpu()),
+    }
+
+
+def _train_lewm_by_updates(
+    train_path: Path,
+    validation_path: Path,
+    output_root: Path,
+    config: LeWMTrainConfig,
+    *,
+    device: str,
+) -> dict[str, Any]:
+    torch, instantiate = _require_runtime()
+    random.seed(config.seed)
+    np.random.seed(config.seed)
+    torch.manual_seed(config.seed)
+    resolved_device = torch.device(
+        "cuda"
+        if device == "auto" and torch.cuda.is_available()
+        else ("cpu" if device == "auto" else device)
+    )
+    if resolved_device.type == "cuda" and not torch.cuda.is_available():
+        raise LeWMTrainingError("CUDA was requested but is unavailable.")
+    train_dataset = _dataset(train_path, config)
+    validation_dataset = _dataset(validation_path, config)
+    action_dim = int(train_dataset.get_dim("action"))
+    if int(validation_dataset.get_dim("action")) != action_dim:
+        raise LeWMTrainingError("Train and validation action dimensions differ.")
+    model_config = build_model_config(config, action_dim)
+    model = instantiate(model_config).to(resolved_device)
+    optimizer = torch.optim.AdamW(
+        model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
+    )
+    output_root.mkdir(parents=True, exist_ok=True)
+    config_hash = _config_hash(config)
+    dataset_hashes = {
+        "train": FingerprintBuilder.inventory_sha256(train_path),
+        "validation": FingerprintBuilder.inventory_sha256(validation_path),
+    }
+    if (
+        dataset_hashes["train"] == dataset_hashes["validation"]
+        and not config.allow_identical_datasets_for_smoke
+    ):
+        raise LeWMTrainingError(
+            "Train and validation datasets are identical; permit this only for an explicit smoke."
+        )
+    generator = torch.Generator().manual_seed(config.seed)
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset,
+        batch_size=config.batch_size,
+        shuffle=True,
+        generator=generator,
+        num_workers=config.num_workers,
+        pin_memory=config.pin_memory,
+    )
+    validation_loader = torch.utils.data.DataLoader(
+        validation_dataset,
+        batch_size=config.batch_size,
+        shuffle=False,
+        num_workers=config.num_workers,
+        pin_memory=config.pin_memory,
+    )
+    scaler = torch.amp.GradScaler(
+        "cuda", enabled=config.mixed_precision and resolved_device.type == "cuda"
+    )
+    checkpoint_path = output_root / "checkpoint_weights.pt"
+    best_weights_path = output_root / "best_weights.pt"
+    best_metadata_path = output_root / "best_checkpoint_metadata.json"
+    weights_path = output_root / "weights.pt"
+    training_history: list[dict[str, Any]] = []
+    validation_history: list[dict[str, Any]] = []
+    best_validation_loss = float("inf")
+    best_update = 0
+    evaluations_without_improvement = 0
+    stopped_early = False
+    train_batches = iter(train_loader)
+    started = time.perf_counter()
+    started_at = _utc_now()
+    assert config.target_optimizer_updates is not None
+    assert config.evaluation_interval_updates is not None
+    assert config.checkpoint_interval_updates is not None
+    final_embeddings = None
+    updates_completed = 0
+
+    for update in range(1, config.target_optimizer_updates + 1):
+        try:
+            batch = next(train_batches)
+        except StopIteration:
+            train_batches = iter(train_loader)
+            batch = next(train_batches)
+        metrics = _train_update_step(
+            torch=torch,
+            model=model,
+            optimizer=optimizer,
+            scaler=scaler,
+            batch=batch,
+            config=config,
+            device=resolved_device,
+        )
+        if not all(np.isfinite(float(value)) for value in metrics.values()):
+            raise LeWMTrainingError(f"Non-finite update metrics at update {update}.")
+        updates_completed = update
+        training_history.append({"update": update, **metrics})
+        should_evaluate = update % config.evaluation_interval_updates == 0
+        should_checkpoint = update % config.checkpoint_interval_updates == 0
+        if should_evaluate:
+            validation_losses, final_embeddings = _run_epoch(
+                model,
+                validation_loader,
+                config,
+                resolved_device,
+                optimizer=None,
+                max_steps=config.max_validation_steps,
+            )
+            mean_validation_loss = float(
+                np.mean([row["loss"] for row in validation_losses], dtype=np.float64)
+            )
+            validation_history.append(
+                {
+                    "update": update,
+                    "mean_validation_loss": mean_validation_loss,
+                    "batches": validation_losses,
+                    "selection_split": "validation_normal",
+                }
+            )
+            improved = mean_validation_loss < (
+                best_validation_loss - config.early_stopping_min_delta
+            )
+            if improved:
+                best_validation_loss = mean_validation_loss
+                best_update = update
+                evaluations_without_improvement = 0
+                torch.save(model.state_dict(), best_weights_path)
+                best_metadata_path.write_text(
+                    json.dumps(
+                        {
+                            "update": best_update,
+                            "validation_loss": best_validation_loss,
+                            "selection_split": "validation_normal",
+                        },
+                        indent=2,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+            else:
+                evaluations_without_improvement += 1
+            if (
+                config.early_stopping_patience is not None
+                and evaluations_without_improvement >= config.early_stopping_patience
+            ):
+                stopped_early = True
+                should_checkpoint = True
+        if should_checkpoint or stopped_early:
+            torch.save(
+                {
+                    "global_step": update,
+                    "model": model.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                    "scheduler": None,
+                    "scheduler_present": False,
+                    "config_hash": config_hash,
+                    "dataset_hashes": dataset_hashes,
+                    "evaluations_without_improvement": evaluations_without_improvement,
+                },
+                checkpoint_path,
+            )
+        if stopped_early:
+            break
+
+    if not validation_history:
+        raise LeWMTrainingError("Update-based training completed without validation.")
+    if not best_weights_path.is_file():
+        torch.save(model.state_dict(), best_weights_path)
+    torch.save(model.state_dict(), weights_path)
+    (output_root / "config.json").write_text(
+        json.dumps(model_config, indent=2) + "\n", encoding="utf-8"
+    )
+    (output_root / "loss_history.json").write_text(
+        json.dumps(training_history, indent=2) + "\n", encoding="utf-8"
+    )
+    (output_root / "validation_history.json").write_text(
+        json.dumps(validation_history, indent=2) + "\n", encoding="utf-8"
+    )
+    if final_embeddings is None:
+        raise LeWMTrainingError("Update-based training did not produce validation embeddings.")
+    flat = final_embeddings.reshape(-1, final_embeddings.shape[-1]).float()
+    diagnostics = {
+        "latent_variance_mean": float(flat.var(dim=0).mean().cpu()),
+        "latent_variance_min": float(flat.var(dim=0).min().cpu()),
+        "finite": bool(torch.isfinite(flat).all().item()),
+    }
+    if not diagnostics["finite"]:
+        raise LeWMTrainingError("Update-based training produced non-finite latent diagnostics.")
+    (output_root / "collapse_diagnostics.json").write_text(
+        json.dumps(diagnostics, indent=2) + "\n", encoding="utf-8"
+    )
+    if not checkpoint_path.is_file():
+        torch.save(
+            {
+                "global_step": updates_completed,
+                "model": model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+                "scheduler": None,
+                "scheduler_present": False,
+                "config_hash": config_hash,
+                "dataset_hashes": dataset_hashes,
+                "evaluations_without_improvement": evaluations_without_improvement,
+            },
+            checkpoint_path,
+        )
+    reloaded = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+    if int(reloaded.get("global_step", -1)) != updates_completed:
+        raise LeWMTrainingError("Reloaded checkpoint step does not match completed updates.")
+    reloaded_model = instantiate(model_config)
+    reloaded_optimizer = torch.optim.AdamW(
+        reloaded_model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
+    )
+    reloaded_model.load_state_dict(reloaded["model"], strict=True)
+    reloaded_optimizer.load_state_dict(reloaded["optimizer"])
+    ended_at = _utc_now()
+    runtime_seconds = max(time.perf_counter() - started, 1e-12)
+    metadata = {
+        "status": "research_update_run_complete_unvalidated",
+        "device": str(resolved_device),
+        "config": asdict(config),
+        "config_hash": config_hash,
+        "dataset_hashes": dataset_hashes,
+        "action_dim": action_dim,
+        "target_optimizer_updates": config.target_optimizer_updates,
+        "updates_completed": updates_completed,
+        "validation_evaluations": len(validation_history),
+        "best_update": best_update,
+        "best_validation_loss": best_validation_loss,
+        "stopped_early": stopped_early,
+        "evaluations_without_improvement": evaluations_without_improvement,
+        "started_at": started_at,
+        "ended_at": ended_at,
+        "runtime_seconds": runtime_seconds,
+        "updates_per_second": updates_completed / runtime_seconds,
+        "checkpoint_sha256": sha256_file(checkpoint_path),
+        "weights_sha256": sha256_file(weights_path),
+        "best_weights_sha256": sha256_file(best_weights_path),
+        "checkpoint_reload": {
+            "weights_reload_verified": True,
+            "optimizer_reload_verified": True,
+            "scheduler": {"present": False, "reload_verified": True},
+            "reloaded_global_step": updates_completed,
+        },
+        "locked_test_materialized": False,
+        "locked_test_scored": False,
+    }
+    (output_root / "training_metadata.json").write_text(
+        json.dumps(metadata, indent=2) + "\n", encoding="utf-8"
+    )
+    (output_root / "checkpoint_reload.json").write_text(
+        json.dumps(metadata["checkpoint_reload"], indent=2) + "\n", encoding="utf-8"
+    )
+    (output_root / "checkpoint.sha256").write_text(
+        metadata["checkpoint_sha256"] + "\n", encoding="utf-8"
+    )
+    return metadata
+
+
 def train_lewm(
     train_path: Path,
     validation_path: Path,
@@ -241,6 +569,14 @@ def train_lewm(
     device: str = "auto",
     resume: bool = False,
 ) -> dict[str, Any]:
+    if config.target_optimizer_updates is not None:
+        return _train_lewm_by_updates(
+            train_path,
+            validation_path,
+            output_root,
+            config,
+            device=device,
+        )
     torch, instantiate = _require_runtime()
     random.seed(config.seed)
     np.random.seed(config.seed)
