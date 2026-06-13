@@ -20,6 +20,7 @@ PROFILE_REQUIRED_REMOTE_ARTIFACTS = (
     "environment_snapshot.json",
     "checkpoint_hashes.json",
     "retry_history.json",
+    "validator_report.json",
     "checkpoint.pt",
     "profile.log",
 )
@@ -236,6 +237,28 @@ def write_artifact_manifest(root: Path) -> dict[str, Any]:
     return payload
 
 
+def build_validator_report(metadata: dict[str, Any]) -> dict[str, Any]:
+    reload_proof = metadata.get("checkpoint_reload", {})
+    scheduler = reload_proof.get("scheduler", {})
+    return {
+        "status": "lewm_gpu_profile_validated",
+        "evidence_class": "engineering-profile-only",
+        "fingerprint": metadata["fingerprint"],
+        "updates_completed": metadata["updates_completed"],
+        "validation_batches_completed": metadata["validation_batches_completed"],
+        "weights_reload_verified": reload_proof.get("weights_reload_verified") is True,
+        "optimizer_reload_verified": reload_proof.get("optimizer_reload_verified") is True,
+        "scheduler_reload_verified": scheduler.get("reload_verified") is True,
+        "scheduler_present": bool(scheduler.get("present")),
+        "reloaded_global_step": reload_proof.get("reloaded_global_step"),
+        "checkpoint_sha256": metadata["checkpoint"]["checkpoint_sha256"],
+        "locked_materialized": False,
+        "locked_scored": False,
+        "buggy_validation_used": False,
+        "performance_claims_reported": False,
+    }
+
+
 def write_profile_artifacts(
     root: Path,
     *,
@@ -248,6 +271,7 @@ def write_profile_artifacts(
     _write_json(root / "environment_snapshot.json", environment)
     _write_json(root / "checkpoint_hashes.json", metadata["checkpoint"])
     _write_json(root / "retry_history.json", retry_history)
+    _write_json(root / "validator_report.json", build_validator_report(metadata))
     report = (
         "# LeWM 500-Update GPU Profile\n\n"
         "Evidence class: engineering-profile-only\n\n"
@@ -476,6 +500,7 @@ def validate_lewm_gpu_profile_artifacts(root: Path) -> dict[str, Any]:
     environment = json.loads((root / "environment_snapshot.json").read_text(encoding="utf-8-sig"))
     hashes = json.loads((root / "checkpoint_hashes.json").read_text(encoding="utf-8-sig"))
     retries = json.loads((root / "retry_history.json").read_text(encoding="utf-8-sig"))
+    validator = json.loads((root / "validator_report.json").read_text(encoding="utf-8-sig"))
     manifest = json.loads((root / "artifact_manifest.json").read_text(encoding="utf-8-sig"))
     forbidden = _contains_forbidden(
         {
@@ -483,6 +508,7 @@ def validate_lewm_gpu_profile_artifacts(root: Path) -> dict[str, Any]:
             "environment": environment,
             "hashes": hashes,
             "retries": retries,
+            "validator": validator,
         }
     )
     if forbidden:
@@ -516,6 +542,9 @@ def validate_lewm_gpu_profile_artifacts(root: Path) -> dict[str, Any]:
     checkpoint_hash = FingerprintBuilder.sha256_file(root / "checkpoint.pt")
     if hashes.get("checkpoint_sha256") != checkpoint_hash:
         raise ValueError("Profile checkpoint hash mismatch.")
+    expected_validator = build_validator_report(metadata)
+    if validator != expected_validator:
+        raise ValueError("Profile validator report does not match metadata.")
     for name, expected in manifest.get("files", {}).items():
         path = root / name
         if not path.is_file() or FingerprintBuilder.sha256_file(path) != expected.get("sha256"):

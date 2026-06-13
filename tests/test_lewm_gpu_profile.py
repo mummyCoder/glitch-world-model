@@ -9,6 +9,7 @@ from glitch_detection.lewm_gpu_profile import (
     build_checkpoint_payload,
     build_dataset_manifest,
     build_profile_fingerprint,
+    build_validator_report,
     run_exact_updates,
     validate_lewm_gpu_profile_artifacts,
     verify_reloaded_checkpoint,
@@ -108,6 +109,10 @@ def _write_valid_artifacts(root: Path) -> None:
         "updates_per_second": 50.0,
         "peak_vram_bytes": 100,
         "average_vram_bytes": 80,
+        "checkpoint": {
+            "checkpoint_sha256": checkpoint_hash,
+            "save_verified": True,
+        },
         "checkpoint_reload": {
             "weights_reload_verified": True,
             "optimizer_reload_verified": True,
@@ -121,6 +126,7 @@ def _write_valid_artifacts(root: Path) -> None:
         "environment_snapshot.json": json.dumps({"cuda_available": True}),
         "checkpoint_hashes.json": json.dumps({"checkpoint_sha256": checkpoint_hash}),
         "retry_history.json": json.dumps({"attempts": []}),
+        "validator_report.json": json.dumps(build_validator_report(metadata)),
         "profile.log": "complete\n",
     }
     for name, text in files.items():
@@ -136,7 +142,10 @@ def _write_valid_artifacts(root: Path) -> None:
 
 def test_strict_profile_validator_accepts_engineering_artifacts(tmp_path: Path):
     _write_valid_artifacts(tmp_path)
-    assert validate_lewm_gpu_profile_artifacts(tmp_path)["status"] == "lewm_gpu_profile_validated"
+    result = validate_lewm_gpu_profile_artifacts(tmp_path)
+    manifest = json.loads((tmp_path / "artifact_manifest.json").read_text(encoding="utf-8"))
+    assert result["status"] == "lewm_gpu_profile_validated"
+    assert "validator_report.json" in manifest["files"]
 
 
 def test_strict_profile_validator_rejects_wrong_update_count(tmp_path: Path):
