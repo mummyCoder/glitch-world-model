@@ -26,7 +26,14 @@ def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f"{path.name}.tmp")
     temporary.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    os.replace(temporary, path)
+    for attempt in range(3):
+        try:
+            os.replace(temporary, path)
+            return
+        except PermissionError:
+            if attempt == 2:
+                raise
+            time.sleep(0.01 * (attempt + 1))
 
 
 @dataclass
@@ -385,6 +392,8 @@ class CommandRunner:
             command,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             check=False,
             env=environment,
         )

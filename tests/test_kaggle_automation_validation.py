@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
+import glitch_detection.kaggle_automation as kaggle_automation
 from glitch_detection.kaggle_automation import (
     ArtifactValidator,
     AutomationBlockedError,
@@ -148,9 +149,11 @@ def test_public_release_scan_rejects_locked_test_path(tmp_path: Path):
 
 def test_default_executor_enables_utf8_environment(monkeypatch: pytest.MonkeyPatch):
     captured_environment: dict[str, str] = {}
+    captured_options: dict[str, object] = {}
 
     def run(command: list[str], **kwargs: object) -> SimpleNamespace:
         captured_environment.update(kwargs["env"])  # type: ignore[arg-type]
+        captured_options.update(kwargs)
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
     monkeypatch.delenv("PYTHONUTF8", raising=False)
@@ -161,7 +164,41 @@ def test_default_executor_enables_utf8_environment(monkeypatch: pytest.MonkeyPat
 
     assert captured_environment["PYTHONUTF8"] == "1"
     assert captured_environment["PYTHONIOENCODING"] == "utf-8"
+    assert captured_options["encoding"] == "utf-8"
+    assert captured_options["errors"] == "replace"
     assert os.environ.get("PYTHONUTF8") is None
+
+
+def test_default_executor_replaces_non_utf8_subprocess_output():
+    result = CommandRunner._default_executor(
+        [sys.executable, "-c", "import sys; sys.stdout.buffer.write(bytes([0x8f]))"]
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "\ufffd"
+
+
+def test_atomic_json_writer_retries_transient_windows_replace_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    destination = tmp_path / "state.json"
+    real_replace = os.replace
+    calls = 0
+
+    def replace(source: Path, target: Path) -> None:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise PermissionError("transient Windows file lock")
+        real_replace(source, target)
+
+    monkeypatch.setattr(kaggle_automation.os, "replace", replace)
+    monkeypatch.setattr(kaggle_automation.time, "sleep", lambda _seconds: None)
+
+    kaggle_automation._write_json_atomic(destination, {"status": "ok"})
+
+    assert calls == 2
+    assert json.loads(destination.read_text(encoding="utf-8")) == {"status": "ok"}
 
 
 def test_dataset_package_supports_configured_visibility_and_recursive_mode(tmp_path: Path):
