@@ -72,6 +72,10 @@ def test_generated_kernel_is_immutable_and_fail_closed():
     assert 'git", "clone"' not in kernel
     assert "LEWM_PROFILE_BOOTSTRAP_ONLY" in kernel
     assert "run_lewm_gpu_profile" in kernel
+    assert "def main():" in kernel
+    assert 'if __name__ == "__main__":' in kernel
+    assert kernel.index('if __name__ == "__main__":') < kernel.rindex("    main()")
+    assert "num_workers=0" in kernel
     assert "find_one_dir" in kernel
     assert "materialize" in kernel
     assert "dirs_exist_ok=True" in kernel

@@ -19,6 +19,7 @@ def test_profile_config_freezes_engineering_only_contract():
     config = LeWMGPUProfileConfig(batch_size=8)
     assert config.optimizer_updates == 500
     assert config.validation_batches == 8
+    assert config.num_workers == 0
     assert config.seed == 42
     assert config.validation_only is True
     assert config.locked_test_materialized is False

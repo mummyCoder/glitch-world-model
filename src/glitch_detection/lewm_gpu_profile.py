@@ -57,7 +57,7 @@ class LeWMGPUProfileConfig:
     seed: int = 42
     image_size: int = 112
     amp: bool = False
-    num_workers: int = 2
+    num_workers: int = 0
     pin_memory: bool = True
     gradient_clip_norm: float | None = None
     validation_only: bool = True

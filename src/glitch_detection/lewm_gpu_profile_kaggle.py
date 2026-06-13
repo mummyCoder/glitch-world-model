@@ -211,21 +211,30 @@ preflight = {{
     "kaggle_runtime": True,
 }}
 (OUTPUT / "preflight_metadata.json").write_text(json.dumps(preflight, indent=2) + "\\n")
-try:
-    run_lewm_gpu_profile(
-        train, validation, OUTPUT,
-        LeWMGPUProfileConfig(batch_size=CONFIG["batch_size"], amp=CONFIG["amp"]),
-        preflight_metadata=preflight,
-    )
-except Exception as exc:
-    failure = {{
-        "classification": "cuda_oom" if isinstance(exc, torch.cuda.OutOfMemoryError) else "runtime_error",
-        "error_type": type(exc).__name__,
-        "message": str(exc),
-    }}
-    (OUTPUT / "failure.json").write_text(json.dumps(failure, indent=2) + "\\n")
-    (OUTPUT / "traceback.log").write_text(traceback.format_exc())
-    raise
+
+def main():
+    try:
+        run_lewm_gpu_profile(
+            train, validation, OUTPUT,
+            LeWMGPUProfileConfig(
+                batch_size=CONFIG["batch_size"],
+                amp=CONFIG["amp"],
+                num_workers=0,
+            ),
+            preflight_metadata=preflight,
+        )
+    except Exception as exc:
+        failure = {{
+            "classification": "cuda_oom" if isinstance(exc, torch.cuda.OutOfMemoryError) else "runtime_error",
+            "error_type": type(exc).__name__,
+            "message": str(exc),
+        }}
+        (OUTPUT / "failure.json").write_text(json.dumps(failure, indent=2) + "\\n")
+        (OUTPUT / "traceback.log").write_text(traceback.format_exc())
+        raise
+
+if __name__ == "__main__":
+    main()
 '''
 
 
