@@ -1,34 +1,34 @@
 # LAST_HANDOFF.md
 
-Last completed task: F3 live launch contract
+Last completed task: F4 Kaggle-like environment and optional runtime pins
 Commit: pending
 Date: 2026-06-13
 
 ## What Changed
-- Added live-launch contract validation before any profile live action.
-- Required a clean profile implementation tree, a matching parity receipt, and a new run-root.
-- Preserved OOM-only ladder behavior through failure triage buckets.
+- Added a Linux-like devcontainer for infrastructure checks.
+- Added optional Kaggle profile/parity runtime pins separate from default CI dependencies.
+- Documented known local-vs-Kaggle differences and their guard tests.
 
 ## Checks Passed
-- Focused live-contract and failure-triage tests passed; full required validators pending before commit.
+- Focused runtime/environment tests passed; full required validators pending before commit.
 
 ## Safety Status
 - Infrastructure-only milestone; no training or live Kaggle launch performed.
 - Locked test remains closed, unmaterialized, and unscored.
-- No data, output, checkpoint, or credential is tracked.
+- Default install remains lightweight and does not require Torch/GPU.
 
 ## Gate Status After Task
-- F1-F3 implementation complete pending F3 full validation.
+- F1-F4 implementation complete pending F4 full validation.
 - Research gates and scientific claim status are unchanged.
 
 ## Open Blockers
-- F4-F5 infrastructure hardening remains.
+- F5 governance updates remain.
 
 ## Next Recommended Task
-- Add Linux-like development/runtime parity documentation and pinned optional Kaggle runtime.
+- Update agent governance so every GPU profile/live path uses failure triage, parity, and live contract.
 
 ## Files Likely Relevant Next
-- `.devcontainer/devcontainer.json`
-- `requirements/kaggle_runtime.txt`
-- `docs/workflows/00_environment_audit.md`
-- `tests/test_doctor.py`
+- `AGENTS.md`
+- `docs/agents/CLAUDE_OPUS_GITHUB_MASTER_PROMPT.md`
+- `docs/roadmap/MASTER_ROADMAP_LeWM_Glitch_v3.md`
+- `scripts/update_context_cache.py`

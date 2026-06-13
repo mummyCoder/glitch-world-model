@@ -50,3 +50,22 @@ Audit date: June 10, 2026.
 Use global/user-level installs for reusable CLIs such as Git, `uv`, pre-commit, and DVC. Keep
 Python libraries, CI rules, scripts, paper files, and configuration project-level. Do not install
 full TeX, CUDA Toolkit, Docker Desktop, or large ML frameworks globally without approval.
+
+## Kaggle-Parity Environment Matrix
+
+| Environment | Purpose | Python | Heavy GPU deps |
+|---|---|---|---|
+| Default local/CI | Fast repository tests and validators | `>=3.10` lightweight | Not installed by default |
+| Devcontainer | Linux-like infrastructure checks | Python 3.12 Bookworm | Not installed by default |
+| Kaggle profile runtime | Optional parity/live profile dependency set | Kaggle-compatible Python | `requirements/kaggle_runtime.txt` only |
+| Historical LeWM runtime | Audited upstream LeWM integration | Python 3.10 isolated | `requirements/lewm-runtime.txt` only |
+
+## Known Local-vs-Kaggle Differences
+
+| Difference | Failure mode | Guard test |
+|---|---|---|
+| Multiprocessing spawn re-imports top-level scripts | DataLoader bootstrapping error without `__main__` guard | `test_rendered_live_kernel_entrypoint_is_guarded` |
+| Windows console/pipe may decode with cp1252 | `UnicodeDecodeError` on Kaggle CLI progress bytes | `test_default_executor_replaces_non_utf8_subprocess_output` |
+| Windows file scanners can briefly hold JSON temp files | `WinError 5` during atomic replace | `test_atomic_json_writer_retries_transient_windows_replace_error` |
+| DataLoader workers can spawn from generated kernels | Profile bootstrap failure before training | `test_profile_config_freezes_engineering_only_contract` |
+| Kaggle CLI may print push errors with exit code zero | False-success live launch bookkeeping | `test_default_executor_rejects_kaggle_semantic_error_with_zero_exit` |
