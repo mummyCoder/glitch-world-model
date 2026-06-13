@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .failure_triage import allowed_action, classify_failure, is_oom
 from .kaggle_automation import (
     AutomationBlockedError,
     AutomationCommandError,
@@ -35,6 +36,18 @@ EXPECTED_DATASET_HASHES = {
 def _write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def enrich_failure(result: dict[str, Any]) -> dict[str, Any]:
+    failure = result.get("failure")
+    if not isinstance(failure, dict):
+        return result
+    text = "\n".join(
+        str(failure.get(key, "")) for key in ("traceback", "message", "classification")
+    )
+    bucket = classify_failure(text, str(failure.get("error_type", "")))
+    failure.update({"bucket": bucket.value, "allowed_action": allowed_action(bucket)})
+    return result
 
 
 @dataclass(frozen=True)
@@ -331,7 +344,7 @@ def run_profile_attempt_ladder(
     runner = attempt_runner or ProfileAttemptRunner(config).run_attempt
     attempts = []
     for batch_size in APPROVED_BATCH_LADDER:
-        result = runner(batch_size)
+        result = enrich_failure(runner(batch_size))
         attempts.append(result)
         _write_json(config.run_root / "retry_history.json", {"attempts": attempts})
         if result["status"] in {"success", "dry-run"}:
@@ -343,7 +356,7 @@ def run_profile_attempt_ladder(
             }
             _write_json(config.run_root / "final_result.json", final)
             return final
-        if result.get("failure", {}).get("classification") != "cuda_oom":
+        if not is_oom(classify_failure(json.dumps(result.get("failure", {})))):
             break
     final = {
         "status": "failed",

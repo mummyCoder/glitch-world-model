@@ -1,54 +1,34 @@
 # LAST_HANDOFF.md
 
-Last completed task: Claude GitHub master prompt and research roadmap v3
+Last completed task: F1 failure triage and failure knowledge base
 Commit: pending
 Date: 2026-06-13
 
 ## What Changed
-
-- Added a token-efficient master prompt for Claude/strong GitHub coding agents.
-- Added Roadmap v3 with the critical path from exact 500-update profile through paper submission.
-- Synchronized Claude, Copilot, AGENTS, PLAYBOOK, context-cache generation, and claim registry.
-- Recorded the engineering causes of prior profile delays and anti-stall execution rules.
-- No Kaggle, GPU, locked-test, or paper-claim action was performed.
+- Added fixed failure buckets, allowed actions, and strict OOM identification.
+- Enriched GPU-profile retry history with `bucket` and `allowed_action`.
+- Added an append-only registry seeded with packaging, decode, and DataLoader spawn incidents.
 
 ## Checks Passed
-
-- `python scripts/validate_research_release.py --ci` passed.
-- `python scripts/check_claim_registry.py` passed with 59 claims including the new protocol claim.
-- `python -m pytest` passed with 277 tests.
-- Ruff, doctor, context validation, and pre-commit passed.
+- Focused F1 tests passed; full required validators pending before commit.
 
 ## Safety Status
-
+- Infrastructure-only milestone; no training or live Kaggle launch performed.
 - Locked test remains closed, unmaterialized, and unscored.
-- No live Kaggle action was performed.
-- No long GPU job was run.
-- No secret material was printed or committed.
-- No model-performance claim was added.
-- Roadmap v3 is a protocol artifact, not experiment evidence.
+- No data, output, checkpoint, or credential is tracked.
 
 ## Gate Status After Task
-
-- Gates 1-8 remain passed.
-- Gate 9 remains only the limited non-locked one-buggy-episode validation pilot.
-- Research MVP source readiness remains unchanged.
-- Gate 10 and locked test remain closed.
+- F1 implementation complete pending full validation.
+- Research gates and scientific claim status are unchanged.
 
 ## Open Blockers
-
-- The 500-update Kaggle GPU throughput/VRAM profile has not run.
-- Main training batch size, evaluation interval, and wall-clock budget are not frozen.
-- Multi-seed episode-level results and robust calibration do not yet exist.
+- F2-F5 infrastructure hardening remains.
 
 ## Next Recommended Task
-
-- Execute Roadmap v3 Stages R0-R1: implement and strictly validate the exact 500-update
-  non-locked Kaggle GPU profile.
+- Implement the offline Kaggle parity gate.
 
 ## Files Likely Relevant Next
-
-- `docs/agents/CLAUDE_OPUS_GITHUB_MASTER_PROMPT.md`
-- `docs/roadmap/MASTER_ROADMAP_LeWM_Glitch_v3.md`
-- `docs/superpowers/plans/2026-06-13-lewm-500-update-kaggle-gpu-profile.md`
-- `src/glitch_detection/lewm_training.py`
+- `src/glitch_detection/failure_triage.py`
+- `src/glitch_detection/lewm_gpu_profile_kaggle.py`
+- `scripts/run_kaggle_parity_check.py`
+- `tests/test_kaggle_parity.py`

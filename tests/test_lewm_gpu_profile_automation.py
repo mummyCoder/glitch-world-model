@@ -54,7 +54,14 @@ def test_non_oom_failure_does_not_advance_ladder(tmp_path: Path):
             "fingerprint": "fp",
             "attempt_root": str(tmp_path / "attempt"),
             "status": "failed",
-            "failure": {"classification": "runtime_error"},
+            "failure": {
+                "classification": "runtime_error",
+                "message": "An attempt has been made to start a new process before the current "
+                "process has finished its bootstrapping phase",
+            },
         },
     )
     assert result["attempted_batch_sizes"] == [8]
+    failure = result["attempts"][0]["failure"]
+    assert failure["bucket"] == "dataloader_spawn"
+    assert failure["allowed_action"] == "stop_and_fix"
