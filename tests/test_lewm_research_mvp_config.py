@@ -57,3 +57,19 @@ def test_optional_frozen_video_baseline_writes_non_blocking_skip_artifact(
         (tmp_path / "frozen_video_representation_skip.json").read_text(encoding="utf-8")
     )
     assert written["reason"] == "missing_optional_dependency"
+
+
+def test_r3_seed_preflight_requires_seed_42_first(tmp_path: Path):
+    preparer = load_script("prepare_lewm_r3_seed_run")
+    lance_root = tmp_path / "datasets"
+    (lance_root / "tempglitch_train_normal_all_local.lance").mkdir(parents=True)
+    (lance_root / "tempglitch_validation_normal_all_local.lance").mkdir()
+
+    with pytest.raises(ValueError, match="seed 42 first"):
+        preparer.prepare_seed_run(
+            repo_root=ROOT,
+            config_path=ROOT / "configs/lewm_research_mvp.yaml",
+            lance_root=lance_root,
+            output_root=tmp_path / "run",
+            seed=43,
+        )
