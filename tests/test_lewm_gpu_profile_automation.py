@@ -2,10 +2,13 @@ import json
 import subprocess
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
+import glitch_detection.lewm_gpu_profile_automation as automation
 from glitch_detection.lewm_gpu_profile_automation import (
+    ProfileAttemptRunner,
     ProfileAutomationConfig,
     run_profile_attempt_ladder,
     validate_live_launch_contract,
@@ -70,6 +73,49 @@ def test_non_oom_failure_does_not_advance_ladder(tmp_path: Path):
     failure = result["attempts"][0]["failure"]
     assert failure["bucket"] == "dataloader_spawn"
     assert failure["allowed_action"] == "stop_and_fix"
+
+
+def test_successful_kernel_with_invalid_artifacts_is_recorded_as_failed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    config = replace(_config(tmp_path), live=True, poll_interval_seconds=0)
+    artifact_root = tmp_path / "artifact"
+    artifact_root.mkdir()
+    (artifact_root / "profile_metadata.json").write_text("{}", encoding="utf-8")
+
+    def fake_package(*args, dry_run: bool, **kwargs):
+        if not dry_run:
+            (args[2] / "kernel").mkdir(parents=True)
+            (args[2] / "dataset").mkdir(parents=True)
+        return {
+            "profile_fingerprint": "fp",
+            "kernel_inventory_sha256": "kernel-sha",
+        }
+
+    monkeypatch.setattr(automation, "prepare_profile_kaggle_package", fake_package)
+    monkeypatch.setattr(automation, "validate_profile_kaggle_package", lambda _root: {})
+    runner = ProfileAttemptRunner(config)
+    monkeypatch.setattr(
+        runner,
+        "preflight",
+        lambda: {"git_sha": "sha", "branch": "main"},
+    )
+    monkeypatch.setattr(runner, "_dataset_upload", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(runner, "_wait_dataset", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(runner, "_download", lambda *_args, **_kwargs: artifact_root)
+    monkeypatch.setattr(
+        runner,
+        "_run",
+        lambda _root, step, _command: SimpleNamespace(
+            stdout="complete" if step == "kernel_poll" else ""
+        ),
+    )
+
+    result = runner.run_attempt(8)
+
+    assert result["status"] == "failed"
+    assert result["failure"]["classification"] == "artifact_contract_error"
+    assert result["failure"]["error_type"] == "FileNotFoundError"
 
 
 def _git_repo(tmp_path: Path) -> tuple[Path, str]:

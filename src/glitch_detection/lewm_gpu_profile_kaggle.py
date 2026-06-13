@@ -144,6 +144,7 @@ import sys
 import traceback
 from pathlib import Path
 
+sys.dont_write_bytecode = True
 CONFIG = json.loads({config_payload!r})
 INPUT_METADATA = json.loads({metadata_payload!r})
 INPUT = Path("/kaggle/input")
@@ -182,6 +183,10 @@ def materialize(archive_name, directory_name, destination):
 if os.environ.get("LEWM_PROFILE_BOOTSTRAP_ONLY") == "1":
     print("LEWM_PROFILE_BOOTSTRAP_OK")
     raise SystemExit(0)
+if CODE.exists():
+    shutil.rmtree(CODE)
+if LOCAL.exists():
+    shutil.rmtree(LOCAL)
 CODE.mkdir(parents=True, exist_ok=True)
 LOCAL.mkdir(parents=True, exist_ok=True)
 snapshot_dirs = sorted(path for path in INPUT.rglob("project_snapshot") if path.is_dir())
@@ -194,6 +199,9 @@ subprocess.check_call([
     "stable-worldmodel==0.1.1", "stable-pretraining==0.1.7", "transformers==4.57.6",
 ])
 sys.path.insert(0, str(CODE / "src"))
+source_contract = CODE / "src" / "glitch_detection" / "lewm_gpu_profile.py"
+if "validator_report.json" not in source_contract.read_text(encoding="utf-8"):
+    raise RuntimeError("Project snapshot is stale: missing validator_report artifact contract.")
 import torch
 from glitch_detection.lewm_gpu_profile import LeWMGPUProfileConfig, run_lewm_gpu_profile
 if not torch.cuda.is_available():

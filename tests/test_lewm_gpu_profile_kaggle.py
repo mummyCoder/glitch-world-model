@@ -79,6 +79,10 @@ def test_generated_kernel_is_immutable_and_fail_closed():
     assert "find_one_dir" in kernel
     assert "materialize" in kernel
     assert "dirs_exist_ok=True" in kernel
+    assert "sys.dont_write_bytecode = True" in kernel
+    assert "shutil.rmtree(CODE)" in kernel
+    assert "shutil.rmtree(LOCAL)" in kernel
+    assert "Project snapshot is stale: missing validator_report artifact contract" in kernel
     assert "validation_buggy" not in kernel
 
 

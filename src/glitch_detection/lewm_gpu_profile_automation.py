@@ -341,7 +341,22 @@ class ProfileAttemptRunner:
             status = self._status(status_result.stdout)
             if status == "success":
                 artifact_root = self._download(attempt_root, kernel_slug)
-                validation = validate_lewm_gpu_profile_artifacts(artifact_root)
+                try:
+                    validation = validate_lewm_gpu_profile_artifacts(artifact_root)
+                except Exception as exc:
+                    summary.update(
+                        {
+                            "status": "failed",
+                            "artifact_root": str(artifact_root),
+                            "failure": {
+                                "classification": "artifact_contract_error",
+                                "error_type": type(exc).__name__,
+                                "message": str(exc),
+                            },
+                        }
+                    )
+                    _write_json(attempt_root / "attempt.json", summary)
+                    return summary
                 summary.update(
                     {
                         "status": "success",
